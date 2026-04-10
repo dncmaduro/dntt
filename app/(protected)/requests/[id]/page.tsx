@@ -156,9 +156,9 @@ function InfoItem({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-3xl bg-muted/35 p-4 md:col-span-1">
+    <div className="min-w-0 rounded-3xl bg-muted/35 p-4 md:col-span-1">
       <p className="text-sm text-muted-foreground">{label}</p>
-      <div className="mt-2 text-sm">{children}</div>
+      <div className="mt-2 min-w-0 text-sm [overflow-wrap:anywhere]">{children}</div>
     </div>
   );
 }

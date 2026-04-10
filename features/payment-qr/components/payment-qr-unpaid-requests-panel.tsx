@@ -325,7 +325,7 @@ export function PaymentQrUnpaidRequestsPanel({
             compact
             disabled={isSubmitting || isNavigating}
             error={sharedBillError}
-            helperText="Mỗi lần xác nhận hàng loạt dùng 1 ảnh bill chung."
+            helperText=""
             onChange={replaceSharedBill}
             onErrorChange={setSharedBillError}
             value={sharedBillDraft}
@@ -333,7 +333,7 @@ export function PaymentQrUnpaidRequestsPanel({
         </div>
       </div>
 
-      <div className="mt-4 max-h-[58vh] overflow-y-auto pr-1">
+      <div className="mt-4">
         <PaymentRequestList
           isLoading={isNavigating}
           isSubmitting={isSubmitting}

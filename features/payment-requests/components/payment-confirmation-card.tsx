@@ -205,9 +205,9 @@ function PaymentInfoItem({
   label: string;
 }) {
   return (
-    <div className="rounded-[1.5rem] border border-border/70 bg-white/70 p-4">
+    <div className="min-w-0 rounded-[1.5rem] border border-border/70 bg-white/70 p-4">
       <p className="text-sm text-muted-foreground">{label}</p>
-      <div className="mt-2 text-sm">{children}</div>
+      <div className="mt-2 min-w-0 text-sm [overflow-wrap:anywhere]">{children}</div>
     </div>
   );
 }

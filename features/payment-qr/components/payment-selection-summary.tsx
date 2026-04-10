@@ -13,7 +13,8 @@ export function PaymentSelectionSummary({
   selectedTotalAmount,
 }: {
   disabled: boolean;
-  onConfirm: () => void;
+  isSubmitting: boolean;
+  onConfirm: () => void | Promise<void>;
   selectedCount: number;
   selectedTotalAmount: number;
 }) {

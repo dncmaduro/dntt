@@ -58,12 +58,12 @@ export function PaymentBillUploadField({
     <div className="space-y-3">
       <div
         className={cn(
-          "rounded-[1.5rem] border border-dashed px-5 py-6 transition-colors",
+          "rounded-[1.5rem] border border-dashed transition-colors",
           isDragActive
             ? "border-primary/60 bg-primary/8"
             : "border-primary/25 bg-primary/5",
           disabled && "cursor-not-allowed opacity-70",
-          compact ? "p-4" : "",
+          compact ? "px-4 py-4 sm:px-5 sm:py-5" : "px-5 py-6",
         )}
         onDragEnter={(event) => {
           event.preventDefault();
@@ -92,10 +92,10 @@ export function PaymentBillUploadField({
           }
         }}
       >
-        <div className={cn("flex gap-4", compact ? "items-start" : "items-center")}>
-          <div className="flex size-14 shrink-0 items-center justify-center rounded-3xl bg-primary/10 text-primary">
+        <div className={cn("flex gap-4", compact ? "items-start gap-3" : "items-center") }>
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-3xl bg-primary/10 text-primary sm:size-14">
             {value ? (
-              <div className="relative size-14 overflow-hidden rounded-3xl">
+              <div className="relative size-12 overflow-hidden rounded-3xl sm:size-14">
                 <Image
                   alt={value.file.name}
                   className="object-cover"
@@ -127,12 +127,13 @@ export function PaymentBillUploadField({
               </div>
             ) : null}
 
-            <div className="mt-4 flex flex-wrap gap-3">
+            <div className={cn("mt-4 flex flex-wrap gap-3", compact ? "mt-3" : "")}>
               <Button
                 disabled={disabled}
                 onClick={() => fileInputRef.current?.click()}
                 type="button"
                 variant="secondary"
+                className={compact ? "h-10 px-3" : undefined}
               >
                 <ImagePlus className="size-4" />
                 {value ? "Chọn ảnh khác" : "Tải bill"}
@@ -147,6 +148,7 @@ export function PaymentBillUploadField({
                   }}
                   type="button"
                   variant="ghost"
+                  className={compact ? "h-10 px-3" : undefined}
                 >
                   <Trash2 className="size-4 text-destructive" />
                   Xóa ảnh

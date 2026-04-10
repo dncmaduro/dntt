@@ -20,20 +20,26 @@ export function PageIntro({
         className,
       )}
     >
-      <div className="space-y-2">
+      <div className="min-w-0 space-y-2">
         {eyebrow ? (
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/75">
             {eyebrow}
           </p>
         ) : null}
-        <h1 className="text-2xl font-semibold md:text-3xl">{title}</h1>
+        <h1 className="text-2xl font-semibold [overflow-wrap:anywhere] md:text-3xl">
+          {title}
+        </h1>
         {description ? (
-          <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+          <p className="max-w-2xl text-sm leading-6 [overflow-wrap:anywhere] text-muted-foreground">
             {description}
           </p>
         ) : null}
       </div>
-      {actions ? <div className="flex items-center gap-3">{actions}</div> : null}
+      {actions ? (
+        <div className="flex w-full flex-wrap items-center gap-3 md:w-auto md:justify-end">
+          {actions}
+        </div>
+      ) : null}
     </div>
   );
 }

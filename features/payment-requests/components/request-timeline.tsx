@@ -23,11 +23,11 @@ export function RequestTimeline({
           <div className="min-w-0 flex-1 rounded-3xl border border-border/70 bg-white/70 p-4">
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <div>
-                <p className="font-semibold">
+                <p className="font-semibold [overflow-wrap:anywhere]">
                   {LOG_ACTION_LABELS[log.action as keyof typeof LOG_ACTION_LABELS] ??
                     log.action}
                 </p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm [overflow-wrap:anywhere] text-muted-foreground">
                   {log.actor?.full_name ?? "Hệ thống"}
                   {log.actor?.role ? ` • ${ROLE_LABELS[log.actor.role as keyof typeof ROLE_LABELS]}` : ""}
                 </p>
@@ -37,7 +37,7 @@ export function RequestTimeline({
               </p>
             </div>
             {log.meta && typeof log.meta === "object" && "note" in log.meta ? (
-              <p className="mt-3 text-sm leading-6 text-muted-foreground">
+              <p className="mt-3 text-sm leading-6 [overflow-wrap:anywhere] text-muted-foreground">
                 {(log.meta.note as string) || "Không có ghi chú bổ sung"}
               </p>
             ) : null}
