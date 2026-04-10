@@ -60,7 +60,9 @@ export const parseRequestFilters = async (
 
   return {
     keyword: toPlainString(params.keyword).trim(),
-    status: ACTIVE_PAYMENT_REQUEST_STATUSES.includes(status as PaymentRequestStatus)
+    status: ACTIVE_PAYMENT_REQUEST_STATUSES.includes(
+      status as (typeof ACTIVE_PAYMENT_REQUEST_STATUSES)[number],
+    )
       ? status
       : "",
     from: toPlainString(params.from),
