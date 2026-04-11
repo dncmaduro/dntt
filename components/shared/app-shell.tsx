@@ -198,6 +198,9 @@ export function AppShell({
                 <DropdownMenuItem asChild>
                   <Link href={APP_ROUTES.profile}>Cập nhật hồ sơ</Link>
                 </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={APP_ROUTES.changePassword}>Đổi mật khẩu</Link>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <form action={logoutAction} ref={logoutFormRef} />
                 <DropdownMenuItem

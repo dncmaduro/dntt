@@ -5,7 +5,12 @@ import { APP_ROUTES } from "@/lib/constants";
 import { env } from "@/lib/env";
 import type { Database } from "@/types/database";
 
-const PUBLIC_PATHS = [APP_ROUTES.login];
+const PUBLIC_PATHS = [
+  APP_ROUTES.login,
+  APP_ROUTES.forgotPassword,
+  APP_ROUTES.resetPassword,
+  APP_ROUTES.authConfirm,
+];
 
 export const updateSession = async (request: NextRequest) => {
   let response = NextResponse.next({

@@ -123,6 +123,8 @@ export const DELETABLE_STATUSES = EMPLOYEE_EDITABLE_STATUSES;
 export const PAGE_TITLES: Record<string, string> = {
   "/": "Tổng quan",
   "/login": "Đăng nhập",
+  "/forgot-password": "Quên mật khẩu",
+  "/reset-password": "Đặt lại mật khẩu",
   "/my-requests": "DNTT của tôi",
   "/my-requests/new": "Tạo đề nghị mới",
   "/requests": "Tất cả đề nghị",
@@ -130,11 +132,15 @@ export const PAGE_TITLES: Record<string, string> = {
   "/notifications": "Thông báo",
   "/profile": "Cá nhân",
   "/profile/update-mobile": "Cập nhật hồ sơ",
+  "/profile/change-password": "Đổi mật khẩu",
 };
 
 export const APP_ROUTES = {
   dashboard: "/",
   login: "/login",
+  forgotPassword: "/forgot-password",
+  resetPassword: "/reset-password",
+  authConfirm: "/auth/confirm",
   myRequests: "/my-requests",
   newRequest: "/my-requests/new",
   requests: "/requests",
@@ -142,6 +148,7 @@ export const APP_ROUTES = {
   notifications: "/notifications",
   profile: "/profile",
   profileMobileUpdate: "/profile/update-mobile",
+  changePassword: "/profile/change-password",
 } as const;
 
 export type NavigationItem = {

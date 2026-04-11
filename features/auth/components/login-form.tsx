@@ -2,12 +2,14 @@
 
 import { useActionState } from "react";
 import { useState } from "react";
+import Link from "next/link";
 import { LoaderCircle, LogIn, Eye, EyeOff } from "lucide-react";
 
 import { loginAction } from "@/features/auth/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { APP_ROUTES } from "@/lib/constants";
 
 const initialState = {
   error: undefined,
@@ -50,6 +52,14 @@ export function LoginForm({ redirectTo }: { redirectTo?: string }) {
           >
             {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
           </button>
+        </div>
+        <div className="flex justify-end">
+          <Link
+            className="text-sm font-medium text-primary hover:text-primary/80"
+            href={APP_ROUTES.forgotPassword}
+          >
+            Quên mật khẩu?
+          </Link>
         </div>
       </div>
 

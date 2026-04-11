@@ -89,6 +89,20 @@ export default async function ProfilePage() {
         </Card>
 
         <div className="space-y-4">
+          <Card className="rounded-[2rem]">
+            <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-medium">Bảo mật tài khoản</p>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  Đổi mật khẩu định kỳ để tăng mức độ an toàn cho tài khoản.
+                </p>
+              </div>
+              <Button asChild className="w-full sm:w-auto" type="button" variant="outline">
+                <Link href={APP_ROUTES.changePassword}>Mở trang đổi mật khẩu</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
           <div className="md:hidden">
             <Card className="rounded-[2rem]">
               <CardContent className="p-6">
