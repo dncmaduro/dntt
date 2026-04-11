@@ -77,7 +77,7 @@ export function PaymentRequestItem({
                 </Button>
               </DialogTrigger>
 
-              <DialogContent className="max-w-2xl">
+              <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>{request.title}</DialogTitle>
                   <DialogDescription>
