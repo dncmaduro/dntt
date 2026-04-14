@@ -70,10 +70,12 @@ const resolveTitle = (pathname: string) => {
 };
 
 export function AppShell({
+  appVersion,
   children,
   profile,
   unreadCount,
 }: {
+  appVersion: string;
   children: React.ReactNode;
   profile: ShellProfile;
   unreadCount: number;
@@ -142,6 +144,9 @@ export function AppShell({
               </p>
               <h2 className="truncate text-xl font-semibold">{pageTitle}</h2>
             </div>
+            <span className="hidden rounded-xl border border-border/70 bg-muted/40 px-3 py-1 text-xs font-medium text-muted-foreground sm:inline-flex">
+              v{appVersion}
+            </span>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
