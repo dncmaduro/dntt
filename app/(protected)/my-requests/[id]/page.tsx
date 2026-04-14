@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttachmentGallery } from "@/features/payment-requests/components/attachment-gallery";
 import { DeleteRequestButton } from "@/features/payment-requests/components/delete-request-button";
-import { RequestForm } from "@/features/payment-requests/components/request-form";
 import { RequestTimeline } from "@/features/payment-requests/components/request-timeline";
 import { StatusBadge } from "@/features/payment-requests/components/status-badge";
 import {
@@ -17,29 +16,25 @@ import {
 import { requireRole } from "@/lib/auth/session";
 import { getPaymentRequestDetail } from "@/features/payment-requests/queries";
 import { APP_ROUTES, type PaymentRequestStatus } from "@/lib/constants";
-import { formatCurrency, formatDate, toPlainString } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 
 type DetailPageProps = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export default async function MyRequestDetailPage({
   params,
-  searchParams,
 }: DetailPageProps) {
   const profile = await requireRole(["employee", "accountant"]);
   const { id } = await params;
-  const { edit } = await searchParams;
   const request = await getPaymentRequestDetail(id);
 
   if (!request || request.user_id !== profile.id || request.is_deleted) {
     notFound();
   }
 
-  const isEditing = toPlainString(edit) === "1";
   const detailHref = `${APP_ROUTES.myRequests}/${request.id}`;
-  const editHref = `${detailHref}?edit=1#edit-form`;
+  const editHref = `${detailHref}/edit`;
 
   const canEdit = canManageOwnRequest(
     profile.role,
@@ -56,10 +51,10 @@ export default async function MyRequestDetailPage({
         actions={
           <div className="flex flex-wrap gap-3">
             {canEdit ? (
-              <Button asChild variant={isEditing ? "outline" : "secondary"}>
-                <Link href={isEditing ? detailHref : editHref}>
+              <Button asChild variant="secondary">
+                <Link href={editHref}>
                   <PencilLine className="size-4" />
-                  {isEditing ? "Đóng biểu mẫu" : "Chỉnh sửa"}
+                  Chỉnh sửa
                 </Link>
               </Button>
             ) : null}
@@ -120,24 +115,6 @@ export default async function MyRequestDetailPage({
         <h2 className="text-xl font-semibold">Chứng từ đính kèm</h2>
         <AttachmentGallery attachments={request.attachments} />
       </section>
-
-      {canEdit && isEditing ? (
-        <section className="space-y-4" id="edit-form">
-          <h2 className="text-xl font-semibold">Cập nhật đề nghị</h2>
-          <RequestForm
-            existingAttachments={request.attachments}
-            initialValues={{
-              amount: request.amount ?? null,
-              title: request.title,
-              description: request.description ?? "",
-              payment_date: request.payment_date,
-              note: request.note ?? "",
-            }}
-            mode="edit"
-            requestId={request.id}
-          />
-        </section>
-      ) : null}
     </div>
   );
 }

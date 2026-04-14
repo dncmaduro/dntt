@@ -1,7 +1,7 @@
-"use server";
+'use server';
 
-import { revalidatePath } from "next/cache";
-import { z } from "zod";
+import { revalidatePath } from 'next/cache';
+import { z } from 'zod';
 
 import {
   APP_ROUTES,
@@ -11,14 +11,14 @@ import {
   type NotificationType,
   type PaymentRequestLogAction,
   type PaymentRequestStatus,
-} from "@/lib/constants";
-import { requireRole } from "@/lib/auth/session";
+} from '@/lib/constants';
+import { requireRole } from '@/lib/auth/session';
 import {
   canMarkAsPaid,
   canManageOwnRequest,
   canReviewAccounting,
   canSoftDeleteOwnRequest,
-} from "@/lib/auth/permissions";
+} from '@/lib/auth/permissions';
 import {
   MAX_ATTACHMENTS,
   MAX_FILE_SIZE_BYTES,
@@ -26,12 +26,12 @@ import {
   paymentRequestFormSchema,
   paymentBillImageSchema,
   reviewSchema,
-} from "@/features/payment-requests/schemas";
-import { uploadPaymentBillFile } from "@/features/payment-requests/payment-bill-storage";
-import { createActionClient, createAdminClient } from "@/lib/supabase/server";
-import { buildStoragePath } from "@/lib/utils";
-import type { Database } from "@/types/database";
-import type { ActionResult } from "@/features/payment-requests/types";
+} from '@/features/payment-requests/schemas';
+import { uploadPaymentBillFile } from '@/features/payment-requests/payment-bill-storage';
+import { createActionClient, createAdminClient } from '@/lib/supabase/server';
+import { buildStoragePath } from '@/lib/utils';
+import type { Database } from '@/types/database';
+import type { ActionResult } from '@/features/payment-requests/types';
 
 type MutationClient =
   | Awaited<ReturnType<typeof createActionClient>>
@@ -39,31 +39,31 @@ type MutationClient =
 
 const fileSchema = z
   .instanceof(File)
-  .refine((file) => file.size > 0, "Tệp đính kèm không hợp lệ")
+  .refine((file) => file.size > 0, 'Tệp đính kèm không hợp lệ')
   .refine(
     (file) => file.size <= MAX_FILE_SIZE_BYTES,
-    "Mỗi tệp không được vượt quá 10MB",
+    'Mỗi tệp không được vượt quá 10MB',
   )
   .refine(
     (file) =>
-      file.type === "application/pdf" ||
-      file.type.startsWith("image/") ||
+      file.type === 'application/pdf' ||
+      file.type.startsWith('image/') ||
       !file.type,
-    "Chỉ hỗ trợ ảnh hoặc PDF",
+    'Chỉ hỗ trợ ảnh hoặc PDF',
   );
 
 const parseFiles = (formData: FormData) =>
   formData
-    .getAll("attachments")
+    .getAll('attachments')
     .filter((item): item is File => item instanceof File && item.size > 0);
 
 const parseRemoveAttachmentIds = (formData: FormData) =>
   formData
-    .getAll("removeAttachmentIds")
-    .filter((item): item is string => typeof item === "string");
+    .getAll('removeAttachmentIds')
+    .filter((item): item is string => typeof item === 'string');
 
 const parseAmountValue = (value: FormDataEntryValue | null) => {
-  if (typeof value !== "string" || !value.trim()) {
+  if (typeof value !== 'string' || !value.trim()) {
     return null;
   }
 
@@ -93,10 +93,10 @@ const insertLog = async ({
   requestId: string;
   actorId: string;
   action: PaymentRequestLogAction;
-  meta?: Database["public"]["Tables"]["payment_request_logs"]["Insert"]["meta"];
+  meta?: Database['public']['Tables']['payment_request_logs']['Insert']['meta'];
 }) => {
   const insertDirectly = async (supabase: MutationClient) => {
-    const { error } = await supabase.from("payment_request_logs").insert({
+    const { error } = await supabase.from('payment_request_logs').insert({
       payment_request_id: requestId,
       actor_id: actorId,
       action,
@@ -118,7 +118,7 @@ const insertLog = async ({
   }
 
   const supabase = client ?? (await createActionClient());
-  const { error } = await supabase.rpc("insert_payment_request_log", {
+  const { error } = await supabase.rpc('insert_payment_request_log', {
     target_action: action,
     target_actor_id: actorId,
     target_meta: meta ?? null,
@@ -130,7 +130,7 @@ const insertLog = async ({
   }
 
   const isMissingRpcFunction = error.message.includes(
-    "insert_payment_request_log",
+    'insert_payment_request_log',
   );
 
   if (!isMissingRpcFunction) {
@@ -159,30 +159,31 @@ const notifyUsers = async ({
     return;
   }
 
-  const supabase = client ?? createAdminClient() ?? (await createActionClient());
-  const { error } = await supabase.from("notifications").insert(
+  const supabase =
+    client ?? createAdminClient() ?? (await createActionClient());
+  const { error } = await supabase.from('notifications').insert(
     recipientIds.map((userId) => ({
       user_id: userId,
       type,
       title,
       body,
-      entity_type: "payment_request",
+      entity_type: 'payment_request',
       entity_id: requestId,
       is_read: false,
     })),
   );
 
   if (error) {
-    console.error("Notification insert failed", error.message);
+    console.error('Notification insert failed', error.message);
   }
 };
 
-const getProfilesByRole = async (role: "accountant" | "director") => {
+const getProfilesByRole = async (role: 'accountant' | 'director') => {
   const client = createAdminClient() ?? (await createActionClient());
   const { data, error } = await client
-    .from("profiles")
-    .select("id")
-    .eq("role", role);
+    .from('profiles')
+    .select('id')
+    .eq('role', role);
 
   if (error) {
     throw new Error(error.message);
@@ -202,7 +203,7 @@ const uploadNewAttachments = async ({
 }) => {
   const supabase = await createActionClient();
   const uploadedPaths: string[] = [];
-  const attachmentRows: Database["public"]["Tables"]["payment_request_attachments"]["Insert"][] =
+  const attachmentRows: Database['public']['Tables']['payment_request_attachments']['Insert'][] =
     [];
 
   for (const file of files) {
@@ -216,7 +217,7 @@ const uploadNewAttachments = async ({
     const { error: uploadError } = await supabase.storage
       .from(STORAGE_BUCKET)
       .upload(filePath, file, {
-        cacheControl: "3600",
+        cacheControl: '3600',
         contentType: file.type || undefined,
         upsert: false,
       });
@@ -241,7 +242,7 @@ const uploadNewAttachments = async ({
 
   if (attachmentRows.length) {
     const { error } = await supabase
-      .from("payment_request_attachments")
+      .from('payment_request_attachments')
       .insert(attachmentRows);
 
     if (error) {
@@ -264,13 +265,13 @@ const validateFiles = (files: File[], existingCount = 0) => {
 const getRequestForMutation = async (requestId: string) => {
   const supabase = await createActionClient();
   const { data, error } = await supabase
-    .from("payment_requests")
-    .select("*")
-    .eq("id", requestId)
+    .from('payment_requests')
+    .select('*')
+    .eq('id', requestId)
     .single();
 
   if (error || !data) {
-    throw new Error("Không tìm thấy đề nghị thanh toán");
+    throw new Error('Không tìm thấy đề nghị thanh toán');
   }
 
   return data;
@@ -289,37 +290,37 @@ export const createPaymentRequestAction = async (
   formData: FormData,
 ): Promise<ActionResult<{ id: string }>> => {
   try {
-    const profile = await requireRole(["employee", "accountant"]);
+    const profile = await requireRole(['employee', 'accountant']);
     const supabase = await createActionClient();
     const files = parseFiles(formData);
 
     if (!files.length) {
       return {
         success: false,
-        error: "Vui lòng tải lên ít nhất một chứng từ",
+        error: 'Vui lòng tải lên ít nhất một chứng từ',
       };
     }
 
     validateFiles(files);
 
     const parsed = paymentRequestFormSchema.safeParse({
-      title: formData.get("title"),
-      amount: parseAmountValue(formData.get("amount")),
-      description: formData.get("description"),
-      payment_date: formData.get("payment_date"),
-      note: formData.get("note"),
+      title: formData.get('title'),
+      amount: parseAmountValue(formData.get('amount')),
+      description: formData.get('description'),
+      payment_date: formData.get('payment_date'),
+      note: formData.get('note'),
     });
 
     if (!parsed.success) {
       return {
         success: false,
-        error: "Dữ liệu biểu mẫu không hợp lệ",
+        error: 'Dữ liệu biểu mẫu không hợp lệ',
         fieldErrors: parsed.error.flatten().fieldErrors,
       };
     }
 
     const { data: createdRequest, error } = await supabase
-      .from("payment_requests")
+      .from('payment_requests')
       .insert({
         user_id: profile.id,
         title: parsed.data.title,
@@ -330,11 +331,11 @@ export const createPaymentRequestAction = async (
         status: DEFAULT_REQUEST_STATUS,
         is_deleted: false,
       })
-      .select("id")
+      .select('id')
       .single();
 
     if (error || !createdRequest) {
-      throw new Error(error?.message ?? "Không thể tạo đề nghị");
+      throw new Error(error?.message ?? 'Không thể tạo đề nghị');
     }
 
     try {
@@ -344,7 +345,10 @@ export const createPaymentRequestAction = async (
         files,
       });
     } catch (attachmentError) {
-      await supabase.from("payment_requests").delete().eq("id", createdRequest.id);
+      await supabase
+        .from('payment_requests')
+        .delete()
+        .eq('id', createdRequest.id);
       throw attachmentError;
     }
 
@@ -352,16 +356,16 @@ export const createPaymentRequestAction = async (
       client: supabase,
       requestId: createdRequest.id,
       actorId: profile.id,
-      action: "created",
+      action: 'created',
     });
 
-    const accountants = await getProfilesByRole("accountant");
+    const accountants = await getProfilesByRole('accountant');
     await notifyUsers({
       client: supabase,
       recipientIds: accountants,
-      type: "request_created",
+      type: 'request_created',
       title: NOTIFICATION_LABELS.request_created,
-      body: `${profile.full_name ?? "Nhân viên"} vừa tạo một đề nghị thanh toán mới.`,
+      body: `${profile.full_name ?? 'Nhân viên'} vừa tạo một đề nghị thanh toán mới.`,
       requestId: createdRequest.id,
     });
 
@@ -370,13 +374,15 @@ export const createPaymentRequestAction = async (
     return {
       success: true,
       data: { id: createdRequest.id },
-      message: "Đã tạo đề nghị thanh toán",
+      message: 'Đã tạo đề nghị thanh toán',
     };
   } catch (error) {
     return {
       success: false,
       error:
-        error instanceof Error ? error.message : "Không thể tạo đề nghị thanh toán",
+        error instanceof Error
+          ? error.message
+          : 'Không thể tạo đề nghị thanh toán',
     };
   }
 };
@@ -386,38 +392,41 @@ export const updatePaymentRequestAction = async (
   formData: FormData,
 ): Promise<ActionResult<{ id: string }>> => {
   try {
-    const profile = await requireRole(["employee", "accountant"]);
+    const profile = await requireRole(['employee', 'accountant']);
     const request = await getRequestForMutation(requestId);
 
     if (request.user_id !== profile.id) {
       return {
         success: false,
-        error: "Bạn không có quyền cập nhật đề nghị này",
+        error: 'Bạn không có quyền cập nhật đề nghị này',
       };
     }
 
     if (
-      !canManageOwnRequest(profile.role, request.status as PaymentRequestStatus) ||
+      !canManageOwnRequest(
+        profile.role,
+        request.status as PaymentRequestStatus,
+      ) ||
       request.is_deleted
     ) {
       return {
         success: false,
-        error: "Trạng thái hiện tại không cho phép chỉnh sửa",
+        error: 'Trạng thái hiện tại không cho phép chỉnh sửa',
       };
     }
 
     const parsed = paymentRequestFormSchema.safeParse({
-      title: formData.get("title"),
-      amount: parseAmountValue(formData.get("amount")),
-      description: formData.get("description"),
-      payment_date: formData.get("payment_date"),
-      note: formData.get("note"),
+      title: formData.get('title'),
+      amount: parseAmountValue(formData.get('amount')),
+      description: formData.get('description'),
+      payment_date: formData.get('payment_date'),
+      note: formData.get('note'),
     });
 
     if (!parsed.success) {
       return {
         success: false,
-        error: "Dữ liệu biểu mẫu không hợp lệ",
+        error: 'Dữ liệu biểu mẫu không hợp lệ',
         fieldErrors: parsed.error.flatten().fieldErrors,
       };
     }
@@ -427,16 +436,16 @@ export const updatePaymentRequestAction = async (
     const supabase = await createActionClient();
 
     const { data: existingAttachments, error: attachmentError } = await supabase
-      .from("payment_request_attachments")
-      .select("*")
-      .eq("payment_request_id", requestId);
+      .from('payment_request_attachments')
+      .select('*')
+      .eq('payment_request_id', requestId);
 
     if (attachmentError) {
       throw new Error(attachmentError.message);
     }
 
-    const removableAttachments = (existingAttachments ?? []).filter((attachment) =>
-      removeAttachmentIds.includes(attachment.id),
+    const removableAttachments = (existingAttachments ?? []).filter(
+      (attachment) => removeAttachmentIds.includes(attachment.id),
     );
     const remainingAttachmentCount =
       (existingAttachments?.length ?? 0) - removableAttachments.length;
@@ -444,20 +453,20 @@ export const updatePaymentRequestAction = async (
     if (!files.length && remainingAttachmentCount <= 0) {
       return {
         success: false,
-        error: "Đề nghị phải có ít nhất một chứng từ",
+        error: 'Đề nghị phải có ít nhất một chứng từ',
       };
     }
 
     validateFiles(files, remainingAttachmentCount);
 
     const nextStatus: PaymentRequestStatus =
-      request.status === "accounting_rejected" ||
-      request.status === "director_rejected"
-        ? "pending_accounting"
+      request.status === 'accounting_rejected' ||
+      request.status === 'director_rejected'
+        ? 'pending_accounting'
         : (request.status as PaymentRequestStatus);
 
     const { error: updateError } = await supabase
-      .from("payment_requests")
+      .from('payment_requests')
       .update({
         title: parsed.data.title,
         amount: parsed.data.amount ?? null,
@@ -466,9 +475,9 @@ export const updatePaymentRequestAction = async (
         note: parsed.data.note || null,
         status: nextStatus,
         updated_at: new Date().toISOString(),
-        ...(nextStatus === "pending_accounting" ? clearReviewFields : {}),
+        ...(nextStatus === 'pending_accounting' ? clearReviewFields : {}),
       })
-      .eq("id", requestId);
+      .eq('id', requestId);
 
     if (updateError) {
       throw new Error(updateError.message);
@@ -484,10 +493,10 @@ export const updatePaymentRequestAction = async (
       }
 
       const { error: attachmentDeleteError } = await supabase
-        .from("payment_request_attachments")
+        .from('payment_request_attachments')
         .delete()
         .in(
-          "id",
+          'id',
           removableAttachments.map((item) => item.id),
         );
 
@@ -508,21 +517,21 @@ export const updatePaymentRequestAction = async (
       client: supabase,
       requestId,
       actorId: profile.id,
-      action: "updated",
+      action: 'updated',
       meta: {
         status: nextStatus,
         removed_attachment_ids: removeAttachmentIds,
       },
     });
 
-    if (request.status !== nextStatus && nextStatus === "pending_accounting") {
-      const accountants = await getProfilesByRole("accountant");
+    if (request.status !== nextStatus && nextStatus === 'pending_accounting') {
+      const accountants = await getProfilesByRole('accountant');
       await notifyUsers({
         client: supabase,
         recipientIds: accountants,
-        type: "request_created",
+        type: 'request_created',
         title: NOTIFICATION_LABELS.request_created,
-        body: `${profile.full_name ?? "Nhân viên"} vừa cập nhật và gửi lại một đề nghị thanh toán.`,
+        body: `${profile.full_name ?? 'Nhân viên'} vừa cập nhật và gửi lại một đề nghị thanh toán.`,
         requestId,
       });
     }
@@ -532,13 +541,13 @@ export const updatePaymentRequestAction = async (
     return {
       success: true,
       data: { id: requestId },
-      message: "Đã cập nhật đề nghị thanh toán",
+      message: 'Đã cập nhật đề nghị thanh toán',
     };
   } catch (error) {
     return {
       success: false,
       error:
-        error instanceof Error ? error.message : "Không thể cập nhật đề nghị",
+        error instanceof Error ? error.message : 'Không thể cập nhật đề nghị',
     };
   }
 };
@@ -547,56 +556,86 @@ export const softDeletePaymentRequestAction = async (
   requestId: string,
 ): Promise<ActionResult> => {
   try {
-    const profile = await requireRole(["employee", "accountant"]);
+    const profile = await requireRole(['employee', 'accountant']);
     const request = await getRequestForMutation(requestId);
 
     if (request.user_id !== profile.id) {
       return {
         success: false,
-        error: "Bạn không có quyền xóa đề nghị này",
+        error: 'Bạn không có quyền xóa đề nghị này',
       };
     }
 
     if (
-      !canSoftDeleteOwnRequest(profile.role, request.status as PaymentRequestStatus)
+      !canSoftDeleteOwnRequest(
+        profile.role,
+        request.status as PaymentRequestStatus,
+      )
     ) {
       return {
         success: false,
-        error: "Không thể xóa đề nghị ở trạng thái hiện tại",
+        error: 'Không thể xóa đề nghị ở trạng thái hiện tại',
       };
     }
 
     const supabase = await createActionClient();
+    const now = new Date().toISOString();
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    console.log('soft delete auth', {
+      profileId: profile.id,
+      authUserId: user?.id,
+      authError: authError?.message,
+      requestUserId: request.user_id,
+      requestStatus: request.status,
+    });
+
     const { error } = await supabase
-      .from("payment_requests")
+      .from('payment_requests')
       .update({
         is_deleted: true,
-        deleted_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        deleted_at: now,
+        updated_at: now,
       })
-      .eq("id", requestId);
+      .eq('id', requestId)
+      .eq('user_id', profile.id)
+      .in('status', [
+        'pending_accounting',
+        'accounting_rejected',
+        'director_rejected',
+      ])
+      .is('is_deleted', false);
 
     if (error) {
       throw new Error(error.message);
     }
 
-    await insertLog({
-      client: supabase,
-      requestId,
-      actorId: profile.id,
-      action: "soft_deleted",
-    });
+    try {
+      await insertLog({
+        client: supabase,
+        requestId,
+        actorId: profile.id,
+        action: 'soft_deleted',
+      });
+    } catch (logError) {
+      // Do not fail the delete flow when audit log insertion is blocked by RLS.
+      console.error('Failed to insert soft-delete log', logError);
+    }
 
     revalidateRequestPaths(requestId);
 
     return {
       success: true,
-      message: "Đã xóa đề nghị",
+      message: 'Đã xóa đề nghị',
     };
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Không thể xóa đề nghị",
+      error: error instanceof Error ? error.message : 'Không thể xóa đề nghị',
     };
   }
 };
@@ -607,40 +646,42 @@ export const reviewPaymentRequestAction = async ({
   note,
 }: {
   requestId: string;
-  decision: "approve" | "reject";
+  decision: 'approve' | 'reject';
   note?: string;
 }): Promise<ActionResult> => {
   try {
-    const profile = await requireRole(["accountant"]);
+    const profile = await requireRole(['accountant']);
     const parsed = reviewSchema.safeParse({
       decision,
-      note: note ?? "",
+      note: note ?? '',
     });
 
     if (!parsed.success) {
       return {
         success: false,
-        error: parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ",
+        error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ',
       };
     }
 
     const request = await getRequestForMutation(requestId);
     const supabase = await createActionClient();
 
-    if (!canReviewAccounting(profile.role, request.status as PaymentRequestStatus)) {
+    if (
+      !canReviewAccounting(profile.role, request.status as PaymentRequestStatus)
+    ) {
       return {
         success: false,
-        error: "Đề nghị này không còn ở bước duyệt của kế toán",
+        error: 'Đề nghị này không còn ở bước duyệt của kế toán',
       };
     }
 
     const nextStatus: PaymentRequestStatus =
-      parsed.data.decision === "approve"
-        ? "director_approved"
-        : "accounting_rejected";
+      parsed.data.decision === 'approve'
+        ? 'director_approved'
+        : 'accounting_rejected';
     const now = new Date().toISOString();
     const { error } = await supabase
-      .from("payment_requests")
+      .from('payment_requests')
       .update({
         status: nextStatus,
         accounting_note: parsed.data.note || null,
@@ -651,7 +692,7 @@ export const reviewPaymentRequestAction = async ({
         director_approved_at: null,
         updated_at: now,
       })
-      .eq("id", requestId);
+      .eq('id', requestId);
 
     if (error) {
       throw new Error(error.message);
@@ -662,31 +703,31 @@ export const reviewPaymentRequestAction = async ({
       requestId,
       actorId: profile.id,
       action:
-        nextStatus === "director_approved"
-          ? "accounting_approved"
-          : "accounting_rejected",
+        nextStatus === 'director_approved'
+          ? 'accounting_approved'
+          : 'accounting_rejected',
       meta: {
         note: parsed.data.note || null,
       },
     });
 
-    if (nextStatus === "director_approved") {
-      const directors = await getProfilesByRole("director");
+    if (nextStatus === 'director_approved') {
+      const directors = await getProfilesByRole('director');
       await notifyUsers({
         client: supabase,
         recipientIds: Array.from(new Set([request.user_id, ...directors])),
-        type: "accounting_approved",
+        type: 'accounting_approved',
         title: NOTIFICATION_LABELS.accounting_approved,
-        body: `${profile.full_name ?? "Kế toán"} đã duyệt một đề nghị thanh toán và sẵn sàng cho bước chi trả.`,
+        body: `${profile.full_name ?? 'Kế toán'} đã duyệt một đề nghị thanh toán và sẵn sàng cho bước chi trả.`,
         requestId,
       });
     } else {
       await notifyUsers({
         client: supabase,
         recipientIds: [request.user_id],
-        type: "accounting_rejected",
+        type: 'accounting_rejected',
         title: NOTIFICATION_LABELS.accounting_rejected,
-        body: `${profile.full_name ?? "Kế toán"} đã từ chối đề nghị thanh toán của bạn.`,
+        body: `${profile.full_name ?? 'Kế toán'} đã từ chối đề nghị thanh toán của bạn.`,
         requestId,
       });
     }
@@ -696,42 +737,41 @@ export const reviewPaymentRequestAction = async ({
     return {
       success: true,
       message:
-        nextStatus === "director_approved"
-          ? "Đã duyệt đề nghị"
-          : "Đã từ chối đề nghị",
+        nextStatus === 'director_approved'
+          ? 'Đã duyệt đề nghị'
+          : 'Đã từ chối đề nghị',
     };
   } catch (error) {
     return {
       success: false,
-      error:
-        error instanceof Error ? error.message : "Không thể xử lý đề nghị",
+      error: error instanceof Error ? error.message : 'Không thể xử lý đề nghị',
     };
   }
 };
 
 const bulkApproveAccountingRequestsSchema = z
-  .array(z.string().uuid("Mã đề nghị không hợp lệ"))
-  .min(1, "Vui lòng chọn ít nhất một đề nghị");
+  .array(z.string().uuid('Mã đề nghị không hợp lệ'))
+  .min(1, 'Vui lòng chọn ít nhất một đề nghị');
 
 export const confirmPaymentRequestPaidAction = async (
   formData: FormData,
 ): Promise<ActionResult<{ paymentReference: string; requestId: string }>> => {
   try {
-    const profile = await requireRole(["director"]);
+    const profile = await requireRole(['director']);
     const parsed = confirmPaymentSchema.safeParse({
-      requestId: formData.get("requestId"),
-      payment_reference: formData.get("payment_reference"),
+      requestId: formData.get('requestId'),
+      payment_reference: formData.get('payment_reference'),
     });
 
     if (!parsed.success) {
       return {
         success: false,
-        error: parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ",
+        error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ',
         fieldErrors: parsed.error.flatten().fieldErrors,
       };
     }
 
-    const paymentBillEntry = formData.get("payment_bill");
+    const paymentBillEntry = formData.get('payment_bill');
     const paymentBillFile =
       paymentBillEntry instanceof File && paymentBillEntry.size > 0
         ? paymentBillEntry
@@ -740,9 +780,9 @@ export const confirmPaymentRequestPaidAction = async (
     if (!paymentBillFile) {
       return {
         success: false,
-        error: "Vui lòng tải lên bill thanh toán",
+        error: 'Vui lòng tải lên bill thanh toán',
         fieldErrors: {
-          payment_bill: ["Vui lòng tải lên bill thanh toán"],
+          payment_bill: ['Vui lòng tải lên bill thanh toán'],
         },
       };
     }
@@ -752,7 +792,7 @@ export const confirmPaymentRequestPaidAction = async (
     if (!parsedPaymentBill.success) {
       const message =
         parsedPaymentBill.error.issues[0]?.message ??
-        "Ảnh bill thanh toán không hợp lệ";
+        'Ảnh bill thanh toán không hợp lệ';
 
       return {
         success: false,
@@ -771,7 +811,7 @@ export const confirmPaymentRequestPaidAction = async (
     ) {
       return {
         success: false,
-        error: "Đề nghị này chưa sẵn sàng để xác nhận thanh toán",
+        error: 'Đề nghị này chưa sẵn sàng để xác nhận thanh toán',
       };
     }
 
@@ -782,7 +822,7 @@ export const confirmPaymentRequestPaidAction = async (
     const supabase = await createActionClient();
     const now = new Date().toISOString();
     const { error } = await supabase
-      .from("payment_requests")
+      .from('payment_requests')
       .update({
         paid_at: now,
         paid_by: profile.id,
@@ -790,10 +830,10 @@ export const confirmPaymentRequestPaidAction = async (
         payment_bill_path: uploadedBill.path,
         payment_bill_type: uploadedBill.fileType,
         payment_reference: parsed.data.payment_reference,
-        status: "paid",
+        status: 'paid',
         updated_at: now,
       })
-      .eq("id", request.id);
+      .eq('id', request.id);
 
     if (error) {
       await supabase.storage.from(STORAGE_BUCKET).remove([uploadedBill.path]);
@@ -804,7 +844,7 @@ export const confirmPaymentRequestPaidAction = async (
       client: supabase,
       requestId: request.id,
       actorId: profile.id,
-      action: "marked_paid",
+      action: 'marked_paid',
       meta: {
         payment_bill_name: uploadedBill.fileName,
         payment_reference: parsed.data.payment_reference,
@@ -814,9 +854,9 @@ export const confirmPaymentRequestPaidAction = async (
     await notifyUsers({
       client: supabase,
       recipientIds: [request.user_id],
-      type: "marked_paid",
+      type: 'marked_paid',
       title: NOTIFICATION_LABELS.marked_paid,
-      body: `${profile.full_name ?? "Giám đốc"} đã xác nhận thanh toán cho đề nghị của bạn với mã ${parsed.data.payment_reference}.`,
+      body: `${profile.full_name ?? 'Giám đốc'} đã xác nhận thanh toán cho đề nghị của bạn với mã ${parsed.data.payment_reference}.`,
       requestId: request.id,
     });
 
@@ -828,13 +868,15 @@ export const confirmPaymentRequestPaidAction = async (
         paymentReference: parsed.data.payment_reference,
         requestId: request.id,
       },
-      message: "Đã xác nhận thanh toán",
+      message: 'Đã xác nhận thanh toán',
     };
   } catch (error) {
     return {
       success: false,
       error:
-        error instanceof Error ? error.message : "Không thể xác nhận thanh toán",
+        error instanceof Error
+          ? error.message
+          : 'Không thể xác nhận thanh toán',
     };
   }
 };
@@ -843,21 +885,21 @@ export const bulkApproveAccountingRequestsAction = async (
   requestIds: string[],
 ): Promise<ActionResult<{ count: number }>> => {
   try {
-    const profile = await requireRole(["accountant"]);
+    const profile = await requireRole(['accountant']);
     const parsed = bulkApproveAccountingRequestsSchema.safeParse(requestIds);
 
     if (!parsed.success) {
       return {
         success: false,
-        error: parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ",
+        error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ',
       };
     }
 
     const supabase = await createActionClient();
     const { data: requests, error } = await supabase
-      .from("payment_requests")
-      .select("*")
-      .in("id", parsed.data);
+      .from('payment_requests')
+      .select('*')
+      .in('id', parsed.data);
 
     if (error) {
       throw new Error(error.message);
@@ -866,29 +908,32 @@ export const bulkApproveAccountingRequestsAction = async (
     if ((requests?.length ?? 0) !== parsed.data.length) {
       return {
         success: false,
-        error: "Một hoặc nhiều đề nghị không còn khả dụng",
+        error: 'Một hoặc nhiều đề nghị không còn khả dụng',
       };
     }
 
     const invalidRequest = (requests ?? []).find(
       (request) =>
         request.is_deleted ||
-        !canReviewAccounting(profile.role, request.status as PaymentRequestStatus),
+        !canReviewAccounting(
+          profile.role,
+          request.status as PaymentRequestStatus,
+        ),
     );
 
     if (invalidRequest) {
       return {
         success: false,
         error:
-          "Chỉ có thể bulk duyệt khi tất cả đề nghị đang ở bước chờ kế toán",
+          'Chỉ có thể bulk duyệt khi tất cả đề nghị đang ở bước chờ kế toán',
       };
     }
 
     const now = new Date().toISOString();
     const { error: updateError } = await supabase
-      .from("payment_requests")
+      .from('payment_requests')
       .update({
-        status: "director_approved",
+        status: 'director_approved',
         accounting_note: null,
         accounting_confirmed_by: profile.id,
         accounting_confirmed_at: now,
@@ -897,13 +942,13 @@ export const bulkApproveAccountingRequestsAction = async (
         director_approved_at: null,
         updated_at: now,
       })
-      .in("id", parsed.data);
+      .in('id', parsed.data);
 
     if (updateError) {
       throw new Error(updateError.message);
     }
 
-    const directors = await getProfilesByRole("director");
+    const directors = await getProfilesByRole('director');
 
     await Promise.all(
       (requests ?? []).map(async (request) => {
@@ -911,7 +956,7 @@ export const bulkApproveAccountingRequestsAction = async (
           client: supabase,
           requestId: request.id,
           actorId: profile.id,
-          action: "accounting_approved",
+          action: 'accounting_approved',
           meta: {
             note: null,
           },
@@ -920,9 +965,9 @@ export const bulkApproveAccountingRequestsAction = async (
         await notifyUsers({
           client: supabase,
           recipientIds: Array.from(new Set([request.user_id, ...directors])),
-          type: "accounting_approved",
+          type: 'accounting_approved',
           title: NOTIFICATION_LABELS.accounting_approved,
-          body: `${profile.full_name ?? "Kế toán"} đã duyệt một đề nghị thanh toán và sẵn sàng cho bước chi trả.`,
+          body: `${profile.full_name ?? 'Kế toán'} đã duyệt một đề nghị thanh toán và sẵn sàng cho bước chi trả.`,
           requestId: request.id,
         });
 
@@ -935,14 +980,14 @@ export const bulkApproveAccountingRequestsAction = async (
       data: { count: parsed.data.length },
       message:
         parsed.data.length === 1
-          ? "Đã duyệt đề nghị"
+          ? 'Đã duyệt đề nghị'
           : `Đã duyệt ${parsed.data.length} đề nghị`,
     };
   } catch (error) {
     return {
       success: false,
       error:
-        error instanceof Error ? error.message : "Không thể bulk duyệt đề nghị",
+        error instanceof Error ? error.message : 'Không thể bulk duyệt đề nghị',
     };
   }
 };

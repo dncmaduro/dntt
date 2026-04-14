@@ -54,6 +54,10 @@ const resolveTitle = (pathname: string) => {
     return PAGE_TITLES[pathname];
   }
 
+  if (pathname.startsWith("/my-requests/") && pathname.endsWith("/edit")) {
+    return "Chỉnh sửa đề nghị";
+  }
+
   if (pathname.startsWith("/my-requests/") && pathname !== APP_ROUTES.newRequest) {
     return "Chi tiết đề nghị";
   }

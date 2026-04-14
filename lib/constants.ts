@@ -72,6 +72,11 @@ export const REQUEST_STATUS_OPTIONS = ACTIVE_PAYMENT_REQUEST_STATUSES.map((statu
   label: STATUS_LABELS[status],
 }));
 
+export const REQUEST_DELETION_FILTER_OPTIONS = [
+  { value: "active", label: "Chưa xóa" },
+  { value: "deleted", label: "Đã xóa" },
+] as const;
+
 export const STATUS_BADGE_VARIANTS: Record<PaymentRequestStatus, string> = {
   pending_accounting:
     "border-amber-200 bg-amber-50 text-amber-700 ring-amber-100",

@@ -45,6 +45,7 @@ export type DashboardData = {
 export type RequestFilters = {
   keyword: string;
   status: string;
+  deleted: "active" | "deleted";
   from: string;
   to: string;
   creator: string;

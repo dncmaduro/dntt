@@ -65,6 +65,7 @@ export const parseRequestFilters = async (
     )
       ? status
       : "",
+    deleted: toPlainString(params.deleted) === "deleted" ? "deleted" : "active",
     from: toPlainString(params.from),
     to: toPlainString(params.to),
     creator: toPlainString(params.creator),
@@ -83,12 +84,17 @@ export const getRequestList = async ({
   scope: "mine" | "all";
   userId?: string;
 }) => {
-  const supabase = await createClient();
+  const supabase = createAdminClient() ?? (await createClient());
 
   let query = supabase
     .from("payment_requests")
-    .select(REQUEST_BASE_SELECT)
-    .eq("is_deleted", false);
+    .select(REQUEST_BASE_SELECT);
+
+  if (filters.deleted === "deleted") {
+    query = query.eq("is_deleted", true);
+  } else {
+    query = query.eq("is_deleted", false);
+  }
 
   if (scope === "mine" && userId) {
     query = query.eq("user_id", userId);
@@ -468,6 +474,7 @@ export const getDashboardData = async ({
     filters: {
       keyword: "",
       status: "",
+      deleted: "active",
       from: "",
       to: "",
       creator: "",

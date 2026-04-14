@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { Filter, LoaderCircle, RotateCcw, Search } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
@@ -23,13 +23,17 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { REQUEST_STATUS_OPTIONS } from "@/lib/constants";
+import {
+  REQUEST_DELETION_FILTER_OPTIONS,
+  REQUEST_STATUS_OPTIONS,
+} from "@/lib/constants";
 import type { ProfileOption, RequestFilters } from "@/features/payment-requests/types";
 
 type DraftFilters = RequestFilters;
 
 const dateInputClassName =
   "pr-3 [&::-webkit-calendar-picker-indicator]:m-0 [&::-webkit-calendar-picker-indicator]:ml-2";
+const searchDebounceMs = 400;
 
 function FilterFields({
   draft,
@@ -67,12 +71,36 @@ function FilterFields({
           }
           value={draft.status || "all"}
         >
-          <SelectTrigger>
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Tất cả trạng thái" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tất cả trạng thái</SelectItem>
             {REQUEST_STATUS_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Tình trạng xóa</Label>
+        <Select
+          onValueChange={(value) =>
+            setDraft((current) => ({
+              ...current,
+              deleted: value as DraftFilters["deleted"],
+            }))
+          }
+          value={draft.deleted}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Chưa xóa" />
+          </SelectTrigger>
+          <SelectContent>
+            {REQUEST_DELETION_FILTER_OPTIONS.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
               </SelectItem>
@@ -117,7 +145,7 @@ function FilterFields({
             }
             value={draft.creator || "all"}
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Tất cả nhân viên" />
             </SelectTrigger>
             <SelectContent>
@@ -143,7 +171,7 @@ function FilterFields({
           }
           value={draft.sort}
         >
-          <SelectTrigger>
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Mới nhất" />
           </SelectTrigger>
           <SelectContent>
@@ -171,10 +199,19 @@ export function RequestFilterBar({
   const [isPending, startTransition] = useTransition();
   const [isOpen, setIsOpen] = useState(false);
   const [draft, setDraft] = useState<RequestFilters>(filters);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setDraft(filters);
   }, [filters]);
+
+  useEffect(() => {
+    return () => {
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+      }
+    };
+  }, []);
 
   const applyFilters = (nextFilters: RequestFilters) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -189,15 +226,52 @@ export function RequestFilterBar({
       }
     });
 
+    const nextUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    const currentUrl = searchParams.toString()
+      ? `${pathname}?${searchParams.toString()}`
+      : pathname;
+
+    if (nextUrl === currentUrl) {
+      return;
+    }
+
     startTransition(() => {
-      router.replace(params.toString() ? `${pathname}?${params.toString()}` : pathname);
+      router.push(nextUrl);
     });
   };
 
+  const updateFilters = (
+    updater: (current: RequestFilters) => RequestFilters,
+    options?: { debounceSearch?: boolean },
+  ) => {
+    const nextFilters = updater(draft);
+    setDraft(nextFilters);
+
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+      searchDebounceRef.current = null;
+    }
+
+    if (options?.debounceSearch) {
+      searchDebounceRef.current = setTimeout(() => {
+        applyFilters(nextFilters);
+      }, searchDebounceMs);
+      return;
+    }
+
+    applyFilters(nextFilters);
+  };
+
   const resetFilters = () => {
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+      searchDebounceRef.current = null;
+    }
+
     const emptyFilters: RequestFilters = {
       keyword: "",
       status: "",
+      deleted: "active",
       from: "",
       to: "",
       creator: "",
@@ -208,27 +282,32 @@ export function RequestFilterBar({
     applyFilters(emptyFilters);
   };
 
+  const handleDraftUpdate: React.Dispatch<React.SetStateAction<RequestFilters>> = (
+    updater,
+  ) => {
+    const nextFilters = typeof updater === "function" ? updater(draft) : updater;
+    const isKeywordChanged = nextFilters.keyword !== draft.keyword;
+    updateFilters(() => nextFilters, { debounceSearch: isKeywordChanged });
+  };
+
   return (
     <>
-      <div className="surface-panel hidden grid-cols-6 gap-4 rounded-[2rem] p-5 md:grid">
-        <FilterFields
-          creators={creators}
-          draft={draft}
-          setDraft={setDraft}
-          showCreator={showCreator}
-        />
-        <div className="col-span-full flex items-center justify-end gap-3">
+      <div className="surface-panel hidden grid-cols-7 gap-4 rounded-[2rem] p-5 md:grid md:w-full">
+        <div className="col-span-full grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
+          <FilterFields
+            creators={creators}
+            draft={draft}
+            setDraft={handleDraftUpdate}
+            showCreator={showCreator}
+          />
+        </div>
+        <div className="col-span-full flex items-center justify-between gap-3">
+          <div className="text-sm text-muted-foreground">
+            {isPending ? "Đang cập nhật bộ lọc..." : "Bộ lọc cập nhật tự động"}
+          </div>
           <Button onClick={resetFilters} type="button" variant="ghost">
             <RotateCcw className="size-4" />
             Đặt lại
-          </Button>
-          <Button onClick={() => applyFilters(draft)} type="button">
-            {isPending ? (
-              <LoaderCircle className="size-4 animate-spin" />
-            ) : (
-              <Filter className="size-4" />
-            )}
-            Áp dụng
           </Button>
         </div>
       </div>
@@ -252,28 +331,32 @@ export function RequestFilterBar({
               <FilterFields
                 creators={creators}
                 draft={draft}
-                setDraft={setDraft}
+                setDraft={handleDraftUpdate}
                 showCreator={showCreator}
               />
             </div>
             <SheetFooter>
+              <div className="mr-auto flex items-center text-sm text-muted-foreground">
+                {isPending ? (
+                  <>
+                    <LoaderCircle className="mr-2 size-4 animate-spin" />
+                    Đang cập nhật...
+                  </>
+                ) : (
+                  "Đã tự động áp dụng"
+                )}
+              </div>
               <Button onClick={resetFilters} type="button" variant="ghost">
                 <RotateCcw className="size-4" />
                 Đặt lại
               </Button>
               <Button
                 onClick={() => {
-                  applyFilters(draft);
                   setIsOpen(false);
                 }}
                 type="button"
               >
-                {isPending ? (
-                  <LoaderCircle className="size-4 animate-spin" />
-                ) : (
-                  <Filter className="size-4" />
-                )}
-                Áp dụng
+                Đóng
               </Button>
             </SheetFooter>
           </SheetContent>
