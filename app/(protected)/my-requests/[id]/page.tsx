@@ -33,9 +33,14 @@ export default async function MyRequestDetailPage({
   if (!request || request.user_id !== profile.id || request.is_deleted) {
     notFound();
   }
-  const ownerQrPreviewUrl = await getProfileQrPreviewUrl(request.owner?.qr_payment_url);
+  const ownerQrPreviewUrl = request.payment_qr_signed_url
+    ? null
+    : await getProfileQrPreviewUrl(request.owner?.qr_payment_url ?? null);
   const paymentQrPreviewUrl = request.payment_qr_signed_url ?? ownerQrPreviewUrl;
-  const paymentQrName = request.payment_qr_name ?? "QR người tạo đề nghị";
+  const paymentQrName = request.payment_qr_signed_url
+    ? request.payment_qr_name ?? "QR thanh toán"
+    : "QR thanh toán mặc định";
+  const requesterName = request.owner?.full_name ?? request.user_id;
 
   const detailHref = `${APP_ROUTES.myRequests}/${request.id}`;
   const editHref = `${detailHref}/edit`;
@@ -76,8 +81,8 @@ export default async function MyRequestDetailPage({
             <CardTitle>Thông tin đề nghị</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
-            <InfoItem label="Người tạo đề nghị">
-              <span className="font-medium">{request.owner?.full_name ?? request.user_id}</span>
+            <InfoItem label="Người đề nghị">
+              <span className="font-medium">{requesterName}</span>
             </InfoItem>
             <InfoItem label="Trạng thái">
               <StatusBadge status={request.status as PaymentRequestStatus} />

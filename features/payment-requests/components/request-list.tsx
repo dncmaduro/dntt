@@ -37,7 +37,7 @@ export function RequestList({
           <thead className="bg-muted/35">
             <tr className="text-left text-sm text-muted-foreground">
               <th className="px-5 py-4 font-medium">Tiêu đề</th>
-              {showOwner ? <th className="px-5 py-4 font-medium">Người tạo</th> : null}
+              {showOwner ? <th className="px-5 py-4 font-medium">Người đề nghị</th> : null}
               <th className="px-5 py-4 font-medium">Ngày thanh toán</th>
               <th className="px-5 py-4 font-medium">Trạng thái</th>
               <th className="px-5 py-4 font-medium">Chứng từ</th>
@@ -63,7 +63,7 @@ export function RequestList({
                 </td>
                 {showOwner ? (
                   <td className="px-5 py-4 text-muted-foreground">
-                    {item.owner?.full_name ?? "Chưa cập nhật"}
+                    {item.owner?.full_name ?? item.user_id}
                   </td>
                 ) : null}
                 <td className="px-5 py-4 text-muted-foreground">
@@ -106,9 +106,9 @@ export function RequestList({
               <div className="grid gap-3 rounded-3xl bg-muted/40 p-4 text-sm">
                 {showOwner ? (
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-muted-foreground">Người tạo</span>
+                    <span className="text-muted-foreground">Người đề nghị</span>
                     <span className="font-medium">
-                      {item.owner?.full_name ?? "Chưa cập nhật"}
+                      {item.owner?.full_name ?? item.user_id}
                     </span>
                   </div>
                 ) : null}

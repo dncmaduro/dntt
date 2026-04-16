@@ -4,12 +4,12 @@ import {
   REQUEST_SORT_OPTIONS,
   type PaymentRequestStatus,
   type UserRole,
-} from "@/lib/constants";
-import { createAdminClient, createClient } from "@/lib/supabase/server";
-import { formatCurrency, toPlainString } from "@/lib/utils";
-import { canViewGlobalRequests } from "@/lib/auth/permissions";
-import { getPaymentBillPreviewUrl } from "@/features/payment-requests/payment-bill-storage";
-import { getPaymentRequestQrPreviewUrl } from "@/features/payment-requests/payment-request-qr-storage";
+} from '@/lib/constants';
+import { createClient } from '@/lib/supabase/server';
+import { formatCurrency, toPlainString } from '@/lib/utils';
+import { canViewGlobalRequests } from '@/lib/auth/permissions';
+import { getPaymentBillPreviewUrl } from '@/features/payment-requests/payment-bill-storage';
+import { getPaymentRequestQrPreviewUrl } from '@/features/payment-requests/payment-request-qr-storage';
 import type {
   DashboardData,
   PaymentRequestLogWithActor,
@@ -17,23 +17,27 @@ import type {
   PaymentRequestListItem,
   ProfileOption,
   RequestFilters,
-} from "@/features/payment-requests/types";
-import { STORAGE_BUCKET } from "@/lib/constants";
+} from '@/features/payment-requests/types';
+import { STORAGE_BUCKET } from '@/lib/constants';
 
-const REQUEST_BASE_SELECT = `
+const REQUEST_OWNER_SELECT = `
   *,
   owner:profiles!payment_requests_user_id_fkey (
     id,
     full_name,
     role,
     qr_payment_url
-  ),
+  )
+`;
+
+const REQUEST_LIST_SELECT = `
+  ${REQUEST_OWNER_SELECT},
   attachments:payment_request_attachments (
     id
   )
 `;
 
-type RequestListRow = Omit<PaymentRequestListItem, "attachment_count"> & {
+type RequestListRow = Omit<PaymentRequestListItem, 'attachment_count'> & {
   attachments: { id: string }[] | null;
 };
 
@@ -45,7 +49,7 @@ type EmployeeFilterRow = {
 
 const normalizeRole = (value?: string | null): UserRole | null => {
   const normalizedValue =
-    typeof value === "string" ? value.trim().toLowerCase() : "";
+    typeof value === 'string' ? value.trim().toLowerCase() : '';
 
   return ROLES.includes(normalizedValue as UserRole)
     ? (normalizedValue as UserRole)
@@ -65,14 +69,14 @@ export const parseRequestFilters = async (
       status as (typeof ACTIVE_PAYMENT_REQUEST_STATUSES)[number],
     )
       ? status
-      : "",
-    deleted: toPlainString(params.deleted) === "deleted" ? "deleted" : "active",
+      : '',
+    deleted: toPlainString(params.deleted) === 'deleted' ? 'deleted' : 'active',
     from: toPlainString(params.from),
     to: toPlainString(params.to),
     creator: toPlainString(params.creator),
-    sort: REQUEST_SORT_OPTIONS.includes(sort as "newest" | "oldest")
-      ? (sort as "newest" | "oldest")
-      : "newest",
+    sort: REQUEST_SORT_OPTIONS.includes(sort as 'newest' | 'oldest')
+      ? (sort as 'newest' | 'oldest')
+      : 'newest',
   };
 };
 
@@ -82,50 +86,48 @@ export const getRequestList = async ({
   userId,
 }: {
   filters: RequestFilters;
-  scope: "mine" | "all";
+  scope: 'mine' | 'all';
   userId?: string;
 }) => {
-  const supabase = createAdminClient() ?? (await createClient());
+  const supabase = await createClient();
 
-  let query = supabase
-    .from("payment_requests")
-    .select(REQUEST_BASE_SELECT);
+  let query = supabase.from('payment_requests').select(REQUEST_LIST_SELECT);
 
-  if (filters.deleted === "deleted") {
-    query = query.eq("is_deleted", true);
+  if (filters.deleted === 'deleted') {
+    query = query.eq('is_deleted', true);
   } else {
-    query = query.eq("is_deleted", false);
+    query = query.eq('is_deleted', false);
   }
 
-  if (scope === "mine" && userId) {
-    query = query.eq("user_id", userId);
+  if (scope === 'mine' && userId) {
+    query = query.eq('user_id', userId);
   }
 
-  if (scope === "all" && filters.creator) {
-    query = query.eq("user_id", filters.creator);
+  if (scope === 'all' && filters.creator) {
+    query = query.eq('user_id', filters.creator);
   }
 
   if (filters.keyword) {
-    const sanitized = filters.keyword.replaceAll(",", " ");
+    const sanitized = filters.keyword.replaceAll(',', ' ');
     query = query.or(
       `title.ilike.%${sanitized}%,description.ilike.%${sanitized}%`,
     );
   }
 
   if (filters.status) {
-    query = query.eq("status", filters.status);
+    query = query.eq('status', filters.status);
   }
 
   if (filters.from) {
-    query = query.gte("payment_date", filters.from);
+    query = query.gte('payment_date', filters.from);
   }
 
   if (filters.to) {
-    query = query.lte("payment_date", filters.to);
+    query = query.lte('payment_date', filters.to);
   }
 
-  query = query.order("created_at", {
-    ascending: filters.sort === "oldest",
+  query = query.order('created_at', {
+    ascending: filters.sort === 'oldest',
   });
 
   const { data, error } = await query;
@@ -142,23 +144,23 @@ export const getRequestList = async ({
 };
 
 export const getEmployeesForFilter = async (): Promise<ProfileOption[]> => {
-  const supabase = createAdminClient() ?? (await createClient());
+  const supabase = await createClient();
   const { data, error } = await supabase
-    .from("profiles")
-    .select("id, full_name, role");
+    .from('profiles')
+    .select('id, full_name, role');
 
   if (error) {
     throw new Error(error.message);
   }
 
   return ((data ?? []) as EmployeeFilterRow[])
-    .filter((profile) => normalizeRole(profile.role) === "employee")
+    .filter((profile) => normalizeRole(profile.role) === 'employee')
     .map((profile) => ({
       id: profile.id,
       full_name: profile.full_name,
     }))
     .sort((left, right) =>
-      (left.full_name ?? "").localeCompare(right.full_name ?? "", "vi"),
+      (left.full_name ?? '').localeCompare(right.full_name ?? '', 'vi'),
     );
 };
 
@@ -167,40 +169,32 @@ export const getPaymentRequestDetail = async (
 ): Promise<PaymentRequestDetail | null> => {
   const supabase = await createClient();
   const { data: request, error } = await supabase
-    .from("payment_requests")
-    .select(
-      `
-      *,
-      owner:profiles!payment_requests_user_id_fkey (
-        id,
-        full_name,
-        role,
-        qr_payment_url
-      )
-    `,
-    )
-    .eq("id", requestId)
-    .single();
+    .from('payment_requests')
+    .select(REQUEST_OWNER_SELECT)
+    .eq('id', requestId)
+    .maybeSingle();
 
   if (error) {
-    if (error.code === "PGRST116") {
-      return null;
-    }
-
     throw new Error(error.message);
   }
 
-  const [{ data: attachments, error: attachmentError }, { data: logs, error: logError }] =
-    await Promise.all([
-      supabase
-        .from("payment_request_attachments")
-        .select("*")
-        .eq("payment_request_id", requestId)
-        .order("created_at", { ascending: true }),
-      supabase
-        .from("payment_request_logs")
-        .select(
-          `
+  if (!request) {
+    return null;
+  }
+
+  const [
+    { data: attachments, error: attachmentError },
+    { data: logs, error: logError },
+  ] = await Promise.all([
+    supabase
+      .from('payment_request_attachments')
+      .select('*')
+      .eq('payment_request_id', requestId)
+      .order('created_at', { ascending: true }),
+    supabase
+      .from('payment_request_logs')
+      .select(
+        `
           *,
           actor:profiles!payment_request_logs_actor_id_fkey (
             id,
@@ -208,10 +202,10 @@ export const getPaymentRequestDetail = async (
             role
           )
         `,
-        )
-        .eq("payment_request_id", requestId)
-        .order("created_at", { ascending: false }),
-    ]);
+      )
+      .eq('payment_request_id', requestId)
+      .order('created_at', { ascending: false }),
+  ]);
 
   if (attachmentError) {
     throw new Error(attachmentError.message);
@@ -240,7 +234,6 @@ export const getPaymentRequestDetail = async (
 
   return {
     ...request,
-    owner: request.owner,
     attachments: attachmentsWithSignedUrls,
     logs: (logs ?? []) as PaymentRequestLogWithActor[],
     payment_bill_signed_url: paymentBillSignedUrl,
@@ -259,20 +252,20 @@ const countRequests = async ({
 }) => {
   const supabase = await createClient();
   let query = supabase
-    .from("payment_requests")
-    .select("*", { count: "exact", head: true })
-    .eq("is_deleted", false);
+    .from('payment_requests')
+    .select('*', { count: 'exact', head: true })
+    .eq('is_deleted', false);
 
   if (!canViewGlobalRequests(role)) {
-    query = query.eq("user_id", userId);
+    query = query.eq('user_id', userId);
   }
 
   if (statuses?.length === 1) {
-    query = query.eq("status", statuses[0]);
+    query = query.eq('status', statuses[0]);
   }
 
   if (statuses && statuses.length > 1) {
-    query = query.in("status", statuses);
+    query = query.in('status', statuses);
   }
 
   const { count, error } = await query;
@@ -295,20 +288,20 @@ const sumRequestAmount = async ({
 }) => {
   const supabase = await createClient();
   let query = supabase
-    .from("payment_requests")
-    .select("amount")
-    .eq("is_deleted", false);
+    .from('payment_requests')
+    .select('amount')
+    .eq('is_deleted', false);
 
   if (!canViewGlobalRequests(role)) {
-    query = query.eq("user_id", userId);
+    query = query.eq('user_id', userId);
   }
 
   if (statuses?.length === 1) {
-    query = query.eq("status", statuses[0]);
+    query = query.eq('status', statuses[0]);
   }
 
   if (statuses && statuses.length > 1) {
-    query = query.in("status", statuses);
+    query = query.in('status', statuses);
   }
 
   const { data, error } = await query;
@@ -331,103 +324,102 @@ export const getDashboardData = async ({
   userId: string;
 }): Promise<DashboardData> => {
   const metrics = await (async () => {
-    if (role === "employee") {
+    if (role === 'employee') {
       const [total, unpaidCount, unpaidAmount, paidCount] = await Promise.all([
         countRequests({ role, userId }),
         countRequests({
           role,
           userId,
           statuses: [
-            "pending_accounting",
-            "accounting_rejected",
-            "pending_director",
-            "director_rejected",
-            "director_approved",
+            'pending_accounting',
+            'accounting_rejected',
+            'pending_director',
+            'director_rejected',
+            'director_approved',
           ],
         }),
         sumRequestAmount({
           role,
           userId,
           statuses: [
-            "pending_accounting",
-            "accounting_rejected",
-            "pending_director",
-            "director_rejected",
-            "director_approved",
+            'pending_accounting',
+            'accounting_rejected',
+            'pending_director',
+            'director_rejected',
+            'director_approved',
           ],
         }),
         countRequests({
           role,
           userId,
-          statuses: ["paid"],
+          statuses: ['paid'],
         }),
       ]);
 
       return [
         {
-          label: "Tổng đề nghị",
+          label: 'Tổng đề nghị',
           value: total,
-          description: "Toàn bộ DNTT bạn đã tạo",
+          description: 'Toàn bộ DNTT bạn đã tạo',
         },
         {
-          label: "Chưa được thanh toán",
+          label: 'Chưa được thanh toán',
           value: unpaidCount,
-          description: "Đang chờ hoặc chưa hoàn tất chi trả",
+          description: 'Đang chờ hoặc chưa hoàn tất chi trả',
         },
         {
-          label: "Chưa thanh toán",
+          label: 'Chưa thanh toán',
           value: formatCurrency(unpaidAmount),
-          description: "Tổng số tiền chưa được thanh toán",
+          description: 'Tổng số tiền chưa được thanh toán',
         },
         {
-          label: "Đã được thanh toán",
+          label: 'Đã được thanh toán',
           value: paidCount,
-          description: "Đã hoàn tất chi trả",
+          description: 'Đã hoàn tất chi trả',
         },
       ];
     }
 
-    if (role === "accountant") {
-      const [pendingAccounting, approved, paid, total] =
-        await Promise.all([
-          countRequests({
-            role,
-            userId,
-            statuses: ["pending_accounting"],
-          }),
-          countRequests({
-            role,
-            userId,
-            statuses: ["pending_director", "director_approved"],
-          }),
-          countRequests({
-            role,
-            userId,
-            statuses: ["paid"],
-          }),
-          countRequests({ role, userId }),
-        ]);
+    if (role === 'accountant') {
+      const [pendingAccounting, approved, paid, total] = await Promise.all([
+        countRequests({
+          role,
+          userId,
+          statuses: ['pending_accounting'],
+        }),
+        countRequests({
+          role,
+          userId,
+          statuses: ['pending_director', 'director_approved'],
+        }),
+        countRequests({
+          role,
+          userId,
+          statuses: ['paid'],
+        }),
+        countRequests({ role, userId }),
+      ]);
 
       return [
         {
-          label: "Chờ kế toán",
+          label: 'Chờ kế toán',
           value: pendingAccounting,
-          description: "Cần xác nhận hồ sơ ngay",
+          description: 'Cần xác nhận hồ sơ ngay',
         },
         {
-          label: "Đã duyệt",
+          label: 'Đã duyệt',
           value: approved,
-          description: "Đã sẵn sàng để thanh toán",
+          description: 'Đã sẵn sàng để thanh toán',
         },
         {
-          label: "Đã thanh toán",
+          label: 'Đã thanh toán',
           value: paid,
-          description: "Đã hoàn tất chi trả",
+          description: 'Đã hoàn tất chi trả',
         },
         {
-          label: "Toàn hệ thống",
+          label: 'Toàn hệ thống',
           value: total,
-          description: "Tổng số DNTT đang quản lý",
+          description: 'Tổng số DNTT đang quản lý',
         },
       ];
     }
@@ -436,56 +428,56 @@ export const getDashboardData = async ({
       countRequests({
         role,
         userId,
-        statuses: ["pending_director", "director_approved"],
+        statuses: ['pending_director', 'director_approved'],
       }),
       countRequests({
         role,
         userId,
-        statuses: ["paid"],
+        statuses: ['paid'],
       }),
       countRequests({
         role,
         userId,
-        statuses: ["accounting_rejected", "director_rejected"],
+        statuses: ['accounting_rejected', 'director_rejected'],
       }),
       countRequests({ role, userId }),
     ]);
 
     return [
       {
-        label: "Chờ thanh toán",
+        label: 'Chờ thanh toán',
         value: readyToPay,
-        description: "Các hồ sơ đã được duyệt và chờ chi trả",
+        description: 'Các hồ sơ đã được duyệt và chờ chi trả',
       },
       {
-        label: "Đã thanh toán",
+        label: 'Đã thanh toán',
         value: paid,
-        description: "Các khoản đã hoàn tất chi trả",
+        description: 'Các khoản đã hoàn tất chi trả',
       },
       {
-        label: "Đã từ chối",
+        label: 'Đã từ chối',
         value: rejected,
-        description: "Hồ sơ bị trả về để bổ sung",
+        description: 'Hồ sơ bị trả về để bổ sung',
       },
       {
-        label: "Toàn hệ thống",
+        label: 'Toàn hệ thống',
         value: total,
-        description: "Tổng số DNTT đã phát sinh",
+        description: 'Tổng số DNTT đã phát sinh',
       },
     ];
   })();
 
   const recentRequests = await getRequestList({
     filters: {
-      keyword: "",
-      status: "",
-      deleted: "active",
-      from: "",
-      to: "",
-      creator: "",
-      sort: "newest",
+      keyword: '',
+      status: '',
+      deleted: 'active',
+      from: '',
+      to: '',
+      creator: '',
+      sort: 'newest',
     },
-    scope: canViewGlobalRequests(role) ? "all" : "mine",
+    scope: canViewGlobalRequests(role) ? 'all' : 'mine',
     userId,
   });
 

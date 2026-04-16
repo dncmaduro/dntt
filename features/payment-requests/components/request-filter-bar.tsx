@@ -135,7 +135,7 @@ function FilterFields({
 
       {showCreator ? (
         <div className="space-y-2">
-          <Label>Người tạo</Label>
+          <Label>Người đề nghị</Label>
           <Select
             onValueChange={(value) =>
               setDraft((current) => ({

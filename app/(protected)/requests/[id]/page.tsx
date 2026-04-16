@@ -15,7 +15,9 @@ import {
 } from "@/lib/auth/permissions";
 import { requireRole } from "@/lib/auth/session";
 import { getPaymentRequestDetail } from "@/features/payment-requests/queries";
-import { getProfileQrPreviewUrl } from "@/features/profile/queries";
+import {
+  getProfileQrPreviewUrl,
+} from "@/features/profile/queries";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import type { PaymentRequestStatus } from "@/lib/constants";
@@ -35,7 +37,14 @@ export default async function RequestReviewDetailPage({
     notFound();
   }
 
-  const ownerQrPreviewUrl = await getProfileQrPreviewUrl(request.owner?.qr_payment_url);
+  const ownerQrPreviewUrl = request.payment_qr_signed_url
+    ? null
+    : await getProfileQrPreviewUrl(request.owner?.qr_payment_url ?? null);
+  const paymentQrPreviewUrl = request.payment_qr_signed_url ?? ownerQrPreviewUrl;
+  const paymentQrName = request.payment_qr_signed_url
+    ? request.payment_qr_name ?? "QR thanh toán"
+    : "QR thanh toán mặc định";
+  const requesterName = request.owner?.full_name ?? request.user_id;
 
   const allowAccountingReview = canReviewAccounting(
     profile.role,
@@ -66,8 +75,8 @@ export default async function RequestReviewDetailPage({
               <CardTitle>Thông tin đề nghị</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
-              <InfoItem label="Người tạo đề nghị">
-                <p className="font-medium">{request.owner?.full_name ?? request.user_id}</p>
+              <InfoItem label="Người đề nghị">
+                <p className="font-medium">{requesterName}</p>
               </InfoItem>
               <InfoItem label="Trạng thái">
                 <StatusBadge status={request.status as PaymentRequestStatus} />
@@ -84,20 +93,20 @@ export default async function RequestReviewDetailPage({
                 </p>
               </InfoItem>
               <InfoItem className="md:col-span-2" label="QR thanh toán">
-                {request.payment_qr_signed_url || ownerQrPreviewUrl ? (
+                {paymentQrPreviewUrl ? (
                   <div className="space-y-3">
                     <div className="w-full max-w-[23rem] overflow-hidden rounded-[1.25rem] border border-border/70 bg-muted/30">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        alt={request.payment_qr_name ?? "QR người tạo đề nghị"}
+                        alt={paymentQrName}
                         className="h-auto w-full object-contain"
-                        src={request.payment_qr_signed_url ?? ownerQrPreviewUrl ?? ""}
+                        src={paymentQrPreviewUrl}
                       />
                     </div>
                     <div>
                       <a
                         className="inline-flex items-center gap-2 text-sm font-medium text-primary"
-                        href={request.payment_qr_signed_url ?? ownerQrPreviewUrl ?? "#"}
+                        href={paymentQrPreviewUrl}
                         rel="noreferrer"
                         target="_blank"
                       >
