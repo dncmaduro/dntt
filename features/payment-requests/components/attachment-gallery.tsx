@@ -36,11 +36,7 @@ export function AttachmentGallery({
               </div>
             )}
 
-            <div className="space-y-2">
-              <p className="line-clamp-2 text-sm font-medium">{attachment.file_name}</p>
-              <p className="text-xs text-muted-foreground">
-                {attachment.file_type || "Tệp đính kèm"}
-              </p>
+            <div>
               {attachment.signed_url ? (
                 <Link
                   className="inline-flex items-center gap-2 text-sm font-medium text-primary"

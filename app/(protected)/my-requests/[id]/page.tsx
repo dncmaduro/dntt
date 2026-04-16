@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PencilLine } from "lucide-react";
+import { ExternalLink, PencilLine } from "lucide-react";
 
 import { PageIntro } from "@/components/shared/page-intro";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { AttachmentGallery } from "@/features/payment-requests/components/attach
 import { DeleteRequestButton } from "@/features/payment-requests/components/delete-request-button";
 import { RequestTimeline } from "@/features/payment-requests/components/request-timeline";
 import { StatusBadge } from "@/features/payment-requests/components/status-badge";
+import { getProfileQrPreviewUrl } from "@/features/profile/queries";
 import {
   canManageOwnRequest,
   canSoftDeleteOwnRequest,
@@ -32,6 +33,9 @@ export default async function MyRequestDetailPage({
   if (!request || request.user_id !== profile.id || request.is_deleted) {
     notFound();
   }
+  const ownerQrPreviewUrl = await getProfileQrPreviewUrl(request.owner?.qr_payment_url);
+  const paymentQrPreviewUrl = request.payment_qr_signed_url ?? ownerQrPreviewUrl;
+  const paymentQrName = request.payment_qr_name ?? "QR người tạo đề nghị";
 
   const detailHref = `${APP_ROUTES.myRequests}/${request.id}`;
   const editHref = `${detailHref}/edit`;
@@ -72,6 +76,9 @@ export default async function MyRequestDetailPage({
             <CardTitle>Thông tin đề nghị</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
+            <InfoItem label="Người tạo đề nghị">
+              <span className="font-medium">{request.owner?.full_name ?? request.user_id}</span>
+            </InfoItem>
             <InfoItem label="Trạng thái">
               <StatusBadge status={request.status as PaymentRequestStatus} />
             </InfoItem>
@@ -86,10 +93,32 @@ export default async function MyRequestDetailPage({
                 {request.description || "Không có mô tả"}
               </p>
             </InfoItem>
-            <InfoItem label="Ghi chú">
-              <p className="leading-6 text-muted-foreground">
-                {request.note || "Không có ghi chú"}
-              </p>
+            <InfoItem className="md:col-span-2" label="QR thanh toán">
+              {paymentQrPreviewUrl ? (
+                <div className="space-y-3">
+                  <div className="w-full max-w-[23rem] overflow-hidden rounded-[1.25rem] border border-border/70 bg-muted/30">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      alt={paymentQrName}
+                      className="h-auto w-full object-contain"
+                      src={paymentQrPreviewUrl}
+                    />
+                  </div>
+                  <div>
+                    <a
+                      className="inline-flex items-center gap-2 text-sm font-medium text-primary"
+                      href={paymentQrPreviewUrl}
+                      rel="noreferrer"
+                      target="_blank"
+                    >
+                      Xem tệp
+                      <ExternalLink className="size-4" />
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <span className="text-muted-foreground">Chưa cập nhật</span>
+              )}
             </InfoItem>
             {request.accounting_note ? (
               <InfoItem label="Ghi chú kế toán">
@@ -122,12 +151,14 @@ export default async function MyRequestDetailPage({
 function InfoItem({
   label,
   children,
+  className,
 }: {
   label: string;
   children: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <div className="min-w-0 rounded-3xl bg-muted/35 p-4 md:col-span-1">
+    <div className={`min-w-0 rounded-3xl bg-muted/35 p-4 md:col-span-1 ${className ?? ""}`}>
       <p className="text-sm text-muted-foreground">{label}</p>
       <div className="mt-2 min-w-0 text-sm [overflow-wrap:anywhere]">{children}</div>
     </div>

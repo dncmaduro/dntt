@@ -3,6 +3,7 @@ import { z } from "zod";
 export const MAX_ATTACHMENTS = 10;
 export const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 export const MAX_PAYMENT_BILL_SIZE_BYTES = 5 * 1024 * 1024;
+export const MAX_PAYMENT_REQUEST_QR_SIZE_BYTES = 5 * 1024 * 1024;
 export const PAYMENT_REFERENCE_PATTERN = /^PAY-\d{8}-[A-Z0-9]{8}$/;
 
 export const paymentRequestFormSchema = z.object({
@@ -23,12 +24,6 @@ export const paymentRequestFormSchema = z.object({
     .optional()
     .or(z.literal("")),
   payment_date: z.string().min(1, "Vui lòng chọn ngày thanh toán"),
-  note: z
-    .string()
-    .trim()
-    .max(2000, "Ghi chú không được vượt quá 2000 ký tự")
-    .optional()
-    .or(z.literal("")),
 });
 
 export const reviewSchema = z
@@ -60,6 +55,17 @@ export const paymentBillImageSchema = z
   .refine(
     (file) => file.size <= MAX_PAYMENT_BILL_SIZE_BYTES,
     "Ảnh bill không được vượt quá 5MB",
+  );
+
+export const paymentRequestQrImageSchema = z
+  .instanceof(File, {
+    message: "Vui lòng chọn một ảnh QR hợp lệ",
+  })
+  .refine((file) => file.size > 0, "Ảnh QR không hợp lệ")
+  .refine((file) => file.type.startsWith("image/"), "Chỉ chấp nhận tệp hình ảnh")
+  .refine(
+    (file) => file.size <= MAX_PAYMENT_REQUEST_QR_SIZE_BYTES,
+    "Ảnh QR không được vượt quá 5MB",
   );
 
 export const confirmPaymentSchema = z.object({

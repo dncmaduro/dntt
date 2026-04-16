@@ -118,12 +118,7 @@ export function PaymentConfirmationCard({
 
           <div className="rounded-[1.5rem] border border-border/70 bg-white/70 p-4">
             <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="font-medium">Bill thanh toán</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {paymentBillName || "Bill đã lưu"}
-                </p>
-              </div>
+              <p className="font-medium">Bill thanh toán</p>
               {paymentBillUrl ? (
                 <Button asChild size="sm" variant="outline">
                   <a href={paymentBillUrl} rel="noreferrer" target="_blank">

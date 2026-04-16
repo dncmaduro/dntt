@@ -14,8 +14,8 @@ import type {
 type PaymentQrRequestRow = {
   amount: number | null;
   created_at: string;
+  description: string | null;
   id: string;
-  note: string | null;
   payment_date: string;
   status: string;
   title: string;
@@ -160,7 +160,7 @@ export const getSelectedEmployeePaymentQr = async (
   ] = await Promise.all([
     supabase
       .from("payment_requests")
-      .select("id, title, status, payment_date, created_at, amount, note")
+      .select("id, title, status, payment_date, created_at, amount, description")
       .eq("user_id", employeeId)
       .eq("is_deleted", false)
       .in("status", [...PAYMENT_QR_VISIBLE_STATUSES])

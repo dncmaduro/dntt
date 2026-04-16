@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ExternalLink } from "lucide-react";
 
 import { PageIntro } from "@/components/shared/page-intro";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -65,8 +66,8 @@ export default async function RequestReviewDetailPage({
               <CardTitle>Thông tin đề nghị</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
-              <InfoItem label="Người tạo">
-                <p className="font-medium">{request.owner?.full_name ?? "--"}</p>
+              <InfoItem label="Người tạo đề nghị">
+                <p className="font-medium">{request.owner?.full_name ?? request.user_id}</p>
               </InfoItem>
               <InfoItem label="Trạng thái">
                 <StatusBadge status={request.status as PaymentRequestStatus} />
@@ -77,29 +78,37 @@ export default async function RequestReviewDetailPage({
               <InfoItem label="Số tiền">
                 <span className="font-medium">{formatCurrency(request.amount)}</span>
               </InfoItem>
-              <InfoItem label="QR thanh toán">
-                {ownerQrPreviewUrl ? (
-                  <a
-                    className="font-medium text-primary"
-                    href={ownerQrPreviewUrl}
-                    rel="noreferrer"
-                    target="_blank"
-                  >
-                    Mở ảnh QR
-                  </a>
-                ) : (
-                  <span className="text-muted-foreground">Chưa cập nhật</span>
-                )}
-              </InfoItem>
               <InfoItem label="Mô tả">
                 <p className="leading-6 text-muted-foreground">
                   {request.description || "Không có mô tả"}
                 </p>
               </InfoItem>
-              <InfoItem label="Ghi chú">
-                <p className="leading-6 text-muted-foreground">
-                  {request.note || "Không có ghi chú"}
-                </p>
+              <InfoItem className="md:col-span-2" label="QR thanh toán">
+                {request.payment_qr_signed_url || ownerQrPreviewUrl ? (
+                  <div className="space-y-3">
+                    <div className="w-full max-w-[23rem] overflow-hidden rounded-[1.25rem] border border-border/70 bg-muted/30">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        alt={request.payment_qr_name ?? "QR người tạo đề nghị"}
+                        className="h-auto w-full object-contain"
+                        src={request.payment_qr_signed_url ?? ownerQrPreviewUrl ?? ""}
+                      />
+                    </div>
+                    <div>
+                      <a
+                        className="inline-flex items-center gap-2 text-sm font-medium text-primary"
+                        href={request.payment_qr_signed_url ?? ownerQrPreviewUrl ?? "#"}
+                        rel="noreferrer"
+                        target="_blank"
+                      >
+                        Xem tệp
+                        <ExternalLink className="size-4" />
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <span className="text-muted-foreground">Chưa cập nhật</span>
+                )}
               </InfoItem>
               {request.accounting_note ? (
                 <InfoItem label="Ghi chú kế toán">
@@ -151,12 +160,14 @@ export default async function RequestReviewDetailPage({
 function InfoItem({
   label,
   children,
+  className,
 }: {
   label: string;
   children: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <div className="min-w-0 rounded-3xl bg-muted/35 p-4 md:col-span-1">
+    <div className={`min-w-0 rounded-3xl bg-muted/35 p-4 md:col-span-1 ${className ?? ""}`}>
       <p className="text-sm text-muted-foreground">{label}</p>
       <div className="mt-2 min-w-0 text-sm [overflow-wrap:anywhere]">{children}</div>
     </div>

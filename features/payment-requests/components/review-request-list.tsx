@@ -168,8 +168,11 @@ export function ReviewRequestList({
                   >
                     <p className="font-semibold text-foreground">{item.title}</p>
                     <p className="line-clamp-1 text-muted-foreground">
-                      {item.description || item.note || "Không có mô tả"}
+                      {item.description || "Không có mô tả"}
                     </p>
+                    {item.payment_qr_name ? (
+                      <p className="text-xs text-muted-foreground">Có QR thanh toán riêng</p>
+                    ) : null}
                   </Link>
                 </td>
                 {showOwner ? (
@@ -224,8 +227,11 @@ export function ReviewRequestList({
                   <p className="line-clamp-2 font-semibold">{item.title}</p>
                 </Link>
                 <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                  {item.description || item.note || "Không có mô tả"}
+                  {item.description || "Không có mô tả"}
                 </p>
+                {item.payment_qr_name ? (
+                  <p className="mt-1 text-xs text-muted-foreground">Có QR thanh toán riêng</p>
+                ) : null}
               </div>
 
               <div className="grid gap-3 rounded-3xl bg-muted/40 p-4 text-sm">

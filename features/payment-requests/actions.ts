@@ -25,9 +25,11 @@ import {
   confirmPaymentSchema,
   paymentRequestFormSchema,
   paymentBillImageSchema,
+  paymentRequestQrImageSchema,
   reviewSchema,
 } from '@/features/payment-requests/schemas';
 import { uploadPaymentBillFile } from '@/features/payment-requests/payment-bill-storage';
+import { uploadPaymentRequestQrFile } from '@/features/payment-requests/payment-request-qr-storage';
 import { createActionClient, createAdminClient } from '@/lib/supabase/server';
 import { buildStoragePath } from '@/lib/utils';
 import type { Database } from '@/types/database';
@@ -57,10 +59,17 @@ const parseFiles = (formData: FormData) =>
     .getAll('attachments')
     .filter((item): item is File => item instanceof File && item.size > 0);
 
+const parseOptionalSingleFile = (entry: FormDataEntryValue | null) =>
+  entry instanceof File && entry.size > 0 ? entry : null;
+
 const parseRemoveAttachmentIds = (formData: FormData) =>
   formData
     .getAll('removeAttachmentIds')
     .filter((item): item is string => typeof item === 'string');
+
+const parseBoolean = (value: FormDataEntryValue | null) =>
+  typeof value === 'string' &&
+  ['true', '1', 'on', 'yes'].includes(value.trim().toLowerCase());
 
 const parseAmountValue = (value: FormDataEntryValue | null) => {
   if (typeof value !== 'string' || !value.trim()) {
@@ -293,6 +302,7 @@ export const createPaymentRequestAction = async (
     const profile = await requireRole(['employee', 'accountant']);
     const supabase = await createActionClient();
     const files = parseFiles(formData);
+    const paymentQrFile = parseOptionalSingleFile(formData.get('payment_qr'));
 
     if (!files.length) {
       return {
@@ -303,12 +313,30 @@ export const createPaymentRequestAction = async (
 
     validateFiles(files);
 
+    if (paymentQrFile) {
+      const parsedPaymentQr =
+        paymentRequestQrImageSchema.safeParse(paymentQrFile);
+
+      if (!parsedPaymentQr.success) {
+        const message =
+          parsedPaymentQr.error.issues[0]?.message ??
+          'Ảnh QR thanh toán không hợp lệ';
+
+        return {
+          success: false,
+          error: message,
+          fieldErrors: {
+            payment_qr: [message],
+          },
+        };
+      }
+    }
+
     const parsed = paymentRequestFormSchema.safeParse({
       title: formData.get('title'),
       amount: parseAmountValue(formData.get('amount')),
       description: formData.get('description'),
       payment_date: formData.get('payment_date'),
-      note: formData.get('note'),
     });
 
     if (!parsed.success) {
@@ -327,7 +355,6 @@ export const createPaymentRequestAction = async (
         amount: parsed.data.amount ?? null,
         description: parsed.data.description || null,
         payment_date: parsed.data.payment_date,
-        note: parsed.data.note || null,
         status: DEFAULT_REQUEST_STATUS,
         is_deleted: false,
       })
@@ -344,6 +371,29 @@ export const createPaymentRequestAction = async (
         userId: profile.id,
         files,
       });
+
+      if (paymentQrFile) {
+        const uploadedPaymentQr = await uploadPaymentRequestQrFile({
+          file: paymentQrFile,
+          requestId: createdRequest.id,
+        });
+        const { error: updatePaymentQrError } = await supabase
+          .from('payment_requests')
+          .update({
+            payment_qr_path: uploadedPaymentQr.path,
+            payment_qr_name: uploadedPaymentQr.fileName,
+            payment_qr_type: uploadedPaymentQr.fileType,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', createdRequest.id);
+
+        if (updatePaymentQrError) {
+          await supabase.storage
+            .from(STORAGE_BUCKET)
+            .remove([uploadedPaymentQr.path]);
+          throw new Error(updatePaymentQrError.message);
+        }
+      }
     } catch (attachmentError) {
       await supabase
         .from('payment_requests')
@@ -420,7 +470,6 @@ export const updatePaymentRequestAction = async (
       amount: parseAmountValue(formData.get('amount')),
       description: formData.get('description'),
       payment_date: formData.get('payment_date'),
-      note: formData.get('note'),
     });
 
     if (!parsed.success) {
@@ -433,7 +482,28 @@ export const updatePaymentRequestAction = async (
 
     const removeAttachmentIds = parseRemoveAttachmentIds(formData);
     const files = parseFiles(formData);
+    const removePaymentQr = parseBoolean(formData.get('removePaymentQr'));
+    const paymentQrFile = parseOptionalSingleFile(formData.get('payment_qr'));
     const supabase = await createActionClient();
+
+    if (paymentQrFile) {
+      const parsedPaymentQr =
+        paymentRequestQrImageSchema.safeParse(paymentQrFile);
+
+      if (!parsedPaymentQr.success) {
+        const message =
+          parsedPaymentQr.error.issues[0]?.message ??
+          'Ảnh QR thanh toán không hợp lệ';
+
+        return {
+          success: false,
+          error: message,
+          fieldErrors: {
+            payment_qr: [message],
+          },
+        };
+      }
+    }
 
     const { data: existingAttachments, error: attachmentError } = await supabase
       .from('payment_request_attachments')
@@ -472,7 +542,6 @@ export const updatePaymentRequestAction = async (
         amount: parsed.data.amount ?? null,
         description: parsed.data.description || null,
         payment_date: parsed.data.payment_date,
-        note: parsed.data.note || null,
         status: nextStatus,
         updated_at: new Date().toISOString(),
         ...(nextStatus === 'pending_accounting' ? clearReviewFields : {}),
@@ -513,6 +582,67 @@ export const updatePaymentRequestAction = async (
       });
     }
 
+    const currentPaymentQrPath = request.payment_qr_path;
+
+    if (paymentQrFile) {
+      const uploadedPaymentQr = await uploadPaymentRequestQrFile({
+        file: paymentQrFile,
+        requestId,
+      });
+
+      const { error: updatePaymentQrError } = await supabase
+        .from('payment_requests')
+        .update({
+          payment_qr_path: uploadedPaymentQr.path,
+          payment_qr_name: uploadedPaymentQr.fileName,
+          payment_qr_type: uploadedPaymentQr.fileType,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', requestId);
+
+      if (updatePaymentQrError) {
+        await supabase.storage
+          .from(STORAGE_BUCKET)
+          .remove([uploadedPaymentQr.path]);
+        throw new Error(updatePaymentQrError.message);
+      }
+
+      if (currentPaymentQrPath) {
+        const { error: removeOldQrError } = await supabase.storage
+          .from(STORAGE_BUCKET)
+          .remove([currentPaymentQrPath]);
+
+        if (removeOldQrError) {
+          console.error(
+            'Failed to remove old payment QR',
+            removeOldQrError.message,
+          );
+        }
+      }
+    } else if (removePaymentQr && currentPaymentQrPath) {
+      const { error: clearPaymentQrError } = await supabase
+        .from('payment_requests')
+        .update({
+          payment_qr_path: null,
+          payment_qr_name: null,
+          payment_qr_type: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', requestId);
+
+      if (clearPaymentQrError) {
+        throw new Error(clearPaymentQrError.message);
+      }
+
+      const { error: removeQrError } = await supabase.storage
+        .from(STORAGE_BUCKET)
+        .remove([currentPaymentQrPath]);
+
+      if (removeQrError) {
+        console.error('Failed to remove payment QR', removeQrError.message);
+      }
+    }
+
     await insertLog({
       client: supabase,
       requestId,
@@ -521,6 +651,7 @@ export const updatePaymentRequestAction = async (
       meta: {
         status: nextStatus,
         removed_attachment_ids: removeAttachmentIds,
+        removed_payment_qr: removePaymentQr && !paymentQrFile,
       },
     });
 

@@ -9,6 +9,7 @@ import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { formatCurrency, toPlainString } from "@/lib/utils";
 import { canViewGlobalRequests } from "@/lib/auth/permissions";
 import { getPaymentBillPreviewUrl } from "@/features/payment-requests/payment-bill-storage";
+import { getPaymentRequestQrPreviewUrl } from "@/features/payment-requests/payment-request-qr-storage";
 import type {
   DashboardData,
   PaymentRequestLogWithActor,
@@ -107,7 +108,7 @@ export const getRequestList = async ({
   if (filters.keyword) {
     const sanitized = filters.keyword.replaceAll(",", " ");
     query = query.or(
-      `title.ilike.%${sanitized}%,description.ilike.%${sanitized}%,note.ilike.%${sanitized}%`,
+      `title.ilike.%${sanitized}%,description.ilike.%${sanitized}%`,
     );
   }
 
@@ -232,7 +233,10 @@ export const getPaymentRequestDetail = async (
       };
     }),
   );
-  const paymentBillSignedUrl = await getPaymentBillPreviewUrl(request.payment_bill_path);
+  const [paymentBillSignedUrl, paymentQrSignedUrl] = await Promise.all([
+    getPaymentBillPreviewUrl(request.payment_bill_path),
+    getPaymentRequestQrPreviewUrl(request.payment_qr_path),
+  ]);
 
   return {
     ...request,
@@ -240,6 +244,7 @@ export const getPaymentRequestDetail = async (
     attachments: attachmentsWithSignedUrls,
     logs: (logs ?? []) as PaymentRequestLogWithActor[],
     payment_bill_signed_url: paymentBillSignedUrl,
+    payment_qr_signed_url: paymentQrSignedUrl,
   };
 };
 

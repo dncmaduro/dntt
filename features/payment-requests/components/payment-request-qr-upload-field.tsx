@@ -5,49 +5,60 @@ import Image from "next/image";
 import { ImagePlus, Trash2, UploadCloud } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { MAX_PAYMENT_BILL_SIZE_BYTES, paymentBillImageSchema } from "@/features/payment-requests/schemas";
-import { cn } from "@/lib/utils";
+import {
+  MAX_PAYMENT_REQUEST_QR_SIZE_BYTES,
+  paymentRequestQrImageSchema,
+} from "@/features/payment-requests/schemas";
+import { cn, isImageMimeType } from "@/lib/utils";
 
-export type PaymentBillDraft = {
+export type PaymentRequestQrDraft = {
   file: File;
   previewUrl: string;
 };
 
-export function PaymentBillUploadField({
-  compact = false,
+export function PaymentRequestQrUploadField({
   disabled = false,
   error,
-  helperText,
+  existingFileName,
+  existingFileType,
+  existingFileUrl,
   onChange,
   onErrorChange,
+  onRemoveExistingChange,
+  removeExisting,
   value,
 }: {
-  compact?: boolean;
   disabled?: boolean;
   error?: string;
-  helperText?: string;
-  onChange: (nextValue: PaymentBillDraft | null) => void;
+  existingFileName?: string | null;
+  existingFileType?: string | null;
+  existingFileUrl?: string | null;
+  onChange: (nextValue: PaymentRequestQrDraft | null) => void;
   onErrorChange?: (error?: string) => void;
-  value: PaymentBillDraft | null;
+  onRemoveExistingChange: (nextValue: boolean) => void;
+  removeExisting: boolean;
+  value: PaymentRequestQrDraft | null;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragActive, setIsDragActive] = useState(false);
+  const hasCurrentFile = Boolean(existingFileName && !removeExisting);
 
   const handleIncomingFile = (file?: File | null) => {
     if (!file) {
       return;
     }
 
-    const parsedFile = paymentBillImageSchema.safeParse(file);
+    const parsedFile = paymentRequestQrImageSchema.safeParse(file);
 
     if (!parsedFile.success) {
       onErrorChange?.(
-        parsedFile.error.issues[0]?.message ?? "Ảnh bill thanh toán không hợp lệ",
+        parsedFile.error.issues[0]?.message ?? "Ảnh QR thanh toán không hợp lệ",
       );
       return;
     }
 
     onErrorChange?.(undefined);
+    onRemoveExistingChange(false);
     onChange({
       file,
       previewUrl: URL.createObjectURL(file),
@@ -58,12 +69,11 @@ export function PaymentBillUploadField({
     <div className="space-y-3">
       <div
         className={cn(
-          "rounded-[1.5rem] border border-dashed transition-colors",
+          "rounded-[1.5rem] border border-dashed transition-colors px-5 py-6",
           isDragActive
             ? "border-primary/60 bg-primary/8"
             : "border-primary/25 bg-primary/5",
           disabled && "cursor-not-allowed opacity-70",
-          compact ? "px-4 py-4 sm:px-5 sm:py-5" : "px-5 py-6",
         )}
         onDragEnter={(event) => {
           event.preventDefault();
@@ -92,18 +102,26 @@ export function PaymentBillUploadField({
           }
         }}
       >
-        <div className={cn("flex gap-4", compact ? "items-start gap-3" : "items-center") }>
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-3xl bg-primary/10 text-primary sm:size-14">
+        <div className="flex items-center gap-4">
+          <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-3xl bg-primary/10 text-primary">
             {value ? (
-              <div className="relative size-12 overflow-hidden rounded-3xl sm:size-14">
-                <Image
-                  alt={value.file.name}
-                  className="object-cover"
-                  fill
-                  src={value.previewUrl}
-                  unoptimized
-                />
-              </div>
+              <Image
+                alt={value.file.name}
+                className="size-14 object-cover"
+                height={56}
+                src={value.previewUrl}
+                unoptimized
+                width={56}
+              />
+            ) : hasCurrentFile && existingFileUrl && isImageMimeType(existingFileType) ? (
+              <Image
+                alt={existingFileName ?? "QR thanh toán"}
+                className="size-14 object-cover"
+                height={56}
+                src={existingFileUrl}
+                unoptimized
+                width={56}
+              />
             ) : (
               <UploadCloud className="size-6" />
             )}
@@ -111,27 +129,31 @@ export function PaymentBillUploadField({
 
           <div className="min-w-0 flex-1">
             <p className="font-medium">
-              {value ? "Ảnh bill đã sẵn sàng" : "Kéo thả bill vào đây hoặc chọn từ thiết bị"}
+              {value
+                ? "Ảnh QR mới đã sẵn sàng"
+                : hasCurrentFile
+                  ? "Đang dùng QR thanh toán hiện tại"
+                  : "Tải QR thanh toán cho đề nghị này"}
             </p>
             <p className="mt-1 text-sm leading-6 text-muted-foreground">
-              {helperText ??
-                `Chỉ chấp nhận ảnh. Tối đa ${formatFileSize(MAX_PAYMENT_BILL_SIZE_BYTES)}.`}
+              {`Chỉ tải khi QR nhận tiền là của người khác, không phải QR của bạn. Chỉ chấp nhận ảnh, tối đa ${formatFileSize(MAX_PAYMENT_REQUEST_QR_SIZE_BYTES)}.`}
             </p>
 
-            <div className={cn("mt-4 flex flex-wrap gap-3", compact ? "mt-3" : "")}>
+            <div className="mt-4 flex flex-wrap gap-3">
               <Button
+                className="h-10 px-3"
                 disabled={disabled}
                 onClick={() => fileInputRef.current?.click()}
                 type="button"
                 variant="secondary"
-                className={compact ? "h-10 px-3" : undefined}
               >
                 <ImagePlus className="size-4" />
-                {value ? "Chọn ảnh khác" : "Tải bill"}
+                {value || hasCurrentFile ? "Chọn ảnh khác" : "Tải QR"}
               </Button>
 
               {value ? (
                 <Button
+                  className="h-10 px-3"
                   disabled={disabled}
                   onClick={() => {
                     onErrorChange?.(undefined);
@@ -139,10 +161,25 @@ export function PaymentBillUploadField({
                   }}
                   type="button"
                   variant="ghost"
-                  className={compact ? "h-10 px-3" : undefined}
                 >
                   <Trash2 className="size-4 text-destructive" />
-                  Xóa ảnh
+                  Xóa ảnh mới
+                </Button>
+              ) : null}
+
+              {hasCurrentFile ? (
+                <Button
+                  className="h-10 px-3"
+                  disabled={disabled}
+                  onClick={() => {
+                    onErrorChange?.(undefined);
+                    onRemoveExistingChange(true);
+                  }}
+                  type="button"
+                  variant="ghost"
+                >
+                  <Trash2 className="size-4 text-destructive" />
+                  Xóa QR hiện tại
                 </Button>
               ) : null}
             </div>

@@ -52,12 +52,16 @@ export default async function EditMyRequestPage({ params }: EditPageProps) {
 
       <RequestForm
         existingAttachments={request.attachments}
+        existingPaymentQr={{
+          fileName: request.payment_qr_name,
+          fileType: request.payment_qr_type,
+          signedUrl: request.payment_qr_signed_url,
+        }}
         initialValues={{
           amount: request.amount ?? null,
           title: request.title,
           description: request.description ?? "",
           payment_date: request.payment_date,
-          note: request.note ?? "",
         }}
         mode="edit"
         requestId={request.id}

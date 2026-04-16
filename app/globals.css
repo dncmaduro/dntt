@@ -100,11 +100,72 @@
 }
 
 @layer utilities {
+  .route-progress {
+    @apply fixed left-0 right-0 top-0 z-[100] h-1 overflow-hidden bg-transparent;
+  }
+
+  .route-progress::before {
+    content: "";
+    @apply absolute left-0 top-0 h-full rounded-r-full bg-primary;
+    width: 36%;
+    animation: route-progress-running 1.05s ease-in-out infinite;
+  }
+
+  .route-progress[data-phase="finishing"]::before {
+    width: 100%;
+    animation: route-progress-finish 260ms ease-out forwards;
+  }
+
+  .page-loading-bar {
+    @apply fixed left-0 right-0 top-0 z-[90] h-1 overflow-hidden bg-transparent;
+  }
+
+  .page-loading-bar::before {
+    content: "";
+    @apply absolute left-0 top-0 h-full w-1/3 rounded-r-full bg-primary;
+    animation: page-loading-indeterminate 1.1s ease-in-out infinite;
+  }
+
   .surface-panel {
     @apply border border-border/80 bg-card shadow-[0_20px_60px_-32px_rgba(11,28,31,0.35)] backdrop-blur-xl;
   }
 
   .surface-soft {
     @apply border border-border/70 bg-white/70 backdrop-blur-md;
+  }
+}
+
+@keyframes page-loading-indeterminate {
+  0% {
+    transform: translateX(-120%);
+  }
+  50% {
+    transform: translateX(95%);
+  }
+  100% {
+    transform: translateX(320%);
+  }
+}
+
+@keyframes route-progress-running {
+  0% {
+    transform: translateX(-115%);
+  }
+  50% {
+    transform: translateX(90%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}
+
+@keyframes route-progress-finish {
+  0% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 0;
   }
 }

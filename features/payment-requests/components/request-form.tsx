@@ -17,6 +17,10 @@ import {
   MAX_ATTACHMENTS,
   paymentRequestFormSchema,
 } from "@/features/payment-requests/schemas";
+import {
+  PaymentRequestQrUploadField,
+  type PaymentRequestQrDraft,
+} from "@/features/payment-requests/components/payment-request-qr-upload-field";
 import type { AttachmentWithUrl } from "@/features/payment-requests/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,11 +43,17 @@ export function RequestForm({
   requestId,
   initialValues,
   existingAttachments = [],
+  existingPaymentQr,
 }: {
   mode: "create" | "edit";
   requestId?: string;
   initialValues?: Partial<FormValues>;
   existingAttachments?: AttachmentWithUrl[];
+  existingPaymentQr?: {
+    fileName: string | null;
+    fileType: string | null;
+    signedUrl: string | null;
+  };
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -54,6 +64,8 @@ export function RequestForm({
   const [retainedAttachments, setRetainedAttachments] =
     useState<AttachmentWithUrl[]>(existingAttachments);
   const [removedAttachmentIds, setRemovedAttachmentIds] = useState<string[]>([]);
+  const [paymentQrDraft, setPaymentQrDraft] = useState<PaymentRequestQrDraft | null>(null);
+  const [removeExistingPaymentQr, setRemoveExistingPaymentQr] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(paymentRequestFormSchema),
@@ -62,7 +74,6 @@ export function RequestForm({
       amount: initialValues?.amount ?? undefined,
       description: initialValues?.description ?? "",
       payment_date: initialValues?.payment_date ?? "",
-      note: initialValues?.note ?? "",
     },
   });
 
@@ -73,8 +84,12 @@ export function RequestForm({
           URL.revokeObjectURL(draft.previewUrl);
         }
       });
+
+      if (paymentQrDraft?.previewUrl) {
+        URL.revokeObjectURL(paymentQrDraft.previewUrl);
+      }
     };
-  }, [selectedFiles]);
+  }, [paymentQrDraft, selectedFiles]);
 
   const totalAttachments = retainedAttachments.length + selectedFiles.length;
 
@@ -125,7 +140,7 @@ export function RequestForm({
     formData.set("amount", values.amount == null ? "" : String(values.amount));
     formData.set("description", values.description ?? "");
     formData.set("payment_date", values.payment_date);
-    formData.set("note", values.note ?? "");
+    formData.set("removePaymentQr", removeExistingPaymentQr ? "true" : "false");
 
     selectedFiles.forEach((draft) => {
       formData.append("attachments", draft.file);
@@ -134,6 +149,10 @@ export function RequestForm({
     removedAttachmentIds.forEach((attachmentId) => {
       formData.append("removeAttachmentIds", attachmentId);
     });
+
+    if (paymentQrDraft) {
+      formData.set("payment_qr", paymentQrDraft.file);
+    }
 
     startTransition(async () => {
       const result =
@@ -219,19 +238,13 @@ export function RequestForm({
             <FieldLabel htmlFor="payment_date" required>
               Ngày thanh toán
             </FieldLabel>
-            <Input id="payment_date" type="date" {...form.register("payment_date")} />
+              <Input id="payment_date" type="date" {...form.register("payment_date")} />
             <FieldError
               error={
                 form.formState.errors.payment_date?.message ||
                 serverErrors.payment_date?.[0]
               }
             />
-          </div>
-
-          <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="note">Ghi chú</Label>
-            <Input id="note" placeholder="Thông tin bổ sung nếu cần" {...form.register("note")} />
-            <FieldError error={form.formState.errors.note?.message || serverErrors.note?.[0]} />
           </div>
 
           <div className="space-y-2 md:col-span-2">
@@ -246,6 +259,33 @@ export function RequestForm({
                 form.formState.errors.description?.message ||
                 serverErrors.description?.[0]
               }
+            />
+          </div>
+
+          <div className="space-y-2 md:col-span-2">
+            <Label>QR thanh toán</Label>
+            <PaymentRequestQrUploadField
+              disabled={isPending}
+              error={serverErrors.payment_qr?.[0]}
+              existingFileName={existingPaymentQr?.fileName}
+              existingFileType={existingPaymentQr?.fileType}
+              existingFileUrl={existingPaymentQr?.signedUrl}
+              onChange={(nextValue) => {
+                if (paymentQrDraft?.previewUrl) {
+                  URL.revokeObjectURL(paymentQrDraft.previewUrl);
+                }
+
+                setPaymentQrDraft(nextValue);
+              }}
+              onErrorChange={(error) => {
+                setServerErrors((current) => ({
+                  ...current,
+                  payment_qr: error ? [error] : undefined,
+                }));
+              }}
+              onRemoveExistingChange={setRemoveExistingPaymentQr}
+              removeExisting={removeExistingPaymentQr}
+              value={paymentQrDraft}
             />
           </div>
         </CardContent>
@@ -300,13 +340,7 @@ export function RequestForm({
                       </div>
                     )}
                   </div>
-                  <div className="flex items-start justify-between gap-3 p-4">
-                    <div className="min-w-0">
-                      <p className="line-clamp-2 text-sm font-medium">{item.name}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {item.type || "Tệp đính kèm"}
-                      </p>
-                    </div>
+                  <div className="flex justify-end p-4">
                     <Button
                       onClick={() =>
                         item.kind === "existing"

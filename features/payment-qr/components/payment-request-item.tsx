@@ -116,10 +116,10 @@ export function PaymentRequestItem({
                 <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
                   <p className="flex items-center gap-2 text-sm font-medium">
                     <StickyNote className="size-4 text-muted-foreground" />
-                    Ghi chú
+                    Mô tả
                   </p>
                   <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                    {request.note?.trim() ? request.note : "Không có ghi chú bổ sung"}
+                    {request.description?.trim() ? request.description : "Không có mô tả"}
                   </p>
                 </div>
               </DialogContent>

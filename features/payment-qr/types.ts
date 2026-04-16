@@ -10,7 +10,7 @@ export type PaymentQrRecentRequest = Pick<
   | "amount"
   | "created_at"
   | "id"
-  | "note"
+  | "description"
   | "payment_date"
   | "status"
   | "title"

@@ -29,6 +29,7 @@ export type PaymentRequestDetail = PaymentRequestRow & {
   attachments: AttachmentWithUrl[];
   logs: PaymentRequestLogWithActor[];
   payment_bill_signed_url: string | null;
+  payment_qr_signed_url: string | null;
 };
 
 export type DashboardMetric = {
