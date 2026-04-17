@@ -101,6 +101,51 @@ export type Database = {
           },
         ];
       };
+      payment_request_payment_bills: {
+        Row: {
+          created_at: string;
+          created_by: string;
+          file_name: string | null;
+          file_path: string;
+          file_type: string | null;
+          id: string;
+          payment_request_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by: string;
+          file_name?: string | null;
+          file_path: string;
+          file_type?: string | null;
+          id?: string;
+          payment_request_id: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string;
+          file_name?: string | null;
+          file_path?: string;
+          file_type?: string | null;
+          id?: string;
+          payment_request_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "payment_request_payment_bills_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "payment_request_payment_bills_payment_request_id_fkey";
+            columns: ["payment_request_id"];
+            isOneToOne: false;
+            referencedRelation: "payment_requests";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       payment_request_logs: {
         Row: {
           action: string;
@@ -159,9 +204,6 @@ export type Database = {
           is_deleted: boolean;
           paid_at: string | null;
           paid_by: string | null;
-          payment_bill_name: string | null;
-          payment_bill_path: string | null;
-          payment_bill_type: string | null;
           payment_qr_name: string | null;
           payment_qr_path: string | null;
           payment_qr_type: string | null;
@@ -187,9 +229,6 @@ export type Database = {
           is_deleted?: boolean;
           paid_at?: string | null;
           paid_by?: string | null;
-          payment_bill_name?: string | null;
-          payment_bill_path?: string | null;
-          payment_bill_type?: string | null;
           payment_qr_name?: string | null;
           payment_qr_path?: string | null;
           payment_qr_type?: string | null;
@@ -215,9 +254,6 @@ export type Database = {
           is_deleted?: boolean;
           paid_at?: string | null;
           paid_by?: string | null;
-          payment_bill_name?: string | null;
-          payment_bill_path?: string | null;
-          payment_bill_type?: string | null;
           payment_qr_name?: string | null;
           payment_qr_path?: string | null;
           payment_qr_type?: string | null;
@@ -319,6 +355,8 @@ export type PaymentRequestRow =
   Database["public"]["Tables"]["payment_requests"]["Row"];
 export type PaymentRequestAttachmentRow =
   Database["public"]["Tables"]["payment_request_attachments"]["Row"];
+export type PaymentRequestPaymentBillRow =
+  Database["public"]["Tables"]["payment_request_payment_bills"]["Row"];
 export type PaymentRequestLogRow =
   Database["public"]["Tables"]["payment_request_logs"]["Row"];
 export type NotificationRow = Database["public"]["Tables"]["notifications"]["Row"];

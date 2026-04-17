@@ -18,6 +18,7 @@ import {
   PaymentBillUploadField,
   type PaymentBillDraft,
 } from "@/features/payment-requests/components/payment-bill-upload-field";
+import { MAX_PAYMENT_BILLS } from "@/features/payment-requests/schemas";
 import { PaymentRequestList } from "@/features/payment-qr/components/payment-request-list";
 import { PaymentSelectionSummary } from "@/features/payment-qr/components/payment-selection-summary";
 import type { PaymentQrUnpaidRequestList } from "@/features/payment-qr/types";
@@ -88,29 +89,34 @@ export function PaymentQrUnpaidRequestsPanel({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [sharedBillDraft, setSharedBillDraft] = useState<PaymentBillDraft | null>(null);
+  const [selectedIdsState, setSelectedIds] = useState<string[]>([]);
+  const [sharedBillDrafts, setSharedBillDrafts] = useState<PaymentBillDraft[]>([]);
   const [sharedBillError, setSharedBillError] = useState<string>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isNavigating, startNavigationTransition] = useTransition();
-  const sharedBillPreviewUrlRef = useRef<string | null>(null);
+  const sharedBillPreviewUrlsRef = useRef<string[]>([]);
 
   useEffect(() => {
-    sharedBillPreviewUrlRef.current = sharedBillDraft?.previewUrl ?? null;
-  }, [sharedBillDraft]);
+    sharedBillPreviewUrlsRef.current = sharedBillDrafts.map((draft) => draft.previewUrl);
+  }, [sharedBillDrafts]);
 
   useEffect(() => {
     return () => {
-      if (sharedBillPreviewUrlRef.current) {
-        URL.revokeObjectURL(sharedBillPreviewUrlRef.current);
-      }
+      sharedBillPreviewUrlsRef.current.forEach((previewUrl) => {
+        URL.revokeObjectURL(previewUrl);
+      });
     };
   }, []);
 
-  useEffect(() => {
-    const currentIds = new Set(requests.items.map((item) => item.id));
-    setSelectedIds((current) => current.filter((id) => currentIds.has(id)));
-  }, [requests.items]);
+  const allCurrentPageIds = useMemo(
+    () => requests.items.map((request) => request.id),
+    [requests.items],
+  );
+  const selectedIds = useMemo(() => {
+    const currentIds = new Set(allCurrentPageIds);
+
+    return selectedIdsState.filter((id) => currentIds.has(id));
+  }, [allCurrentPageIds, selectedIdsState]);
 
   const selectedItems = useMemo(
     () => requests.items.filter((request) => selectedIds.includes(request.id)),
@@ -128,10 +134,6 @@ export function PaymentQrUnpaidRequestsPanel({
     });
   }, [onSelectionSummaryChange, selectedIds.length, selectedTotalAmount]);
 
-  const allCurrentPageIds = useMemo(
-    () => requests.items.map((request) => request.id),
-    [requests.items],
-  );
   const isAllChecked =
     allCurrentPageIds.length > 0 &&
     allCurrentPageIds.every((requestId) => selectedIds.includes(requestId));
@@ -187,12 +189,27 @@ export function PaymentQrUnpaidRequestsPanel({
     });
   };
 
-  const replaceSharedBill = (nextDraft: PaymentBillDraft | null) => {
-    if (sharedBillDraft?.previewUrl) {
-      URL.revokeObjectURL(sharedBillDraft.previewUrl);
-    }
+  const replaceSharedBills = (nextDrafts: PaymentBillDraft[]) => {
+    const nextDraftIds = new Set(nextDrafts.map((draft) => draft.id));
 
-    setSharedBillDraft(nextDraft);
+    sharedBillDrafts.forEach((draft) => {
+      if (!nextDraftIds.has(draft.id) && draft.previewUrl) {
+        URL.revokeObjectURL(draft.previewUrl);
+      }
+    });
+
+    setSharedBillDrafts(nextDrafts);
+    setSharedBillError(undefined);
+  };
+
+  const clearSharedBills = () => {
+    sharedBillDrafts.forEach((draft) => {
+      if (draft.previewUrl) {
+        URL.revokeObjectURL(draft.previewUrl);
+      }
+    });
+
+    setSharedBillDrafts([]);
     setSharedBillError(undefined);
   };
 
@@ -218,7 +235,7 @@ export function PaymentQrUnpaidRequestsPanel({
       return;
     }
 
-    if (!sharedBillDraft) {
+    if (!sharedBillDrafts.length) {
       setSharedBillError("Vui lòng tải bill dùng chung trước khi xác nhận");
       toast.error("Bạn chưa tải bill thanh toán dùng chung");
       return;
@@ -234,7 +251,9 @@ export function PaymentQrUnpaidRequestsPanel({
       const formData = new FormData();
       formData.set("requestId", request.id);
       formData.set("payment_reference", generatePaymentReference());
-      formData.set("payment_bill", sharedBillDraft.file);
+      sharedBillDrafts.forEach((bill) => {
+        formData.append("payment_bills", bill.file);
+      });
 
       const result = await confirmPaymentRequestPaidAction(formData);
 
@@ -254,7 +273,7 @@ export function PaymentQrUnpaidRequestsPanel({
     }
 
     if (successfulIds.length === selectedItems.length) {
-      replaceSharedBill(null);
+      clearSharedBills();
       toast.success(
         successfulIds.length === 1
           ? "Đã xác nhận thanh toán 1 đề nghị"
@@ -325,10 +344,11 @@ export function PaymentQrUnpaidRequestsPanel({
             compact
             disabled={isSubmitting || isNavigating}
             error={sharedBillError}
-            helperText=""
-            onChange={replaceSharedBill}
+            helperText={`Tải từ 1 đến tối đa ${MAX_PAYMENT_BILLS} bill dùng chung cho các đề nghị đang chọn.`}
+            maxFiles={MAX_PAYMENT_BILLS}
+            onChange={replaceSharedBills}
             onErrorChange={setSharedBillError}
-            value={sharedBillDraft}
+            value={sharedBillDrafts}
           />
         </div>
       </div>
@@ -374,7 +394,7 @@ export function PaymentQrUnpaidRequestsPanel({
       </div>
 
       <PaymentSelectionSummary
-        disabled={!selectedIds.length || !sharedBillDraft || isNavigating}
+        disabled={!selectedIds.length || !sharedBillDrafts.length || isNavigating}
         isSubmitting={isSubmitting}
         onConfirm={confirmSelectedRequests}
         selectedCount={selectedIds.length}

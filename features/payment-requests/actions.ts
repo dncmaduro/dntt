@@ -22,13 +22,14 @@ import {
 import {
   MAX_ATTACHMENTS,
   MAX_FILE_SIZE_BYTES,
+  MAX_PAYMENT_BILLS,
   confirmPaymentSchema,
   paymentRequestFormSchema,
   paymentBillImageSchema,
   paymentRequestQrImageSchema,
   reviewSchema,
 } from '@/features/payment-requests/schemas';
-import { uploadPaymentBillFile } from '@/features/payment-requests/payment-bill-storage';
+import { uploadPaymentBillFiles } from '@/features/payment-requests/payment-bill-storage';
 import { uploadPaymentRequestQrFile } from '@/features/payment-requests/payment-request-qr-storage';
 import { createActionClient, createAdminClient } from '@/lib/supabase/server';
 import { buildStoragePath } from '@/lib/utils';
@@ -57,6 +58,11 @@ const fileSchema = z
 const parseFiles = (formData: FormData) =>
   formData
     .getAll('attachments')
+    .filter((item): item is File => item instanceof File && item.size > 0);
+
+const parsePaymentBillFiles = (formData: FormData) =>
+  formData
+    .getAll('payment_bills')
     .filter((item): item is File => item instanceof File && item.size > 0);
 
 const parseOptionalSingleFile = (entry: FormDataEntryValue | null) =>
@@ -268,6 +274,20 @@ const validateFiles = (files: File[], existingCount = 0) => {
 
   files.forEach((file) => {
     fileSchema.parse(file);
+  });
+};
+
+const validatePaymentBillFiles = (files: File[], existingCount = 0) => {
+  if (!files.length) {
+    throw new Error('Vui lòng tải lên bill thanh toán');
+  }
+
+  if (files.length + existingCount > MAX_PAYMENT_BILLS) {
+    throw new Error(`Chỉ được tải tối đa ${MAX_PAYMENT_BILLS} bill thanh toán`);
+  }
+
+  files.forEach((file) => {
+    paymentBillImageSchema.parse(file);
   });
 };
 
@@ -902,37 +922,7 @@ export const confirmPaymentRequestPaidAction = async (
       };
     }
 
-    const paymentBillEntry = formData.get('payment_bill');
-    const paymentBillFile =
-      paymentBillEntry instanceof File && paymentBillEntry.size > 0
-        ? paymentBillEntry
-        : null;
-
-    if (!paymentBillFile) {
-      return {
-        success: false,
-        error: 'Vui lòng tải lên bill thanh toán',
-        fieldErrors: {
-          payment_bill: ['Vui lòng tải lên bill thanh toán'],
-        },
-      };
-    }
-
-    const parsedPaymentBill = paymentBillImageSchema.safeParse(paymentBillFile);
-
-    if (!parsedPaymentBill.success) {
-      const message =
-        parsedPaymentBill.error.issues[0]?.message ??
-        'Ảnh bill thanh toán không hợp lệ';
-
-      return {
-        success: false,
-        error: message,
-        fieldErrors: {
-          payment_bill: [message],
-        },
-      };
-    }
+    const paymentBillFiles = parsePaymentBillFiles(formData);
 
     const request = await getRequestForMutation(parsed.data.requestId);
 
@@ -946,20 +936,68 @@ export const confirmPaymentRequestPaidAction = async (
       };
     }
 
-    const uploadedBill = await uploadPaymentBillFile({
-      file: paymentBillFile,
+    const supabase = await createActionClient();
+    const { data: existingPaymentBills, error: existingPaymentBillsError } =
+      await supabase
+        .from('payment_request_payment_bills')
+        .select('id, file_path')
+        .eq('payment_request_id', request.id);
+
+    if (existingPaymentBillsError) {
+      throw new Error(existingPaymentBillsError.message);
+    }
+
+    try {
+      validatePaymentBillFiles(
+        paymentBillFiles,
+        existingPaymentBills?.length ?? 0,
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Ảnh bill thanh toán không hợp lệ';
+
+      return {
+        success: false,
+        error: message,
+        fieldErrors: {
+          payment_bills: [message],
+        },
+      };
+    }
+
+    const uploadedBills = await uploadPaymentBillFiles({
+      files: paymentBillFiles,
       requestId: request.id,
     });
-    const supabase = await createActionClient();
     const now = new Date().toISOString();
+    const insertedBillRows = uploadedBills.map((bill) => ({
+      payment_request_id: request.id,
+      file_path: bill.path,
+      file_name: bill.fileName,
+      file_type: bill.fileType,
+      created_by: profile.id,
+    }));
+    const { data: insertedPaymentBills, error: insertPaymentBillsError } =
+      await supabase
+        .from('payment_request_payment_bills')
+        .insert(insertedBillRows)
+        .select('id');
+
+    if (insertPaymentBillsError) {
+      await supabase
+        .storage
+        .from(STORAGE_BUCKET)
+        .remove(uploadedBills.map((bill) => bill.path));
+      throw new Error(insertPaymentBillsError.message);
+    }
+
     const { error } = await supabase
       .from('payment_requests')
       .update({
         paid_at: now,
         paid_by: profile.id,
-        payment_bill_name: uploadedBill.fileName,
-        payment_bill_path: uploadedBill.path,
-        payment_bill_type: uploadedBill.fileType,
         payment_reference: parsed.data.payment_reference,
         status: 'paid',
         updated_at: now,
@@ -967,7 +1005,20 @@ export const confirmPaymentRequestPaidAction = async (
       .eq('id', request.id);
 
     if (error) {
-      await supabase.storage.from(STORAGE_BUCKET).remove([uploadedBill.path]);
+      if (insertedPaymentBills?.length) {
+        await supabase
+          .from('payment_request_payment_bills')
+          .delete()
+          .in(
+            'id',
+            insertedPaymentBills.map((bill) => bill.id),
+          );
+      }
+
+      await supabase
+        .storage
+        .from(STORAGE_BUCKET)
+        .remove(uploadedBills.map((bill) => bill.path));
       throw new Error(error.message);
     }
 
@@ -977,7 +1028,8 @@ export const confirmPaymentRequestPaidAction = async (
       actorId: profile.id,
       action: 'marked_paid',
       meta: {
-        payment_bill_name: uploadedBill.fileName,
+        payment_bill_count: uploadedBills.length,
+        payment_bill_names: uploadedBills.map((bill) => bill.fileName),
         payment_reference: parsed.data.payment_reference,
       },
     });

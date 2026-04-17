@@ -10,35 +10,49 @@ export type UploadedPaymentBill = {
 
 const isExternalUrl = (value: string) => /^https?:\/\//i.test(value);
 
-export const uploadPaymentBillFile = async ({
-  file,
+export const uploadPaymentBillFiles = async ({
+  files,
   requestId,
 }: {
-  file: File;
+  files: File[];
   requestId: string;
-}): Promise<UploadedPaymentBill> => {
+}): Promise<UploadedPaymentBill[]> => {
   const supabase = await createActionClient();
-  const path = buildPaymentBillStoragePath({
-    requestId,
-    timestamp: Date.now(),
-    fileName: file.name,
-  });
+  const uploadedPaths: string[] = [];
+  const uploadedBills: UploadedPaymentBill[] = [];
 
-  const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(path, file, {
-    cacheControl: "3600",
-    contentType: file.type || undefined,
-    upsert: false,
-  });
+  for (const file of files) {
+    const path = buildPaymentBillStoragePath({
+      requestId,
+      timestamp: Date.now(),
+      fileName: file.name,
+    });
 
-  if (error) {
-    throw new Error(`Không thể tải bill thanh toán lên: ${error.message}`);
+    const { error } = await supabase.storage
+      .from(STORAGE_BUCKET)
+      .upload(path, file, {
+        cacheControl: "3600",
+        contentType: file.type || undefined,
+        upsert: false,
+      });
+
+    if (error) {
+      if (uploadedPaths.length) {
+        await supabase.storage.from(STORAGE_BUCKET).remove(uploadedPaths);
+      }
+
+      throw new Error(`Không thể tải bill thanh toán lên: ${error.message}`);
+    }
+
+    uploadedPaths.push(path);
+    uploadedBills.push({
+      fileName: file.name,
+      fileType: file.type || null,
+      path,
+    });
   }
 
-  return {
-    fileName: file.name,
-    fileType: file.type || null,
-    path,
-  };
+  return uploadedBills;
 };
 
 export const getPaymentBillPreviewUrl = async (path?: string | null) => {

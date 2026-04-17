@@ -2,6 +2,7 @@ import type {
   NotificationRow,
   PaymentRequestAttachmentRow,
   PaymentRequestLogRow,
+  PaymentRequestPaymentBillRow,
   PaymentRequestRow,
   ProfileRow,
 } from "@/types/database";
@@ -19,6 +20,10 @@ export type PaymentRequestLogWithActor = PaymentRequestLogRow & {
   actor: Pick<ProfileRow, "id" | "full_name" | "role"> | null;
 };
 
+export type PaymentBillWithUrl = PaymentRequestPaymentBillRow & {
+  signed_url: string | null;
+};
+
 export type PaymentRequestListItem = PaymentRequestRow & {
   owner: RequestOwner | null;
   attachment_count: number;
@@ -28,7 +33,7 @@ export type PaymentRequestDetail = PaymentRequestRow & {
   owner: RequestOwner | null;
   attachments: AttachmentWithUrl[];
   logs: PaymentRequestLogWithActor[];
-  payment_bill_signed_url: string | null;
+  payment_bills: PaymentBillWithUrl[];
   payment_qr_signed_url: string | null;
 };
 

@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const MAX_ATTACHMENTS = 10;
 export const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+export const MAX_PAYMENT_BILLS = 5;
 export const MAX_PAYMENT_BILL_SIZE_BYTES = 4 * 1024 * 1024;
 export const MAX_PAYMENT_REQUEST_QR_SIZE_BYTES = 4 * 1024 * 1024;
 export const PAYMENT_REFERENCE_PATTERN = /^PAY-\d{8}-[A-Z0-9]{8}$/;

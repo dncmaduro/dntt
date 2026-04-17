@@ -12,6 +12,7 @@ import { getPaymentBillPreviewUrl } from '@/features/payment-requests/payment-bi
 import { getPaymentRequestQrPreviewUrl } from '@/features/payment-requests/payment-request-qr-storage';
 import type {
   DashboardData,
+  PaymentBillWithUrl,
   PaymentRequestLogWithActor,
   PaymentRequestDetail,
   PaymentRequestListItem,
@@ -184,10 +185,16 @@ export const getPaymentRequestDetail = async (
 
   const [
     { data: attachments, error: attachmentError },
+    { data: paymentBills, error: paymentBillError },
     { data: logs, error: logError },
   ] = await Promise.all([
     supabase
       .from('payment_request_attachments')
+      .select('*')
+      .eq('payment_request_id', requestId)
+      .order('created_at', { ascending: true }),
+    supabase
+      .from('payment_request_payment_bills')
       .select('*')
       .eq('payment_request_id', requestId)
       .order('created_at', { ascending: true }),
@@ -211,6 +218,10 @@ export const getPaymentRequestDetail = async (
     throw new Error(attachmentError.message);
   }
 
+  if (paymentBillError) {
+    throw new Error(paymentBillError.message);
+  }
+
   if (logError) {
     throw new Error(logError.message);
   }
@@ -227,8 +238,13 @@ export const getPaymentRequestDetail = async (
       };
     }),
   );
-  const [paymentBillSignedUrl, paymentQrSignedUrl] = await Promise.all([
-    getPaymentBillPreviewUrl(request.payment_bill_path),
+  const [paymentBillsWithSignedUrls, paymentQrSignedUrl] = await Promise.all([
+    Promise.all(
+      (paymentBills ?? []).map(async (bill) => ({
+        ...bill,
+        signed_url: await getPaymentBillPreviewUrl(bill.file_path),
+      })),
+    ),
     getPaymentRequestQrPreviewUrl(request.payment_qr_path),
   ]);
 
@@ -236,7 +252,7 @@ export const getPaymentRequestDetail = async (
     ...request,
     attachments: attachmentsWithSignedUrls,
     logs: (logs ?? []) as PaymentRequestLogWithActor[],
-    payment_bill_signed_url: paymentBillSignedUrl,
+    payment_bills: paymentBillsWithSignedUrls as PaymentBillWithUrl[],
     payment_qr_signed_url: paymentQrSignedUrl,
   };
 };

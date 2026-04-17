@@ -1,71 +1,85 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Image from "next/image";
-import { ExternalLink, LoaderCircle, ReceiptText } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { LoaderCircle, ReceiptText } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { confirmPaymentRequestPaidAction } from "@/features/payment-requests/actions";
-import {
-  PaymentBillUploadField,
-  type PaymentBillDraft,
-} from "@/features/payment-requests/components/payment-bill-upload-field";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { formatDateTime, generatePaymentReference, isImageMimeType } from "@/lib/utils";
+import { confirmPaymentRequestPaidAction } from "@/features/payment-requests/actions";
+import { PaymentBillGallery } from "@/features/payment-requests/components/payment-bill-gallery";
+import {
+  PaymentBillUploadField,
+  type PaymentBillDraft,
+} from "@/features/payment-requests/components/payment-bill-upload-field";
+import { MAX_PAYMENT_BILLS } from "@/features/payment-requests/schemas";
+import type { PaymentBillWithUrl } from "@/features/payment-requests/types";
+import { formatDateTime, generatePaymentReference } from "@/lib/utils";
 
 export function PaymentConfirmationCard({
   canConfirmPayment,
+  currentPaymentBills,
   isPaid,
   paidAt,
-  paymentBillName,
-  paymentBillType,
-  paymentBillUrl,
   paymentReference,
   requestId,
 }: {
   canConfirmPayment: boolean;
+  currentPaymentBills: PaymentBillWithUrl[];
   isPaid: boolean;
   paidAt?: string | null;
-  paymentBillName?: string | null;
-  paymentBillType?: string | null;
-  paymentBillUrl?: string | null;
   paymentReference?: string | null;
   requestId: string;
 }) {
   const router = useRouter();
-  const [draftBill, setDraftBill] = useState<PaymentBillDraft | null>(null);
+  const [draftBills, setDraftBills] = useState<PaymentBillDraft[]>([]);
   const [draftReference, setDraftReference] = useState("");
   const [billError, setBillError] = useState<string>();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const draftBillPreviewUrlsRef = useRef<string[]>([]);
+
+  useEffect(() => {
+    draftBillPreviewUrlsRef.current = draftBills.map((bill) => bill.previewUrl);
+  }, [draftBills]);
 
   useEffect(() => {
     return () => {
-      if (draftBill?.previewUrl) {
-        URL.revokeObjectURL(draftBill.previewUrl);
-      }
+      draftBillPreviewUrlsRef.current.forEach((previewUrl) => {
+        if (previewUrl) {
+          URL.revokeObjectURL(previewUrl);
+        }
+      });
     };
-  }, [draftBill]);
+  }, []);
 
   if (!canConfirmPayment && !isPaid) {
     return null;
   }
 
-  const replaceDraftBill = (nextBill: PaymentBillDraft | null) => {
-    if (draftBill?.previewUrl) {
-      URL.revokeObjectURL(draftBill.previewUrl);
-    }
+  const remainingBillSlots = Math.max(
+    MAX_PAYMENT_BILLS - currentPaymentBills.length,
+    0,
+  );
 
-    setDraftBill(nextBill);
+  const replaceDraftBills = (nextBills: PaymentBillDraft[]) => {
+    const nextBillIds = new Set(nextBills.map((bill) => bill.id));
+
+    draftBills.forEach((bill) => {
+      if (!nextBillIds.has(bill.id) && bill.previewUrl) {
+        URL.revokeObjectURL(bill.previewUrl);
+      }
+    });
+
+    setDraftBills(nextBills);
     setBillError(undefined);
-    setDraftReference(nextBill ? generatePaymentReference() : "");
+    setDraftReference(nextBills.length ? generatePaymentReference() : "");
   };
 
   const confirmPayment = async () => {
-    if (!draftBill) {
+    if (!draftBills.length) {
       setBillError("Vui lòng tải lên bill thanh toán trước khi xác nhận");
       return;
     }
@@ -78,17 +92,20 @@ export function PaymentConfirmationCard({
       const formData = new FormData();
       formData.set("requestId", requestId);
       formData.set("payment_reference", reference);
-      formData.set("payment_bill", draftBill.file);
+
+      draftBills.forEach((bill) => {
+        formData.append("payment_bills", bill.file);
+      });
 
       const result = await confirmPaymentRequestPaidAction(formData);
 
       if (!result.success) {
-        setBillError(result.fieldErrors?.payment_bill?.[0]);
+        setBillError(result.fieldErrors?.payment_bills?.[0]);
         toast.error(result.error);
         return;
       }
 
-      replaceDraftBill(null);
+      replaceDraftBills([]);
       setDraftReference("");
       toast.success(result.message ?? "Đã xác nhận thanh toán");
       router.refresh();
@@ -102,9 +119,7 @@ export function PaymentConfirmationCard({
       <Card className="rounded-[2rem]">
         <CardHeader>
           <CardTitle className="text-xl">Thông tin thanh toán</CardTitle>
-          <CardDescription>
-            Đề nghị này đã hoàn tất chi trả và được lưu bill thanh toán riêng.
-          </CardDescription>
+          <CardDescription>Danh sách bill thanh toán đã lưu cho đề nghị này.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="grid gap-4 md:grid-cols-2">
@@ -116,36 +131,9 @@ export function PaymentConfirmationCard({
             </PaymentInfoItem>
           </div>
 
-          <div className="rounded-[1.5rem] border border-border/70 bg-white/70 p-4">
-            <div className="flex items-start justify-between gap-3">
-              <p className="font-medium">Bill thanh toán</p>
-              {paymentBillUrl ? (
-                <Button asChild size="sm" variant="outline">
-                  <a href={paymentBillUrl} rel="noreferrer" target="_blank">
-                    <ExternalLink className="size-4" />
-                    Xem bill
-                  </a>
-                </Button>
-              ) : null}
-            </div>
-
-            {paymentBillUrl && isImageMimeType(paymentBillType) ? (
-              <div className="mt-4 relative aspect-[4/3] overflow-hidden rounded-[1.25rem] border border-border/70 bg-muted/30">
-                <Image
-                  alt={paymentBillName || "Bill thanh toán"}
-                  className="object-cover"
-                  fill
-                  src={paymentBillUrl}
-                  unoptimized
-                />
-              </div>
-            ) : (
-              <div className="mt-4 rounded-[1.25rem] border border-dashed border-border/80 bg-muted/20 px-4 py-5 text-sm text-muted-foreground">
-                {paymentBillUrl
-                  ? "Bill đã được lưu. Dùng nút “Xem bill” để mở chi tiết."
-                  : "Chưa tải được bản xem trước của bill thanh toán."}
-              </div>
-            )}
+          <div className="space-y-3">
+            <p className="font-medium">Bill thanh toán</p>
+            <PaymentBillGallery paymentBills={currentPaymentBills} />
           </div>
         </CardContent>
       </Card>
@@ -156,30 +144,40 @@ export function PaymentConfirmationCard({
     <Card className="rounded-[2rem]">
       <CardHeader>
         <CardTitle className="text-xl">Xác nhận thanh toán</CardTitle>
-        <CardDescription>
-          Tải lên đúng 1 ảnh bill thanh toán cho đề nghị này trước khi xác nhận.
-        </CardDescription>
+        <CardDescription>Tải từ 1 đến tối đa 5 bill cho đề nghị này.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
+        {currentPaymentBills.length ? (
+          <div className="space-y-3">
+            <p className="font-medium">Bill đã lưu</p>
+            <PaymentBillGallery paymentBills={currentPaymentBills} />
+          </div>
+        ) : null}
+
         <PaymentBillUploadField
-          disabled={isSubmitting}
+          disabled={isSubmitting || remainingBillSlots === 0}
           error={billError}
-          onChange={replaceDraftBill}
+          maxFiles={remainingBillSlots}
+          onChange={replaceDraftBills}
           onErrorChange={setBillError}
-          value={draftBill}
+          value={draftBills}
         />
 
         <div className="space-y-2 hidden">
           <Label htmlFor="payment-reference-preview">Mã tham chiếu thanh toán</Label>
           <Input
             id="payment-reference-preview"
-            placeholder="Sẽ tự tạo sau khi chọn ảnh bill"
+            placeholder="Sẽ tự tạo sau khi chọn bill"
             readOnly
             value={draftReference}
           />
         </div>
 
-        <Button disabled={isSubmitting} onClick={confirmPayment} type="button">
+        <Button
+          disabled={isSubmitting || remainingBillSlots === 0}
+          onClick={confirmPayment}
+          type="button"
+        >
           {isSubmitting ? (
             <LoaderCircle className="size-4 animate-spin" />
           ) : (

@@ -143,11 +143,9 @@ export default async function RequestReviewDetailPage({
 
           <PaymentConfirmationCard
             canConfirmPayment={allowMarkPaid}
+            currentPaymentBills={request.payment_bills}
             isPaid={request.status === "paid"}
             paidAt={request.paid_at}
-            paymentBillName={request.payment_bill_name}
-            paymentBillType={request.payment_bill_type}
-            paymentBillUrl={request.payment_bill_signed_url}
             paymentReference={request.payment_reference}
             requestId={request.id}
           />

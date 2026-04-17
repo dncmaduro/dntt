@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttachmentGallery } from "@/features/payment-requests/components/attachment-gallery";
 import { DeleteRequestButton } from "@/features/payment-requests/components/delete-request-button";
+import { PaymentBillGallery } from "@/features/payment-requests/components/payment-bill-gallery";
 import { RequestTimeline } from "@/features/payment-requests/components/request-timeline";
 import { StatusBadge } from "@/features/payment-requests/components/status-badge";
 import { getProfileQrPreviewUrl } from "@/features/profile/queries";
@@ -144,6 +145,11 @@ export default async function MyRequestDetailPage({
           </CardContent>
         </Card>
       </div>
+
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold">Bill thanh toán</h2>
+        <PaymentBillGallery paymentBills={request.payment_bills} />
+      </section>
 
       <section className="space-y-4">
         <h2 className="text-xl font-semibold">Chứng từ đính kèm</h2>
