@@ -9,6 +9,21 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      categories: {
+        Row: {
+          id: string;
+          name: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+        };
+        Relationships: [];
+      };
       notifications: {
         Row: {
           body: string;
@@ -210,6 +225,7 @@ export type Database = {
           payment_date: string;
           payment_reference: string | null;
           status: string;
+          sub_category_id: string | null;
           title: string;
           updated_at: string;
           user_id: string;
@@ -235,6 +251,7 @@ export type Database = {
           payment_date: string;
           payment_reference?: string | null;
           status: string;
+          sub_category_id?: string | null;
           title: string;
           updated_at?: string;
           user_id: string;
@@ -260,6 +277,7 @@ export type Database = {
           payment_date?: string;
           payment_reference?: string | null;
           status?: string;
+          sub_category_id?: string | null;
           title?: string;
           updated_at?: string;
           user_id?: string;
@@ -287,6 +305,24 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      sub_categories: {
+        Row: {
+          category_id: string;
+          id: string;
+          name: string;
+        };
+        Insert: {
+          category_id: string;
+          id?: string;
+          name: string;
+        };
+        Update: {
+          category_id?: string;
+          id?: string;
+          name?: string;
+        };
+        Relationships: [];
       };
       profiles: {
         Row: {
@@ -350,6 +386,7 @@ export type Database = {
   };
 };
 
+export type CategoryRow = Database["public"]["Tables"]["categories"]["Row"];
 export type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 export type PaymentRequestRow =
   Database["public"]["Tables"]["payment_requests"]["Row"];
@@ -360,3 +397,5 @@ export type PaymentRequestPaymentBillRow =
 export type PaymentRequestLogRow =
   Database["public"]["Tables"]["payment_request_logs"]["Row"];
 export type NotificationRow = Database["public"]["Tables"]["notifications"]["Row"];
+export type SubCategoryRow =
+  Database["public"]["Tables"]["sub_categories"]["Row"];

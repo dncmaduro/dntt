@@ -142,6 +142,7 @@ export function ReviewRequestList({
               ) : null}
               <th className="px-5 py-4 font-medium">Tiêu đề</th>
               {showOwner ? <th className="px-5 py-4 font-medium">Người đề nghị</th> : null}
+              <th className="px-5 py-4 font-medium">Danh mục</th>
               <th className="px-5 py-4 font-medium">Ngày thanh toán</th>
               <th className="px-5 py-4 font-medium">Trạng thái</th>
               <th className="px-5 py-4 font-medium">Chứng từ</th>
@@ -180,6 +181,16 @@ export function ReviewRequestList({
                     {item.owner?.full_name ?? item.user_id}
                   </td>
                 ) : null}
+                <td className="px-5 py-4">
+                  <div className="space-y-1">
+                    <p className="font-medium text-foreground">
+                      {item.category?.name ?? "—"}
+                    </p>
+                    <p className="text-muted-foreground">
+                      {item.sub_category?.name ?? "—"}
+                    </p>
+                  </div>
+                </td>
                 <td className="px-5 py-4 text-muted-foreground">
                   {formatDate(item.payment_date)}
                 </td>
@@ -243,6 +254,18 @@ export function ReviewRequestList({
                     </span>
                   </div>
                 ) : null}
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-muted-foreground">Danh mục</span>
+                  <span className="text-right font-medium">
+                    {item.category?.name ?? "—"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-muted-foreground">Danh mục con</span>
+                  <span className="text-right font-medium">
+                    {item.sub_category?.name ?? "—"}
+                  </span>
+                </div>
                 <div className="flex items-center justify-between gap-3">
                   <span className="inline-flex items-center gap-2 text-muted-foreground">
                     <CalendarDays className="size-4" />

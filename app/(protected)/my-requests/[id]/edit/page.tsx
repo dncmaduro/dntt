@@ -5,7 +5,11 @@ import { ArrowLeft } from "lucide-react";
 import { PageIntro } from "@/components/shared/page-intro";
 import { Button } from "@/components/ui/button";
 import { RequestForm } from "@/features/payment-requests/components/request-form";
-import { getPaymentRequestDetail } from "@/features/payment-requests/queries";
+import {
+  getCategories,
+  getPaymentRequestDetail,
+  getSubCategories,
+} from "@/features/payment-requests/queries";
 import { canManageOwnRequest } from "@/lib/auth/permissions";
 import { requireRole } from "@/lib/auth/session";
 import { APP_ROUTES, type PaymentRequestStatus } from "@/lib/constants";
@@ -17,7 +21,11 @@ type EditPageProps = {
 export default async function EditMyRequestPage({ params }: EditPageProps) {
   const profile = await requireRole(["employee", "accountant"]);
   const { id } = await params;
-  const request = await getPaymentRequestDetail(id);
+  const [request, categories, subCategories] = await Promise.all([
+    getPaymentRequestDetail(id),
+    getCategories(),
+    getSubCategories(),
+  ]);
 
   if (!request || request.user_id !== profile.id || request.is_deleted) {
     notFound();
@@ -51,20 +59,24 @@ export default async function EditMyRequestPage({ params }: EditPageProps) {
       />
 
       <RequestForm
+        categories={categories}
         existingAttachments={request.attachments}
         existingPaymentQr={{
           fileName: request.payment_qr_name,
           fileType: request.payment_qr_type,
           signedUrl: request.payment_qr_signed_url,
         }}
+        initialCategoryId={request.sub_category?.category_id ?? null}
         initialValues={{
           amount: request.amount ?? null,
           title: request.title,
           description: request.description ?? "",
           payment_date: request.payment_date,
+          sub_category_id: request.sub_category_id ?? "",
         }}
         mode="edit"
         requestId={request.id}
+        subCategories={subCategories}
       />
     </div>
   );

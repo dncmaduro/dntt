@@ -87,8 +87,12 @@ const parseAmountValue = (value: FormDataEntryValue | null) => {
   return Number.isFinite(normalized) ? normalized : value;
 };
 
+const parseUuidField = (value: FormDataEntryValue | null) =>
+  typeof value === 'string' ? value.trim() : '';
+
 const revalidateRequestPaths = (requestId: string) => {
   revalidatePath(APP_ROUTES.dashboard);
+  revalidatePath(APP_ROUTES.expenses);
   revalidatePath(APP_ROUTES.myRequests);
   revalidatePath(APP_ROUTES.requests);
   revalidatePath(APP_ROUTES.paymentQr);
@@ -357,6 +361,7 @@ export const createPaymentRequestAction = async (
       amount: parseAmountValue(formData.get('amount')),
       description: formData.get('description'),
       payment_date: formData.get('payment_date'),
+      sub_category_id: parseUuidField(formData.get('sub_category_id')),
     });
 
     if (!parsed.success) {
@@ -377,6 +382,7 @@ export const createPaymentRequestAction = async (
         payment_date: parsed.data.payment_date,
         status: DEFAULT_REQUEST_STATUS,
         is_deleted: false,
+        sub_category_id: parsed.data.sub_category_id,
       })
       .select('id')
       .single();
@@ -490,6 +496,7 @@ export const updatePaymentRequestAction = async (
       amount: parseAmountValue(formData.get('amount')),
       description: formData.get('description'),
       payment_date: formData.get('payment_date'),
+      sub_category_id: parseUuidField(formData.get('sub_category_id')),
     });
 
     if (!parsed.success) {
@@ -563,6 +570,7 @@ export const updatePaymentRequestAction = async (
         description: parsed.data.description || null,
         payment_date: parsed.data.payment_date,
         status: nextStatus,
+        sub_category_id: parsed.data.sub_category_id,
         updated_at: new Date().toISOString(),
         ...(nextStatus === 'pending_accounting' ? clearReviewFields : {}),
       })

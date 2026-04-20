@@ -25,6 +25,14 @@ export const paymentRequestFormSchema = z.object({
     .optional()
     .or(z.literal("")),
   payment_date: z.string().min(1, "Vui lòng chọn ngày thanh toán"),
+  sub_category_id: z
+    .string()
+    .trim()
+    .min(1, "Vui lòng chọn danh mục con")
+    .refine(
+      (value) => z.uuid().safeParse(value).success,
+      "Danh mục con không hợp lệ",
+    ),
 });
 
 export const reviewSchema = z

@@ -87,6 +87,12 @@ export default async function RequestReviewDetailPage({
               <InfoItem label="Số tiền">
                 <span className="font-medium">{formatCurrency(request.amount)}</span>
               </InfoItem>
+              <InfoItem label="Danh mục">
+                <span className="font-medium">{request.category?.name ?? "—"}</span>
+              </InfoItem>
+              <InfoItem label="Danh mục con">
+                <span className="font-medium">{request.sub_category?.name ?? "—"}</span>
+              </InfoItem>
               <InfoItem label="Mô tả">
                 <p className="leading-6 text-muted-foreground">
                   {request.description || "Không có mô tả"}

@@ -6,6 +6,7 @@ import {
   Files,
   LayoutDashboard,
   ScanQrCode,
+  WalletCards,
 } from "lucide-react";
 
 export const ROLES = ["employee", "accountant", "director"] as const;
@@ -133,6 +134,7 @@ export const PAGE_TITLES: Record<string, string> = {
   "/my-requests": "DNTT của tôi",
   "/my-requests/new": "Tạo đề nghị mới",
   "/requests": "Tất cả đề nghị",
+  "/expenses": "Chi phí",
   "/payment-qr": "QR thanh toán",
   "/notifications": "Thông báo",
   "/profile": "Cá nhân",
@@ -149,6 +151,7 @@ export const APP_ROUTES = {
   myRequests: "/my-requests",
   newRequest: "/my-requests/new",
   requests: "/requests",
+  expenses: "/expenses",
   paymentQr: "/payment-qr",
   notifications: "/notifications",
   profile: "/profile",
@@ -212,6 +215,11 @@ export const ACCOUNTANT_NAVIGATION: NavigationItem[] = [
     icon: Files,
   },
   {
+    href: APP_ROUTES.expenses,
+    label: "Chi phí",
+    icon: WalletCards,
+  },
+  {
     href: APP_ROUTES.notifications,
     label: "Thông báo",
     icon: BellRing,
@@ -233,6 +241,11 @@ export const DIRECTOR_NAVIGATION: NavigationItem[] = [
     href: APP_ROUTES.requests,
     label: "Tất cả DNTT",
     icon: Files,
+  },
+  {
+    href: APP_ROUTES.expenses,
+    label: "Chi phí",
+    icon: WalletCards,
   },
   {
     href: APP_ROUTES.paymentQr,

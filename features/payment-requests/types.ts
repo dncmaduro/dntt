@@ -1,10 +1,12 @@
 import type {
+  CategoryRow,
   NotificationRow,
   PaymentRequestAttachmentRow,
   PaymentRequestLogRow,
   PaymentRequestPaymentBillRow,
   PaymentRequestRow,
   ProfileRow,
+  SubCategoryRow,
 } from "@/types/database";
 
 export type RequestOwner = Pick<
@@ -24,9 +26,17 @@ export type PaymentBillWithUrl = PaymentRequestPaymentBillRow & {
   signed_url: string | null;
 };
 
+export type Category = CategoryRow;
+export type SubCategory = SubCategoryRow;
+export type SubCategoryWithCategory = SubCategory & {
+  category: Category | null;
+};
+
 export type PaymentRequestListItem = PaymentRequestRow & {
   owner: RequestOwner | null;
   attachment_count: number;
+  category: Category | null;
+  sub_category: SubCategoryWithCategory | null;
 };
 
 export type PaymentRequestDetail = PaymentRequestRow & {
@@ -35,6 +45,8 @@ export type PaymentRequestDetail = PaymentRequestRow & {
   logs: PaymentRequestLogWithActor[];
   payment_bills: PaymentBillWithUrl[];
   payment_qr_signed_url: string | null;
+  category: Category | null;
+  sub_category: SubCategoryWithCategory | null;
 };
 
 export type DashboardMetric = {
@@ -49,6 +61,8 @@ export type DashboardData = {
 };
 
 export type RequestFilters = {
+  category: string;
+  sub_category: string;
   keyword: string;
   status: string;
   deleted: "active" | "deleted";
@@ -60,6 +74,19 @@ export type RequestFilters = {
 
 export type ProfileOption = Pick<ProfileRow, "id" | "full_name">;
 export type NotificationItem = NotificationRow;
+
+export type ExpenseFilters = {
+  category: string;
+  sub_category: string;
+  payment_status: "all" | "paid";
+  month: string;
+};
+
+export type ExpenseRequestListItem = PaymentRequestRow & {
+  owner: RequestOwner | null;
+  category: Category | null;
+  sub_category: SubCategoryWithCategory | null;
+};
 
 export type ActionResult<T = void> =
   | {

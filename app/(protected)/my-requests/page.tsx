@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { RequestFilterBar } from "@/features/payment-requests/components/request-filter-bar";
 import { RequestList } from "@/features/payment-requests/components/request-list";
 import {
+  getCategories,
   getRequestList,
+  getSubCategories,
   parseRequestFilters,
 } from "@/features/payment-requests/queries";
 import { APP_ROUTES } from "@/lib/constants";
@@ -19,7 +21,11 @@ export default async function MyRequestsPage({
   searchParams,
 }: MyRequestsPageProps) {
   const profile = await requireRole(["employee", "accountant"]);
-  const filters = await parseRequestFilters(searchParams);
+  const [filters, categories, subCategories] = await Promise.all([
+    parseRequestFilters(searchParams),
+    getCategories(),
+    getSubCategories(),
+  ]);
   const requests = await getRequestList({
     filters,
     scope: "mine",
@@ -39,7 +45,11 @@ export default async function MyRequestsPage({
         title="DNTT của tôi"
       />
 
-      <RequestFilterBar filters={filters} />
+      <RequestFilterBar
+        categories={categories}
+        filters={filters}
+        subCategories={subCategories}
+      />
 
       <RequestList
         detailHrefBase={APP_ROUTES.myRequests}

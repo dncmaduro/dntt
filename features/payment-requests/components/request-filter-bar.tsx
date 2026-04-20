@@ -27,25 +27,41 @@ import {
   REQUEST_DELETION_FILTER_OPTIONS,
   REQUEST_STATUS_OPTIONS,
 } from "@/lib/constants";
-import type { ProfileOption, RequestFilters } from "@/features/payment-requests/types";
+import type {
+  Category,
+  ProfileOption,
+  RequestFilters,
+  SubCategory,
+} from "@/features/payment-requests/types";
 
 type DraftFilters = RequestFilters;
 
 const dateInputClassName =
   "pr-3 [&::-webkit-calendar-picker-indicator]:m-0 [&::-webkit-calendar-picker-indicator]:ml-2";
 const searchDebounceMs = 400;
+const ALL_VALUE = "all";
 
 function FilterFields({
+  categories,
+  subCategories,
   draft,
   setDraft,
   showCreator,
   creators,
 }: {
+  categories: Category[];
+  subCategories: SubCategory[];
   draft: DraftFilters;
   setDraft: React.Dispatch<React.SetStateAction<DraftFilters>>;
   showCreator: boolean;
   creators: ProfileOption[];
 }) {
+  const availableSubCategories = draft.category
+    ? subCategories.filter(
+        (subCategory) => subCategory.category_id === draft.category,
+      )
+    : [];
+
   return (
     <>
       <div className="space-y-2">
@@ -86,6 +102,58 @@ function FilterFields({
       </div>
 
       <div className="space-y-2">
+        <Label>Danh mục</Label>
+        <Select
+          onValueChange={(value) =>
+            setDraft((current) => ({
+              ...current,
+              category: value === ALL_VALUE ? "" : value,
+              sub_category: "",
+            }))
+          }
+          value={draft.category || ALL_VALUE}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Tất cả danh mục" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL_VALUE}>Tất cả danh mục</SelectItem>
+            {categories.map((category) => (
+              <SelectItem key={category.id} value={category.id}>
+                {category.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Danh mục con</Label>
+        <Select
+          disabled={!draft.category}
+          onValueChange={(value) =>
+            setDraft((current) => ({
+              ...current,
+              sub_category: value === ALL_VALUE ? "" : value,
+            }))
+          }
+          value={draft.sub_category || ALL_VALUE}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Tất cả danh mục con" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL_VALUE}>Tất cả danh mục con</SelectItem>
+            {availableSubCategories.map((subCategory) => (
+              <SelectItem key={subCategory.id} value={subCategory.id}>
+                {subCategory.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
         <Label>Tình trạng xóa</Label>
         <Select
           onValueChange={(value) =>
@@ -108,6 +176,33 @@ function FilterFields({
           </SelectContent>
         </Select>
       </div>
+
+      {showCreator ? (
+        <div className="space-y-2">
+          <Label>Người đề nghị</Label>
+          <Select
+            onValueChange={(value) =>
+              setDraft((current) => ({
+                ...current,
+                creator: value === ALL_VALUE ? "" : value,
+              }))
+            }
+            value={draft.creator || ALL_VALUE}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Tất cả nhân viên" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_VALUE}>Tất cả nhân viên</SelectItem>
+              {creators.map((creator) => (
+                <SelectItem key={creator.id} value={creator.id}>
+                  {creator.full_name ?? "Chưa cập nhật"}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      ) : null}
 
       <div className="space-y-2">
         <Label>Từ ngày</Label>
@@ -132,33 +227,6 @@ function FilterFields({
           value={draft.to}
         />
       </div>
-
-      {showCreator ? (
-        <div className="space-y-2">
-          <Label>Người đề nghị</Label>
-          <Select
-            onValueChange={(value) =>
-              setDraft((current) => ({
-                ...current,
-                creator: value === "all" ? "" : value,
-              }))
-            }
-            value={draft.creator || "all"}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Tất cả nhân viên" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả nhân viên</SelectItem>
-              {creators.map((creator) => (
-                <SelectItem key={creator.id} value={creator.id}>
-                  {creator.full_name ?? "Chưa cập nhật"}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      ) : null}
 
       <div className="space-y-2">
         <Label>Sắp xếp</Label>
@@ -185,10 +253,14 @@ function FilterFields({
 }
 
 export function RequestFilterBar({
+  categories,
+  subCategories,
   filters,
   creators = [],
   showCreator = false,
 }: {
+  categories: Category[];
+  subCategories: SubCategory[];
   filters: RequestFilters;
   creators?: ProfileOption[];
   showCreator?: boolean;
@@ -269,6 +341,8 @@ export function RequestFilterBar({
     }
 
     const emptyFilters: RequestFilters = {
+      category: "",
+      sub_category: "",
       keyword: "",
       status: "",
       deleted: "active",
@@ -293,12 +367,14 @@ export function RequestFilterBar({
   return (
     <>
       <div className="surface-panel hidden grid-cols-7 gap-4 rounded-[2rem] p-5 md:grid md:w-full">
-        <div className="col-span-full grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
+        <div className="col-span-full grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           <FilterFields
+            categories={categories}
             creators={creators}
             draft={draft}
             setDraft={handleDraftUpdate}
             showCreator={showCreator}
+            subCategories={subCategories}
           />
         </div>
         <div className="col-span-full flex items-center justify-between gap-3">
@@ -329,10 +405,12 @@ export function RequestFilterBar({
             </SheetHeader>
             <div className="grid gap-4">
               <FilterFields
+                categories={categories}
                 creators={creators}
                 draft={draft}
                 setDraft={handleDraftUpdate}
                 showCreator={showCreator}
+                subCategories={subCategories}
               />
             </div>
             <SheetFooter>

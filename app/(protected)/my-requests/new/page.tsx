@@ -1,9 +1,17 @@
 import { PageIntro } from "@/components/shared/page-intro";
 import { RequestForm } from "@/features/payment-requests/components/request-form";
+import {
+  getCategories,
+  getSubCategories,
+} from "@/features/payment-requests/queries";
 import { requireRole } from "@/lib/auth/session";
 
 export default async function NewRequestPage() {
   await requireRole(["employee", "accountant"]);
+  const [categories, subCategories] = await Promise.all([
+    getCategories(),
+    getSubCategories(),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -13,7 +21,11 @@ export default async function NewRequestPage() {
         title="Tạo đề nghị thanh toán"
       />
 
-      <RequestForm mode="create" />
+      <RequestForm
+        categories={categories}
+        mode="create"
+        subCategories={subCategories}
+      />
     </div>
   );
 }

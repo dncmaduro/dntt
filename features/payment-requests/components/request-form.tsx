@@ -21,12 +21,23 @@ import {
   PaymentRequestQrUploadField,
   type PaymentRequestQrDraft,
 } from "@/features/payment-requests/components/payment-request-qr-upload-field";
-import type { AttachmentWithUrl } from "@/features/payment-requests/types";
+import type {
+  AttachmentWithUrl,
+  Category,
+  SubCategory,
+} from "@/features/payment-requests/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { isImageMimeType } from "@/lib/utils";
 
@@ -39,15 +50,21 @@ type DraftFile = {
 };
 
 export function RequestForm({
+  categories,
+  subCategories,
   mode,
   requestId,
   initialValues,
+  initialCategoryId,
   existingAttachments = [],
   existingPaymentQr,
 }: {
+  categories: Category[];
+  subCategories: SubCategory[];
   mode: "create" | "edit";
   requestId?: string;
   initialValues?: Partial<FormValues>;
+  initialCategoryId?: string | null;
   existingAttachments?: AttachmentWithUrl[];
   existingPaymentQr?: {
     fileName: string | null;
@@ -66,6 +83,7 @@ export function RequestForm({
   const [removedAttachmentIds, setRemovedAttachmentIds] = useState<string[]>([]);
   const [paymentQrDraft, setPaymentQrDraft] = useState<PaymentRequestQrDraft | null>(null);
   const [removeExistingPaymentQr, setRemoveExistingPaymentQr] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState(initialCategoryId ?? "");
 
   const form = useForm<FormValues>({
     resolver: zodResolver(paymentRequestFormSchema),
@@ -74,6 +92,7 @@ export function RequestForm({
       amount: initialValues?.amount ?? undefined,
       description: initialValues?.description ?? "",
       payment_date: initialValues?.payment_date ?? "",
+      sub_category_id: initialValues?.sub_category_id ?? "",
     },
   });
 
@@ -92,6 +111,15 @@ export function RequestForm({
   }, [paymentQrDraft, selectedFiles]);
 
   const totalAttachments = retainedAttachments.length + selectedFiles.length;
+  const availableSubCategories = useMemo(
+    () =>
+      selectedCategoryId
+        ? subCategories.filter(
+            (subCategory) => subCategory.category_id === selectedCategoryId,
+          )
+        : [],
+    [selectedCategoryId, subCategories],
+  );
 
   const onFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const incoming = Array.from(event.target.files ?? []);
@@ -140,6 +168,7 @@ export function RequestForm({
     formData.set("amount", values.amount == null ? "" : String(values.amount));
     formData.set("description", values.description ?? "");
     formData.set("payment_date", values.payment_date);
+    formData.set("sub_category_id", values.sub_category_id);
     formData.set("removePaymentQr", removeExistingPaymentQr ? "true" : "false");
 
     selectedFiles.forEach((draft) => {
@@ -238,11 +267,77 @@ export function RequestForm({
             <FieldLabel htmlFor="payment_date" required>
               Ngày thanh toán
             </FieldLabel>
-              <Input id="payment_date" type="date" {...form.register("payment_date")} />
+            <Input id="payment_date" type="date" {...form.register("payment_date")} />
             <FieldError
               error={
                 form.formState.errors.payment_date?.message ||
                 serverErrors.payment_date?.[0]
+              }
+            />
+          </div>
+
+          <div className="space-y-2">
+            <FieldLabel required>Danh mục</FieldLabel>
+            <Select
+              onValueChange={(value) => {
+                const nextCategoryId = value;
+                setSelectedCategoryId(nextCategoryId);
+                form.setValue("sub_category_id", "", {
+                  shouldDirty: true,
+                  shouldTouch: true,
+                  shouldValidate: true,
+                });
+              }}
+              value={selectedCategoryId || undefined}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Chọn danh mục" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FieldError
+              error={
+                form.formState.submitCount > 0 && !selectedCategoryId
+                  ? "Vui lòng chọn danh mục"
+                  : undefined
+              }
+            />
+          </div>
+
+          <div className="space-y-2">
+            <FieldLabel required>Danh mục con</FieldLabel>
+            <Controller
+              control={form.control}
+              name="sub_category_id"
+              render={({ field }) => (
+                <Select
+                  disabled={!selectedCategoryId}
+                  onValueChange={field.onChange}
+                  value={field.value || undefined}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn danh mục con" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableSubCategories.map((subCategory) => (
+                      <SelectItem key={subCategory.id} value={subCategory.id}>
+                        {subCategory.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            <FieldError
+              error={
+                form.formState.errors.sub_category_id?.message ||
+                serverErrors.sub_category_id?.[0]
               }
             />
           </div>

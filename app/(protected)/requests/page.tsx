@@ -2,8 +2,10 @@ import { PageIntro } from "@/components/shared/page-intro";
 import { RequestFilterBar } from "@/features/payment-requests/components/request-filter-bar";
 import { ReviewRequestList } from "@/features/payment-requests/components/review-request-list";
 import {
+  getCategories,
   getEmployeesForFilter,
   getRequestList,
+  getSubCategories,
   parseRequestFilters,
 } from "@/features/payment-requests/queries";
 import { APP_ROUTES } from "@/lib/constants";
@@ -15,9 +17,11 @@ type RequestsPageProps = {
 
 export default async function RequestsPage({ searchParams }: RequestsPageProps) {
   const profile = await requireRole(["accountant", "director"]);
-  const [filters, creators] = await Promise.all([
+  const [filters, categories, creators, subCategories] = await Promise.all([
     parseRequestFilters(searchParams),
+    getCategories(),
     getEmployeesForFilter(),
+    getSubCategories(),
   ]);
   const requests = await getRequestList({
     filters,
@@ -33,7 +37,13 @@ export default async function RequestsPage({ searchParams }: RequestsPageProps) 
         title="Tất cả đề nghị thanh toán"
       />
 
-      <RequestFilterBar creators={creators} filters={filters} showCreator />
+      <RequestFilterBar
+        categories={categories}
+        creators={creators}
+        filters={filters}
+        showCreator
+        subCategories={subCategories}
+      />
 
       <ReviewRequestList
         currentRole={profile.role}
