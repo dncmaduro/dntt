@@ -56,7 +56,12 @@ type RequestListRow = Omit<
   attachments: { id: string }[] | null;
 };
 
-type ExpenseListRow = Omit<ExpenseRequestListItem, 'category' | 'sub_category'>;
+type ExpenseListRow = Omit<
+  ExpenseRequestListItem,
+  "attachment_count" | "category" | "sub_category"
+> & {
+  attachments: { id: string }[] | null;
+};
 
 type EmployeeFilterRow = {
   full_name: string | null;
@@ -398,7 +403,7 @@ export const getExpenseRequestList = async ({
   filters: ExpenseFilters;
 }): Promise<ExpenseRequestListItem[]> => {
   const supabase = await createClient();
-  let query = supabase.from('payment_requests').select(REQUEST_OWNER_SELECT);
+  let query = supabase.from('payment_requests').select(REQUEST_LIST_SELECT);
 
   query = query.eq('is_deleted', false);
 
@@ -441,9 +446,14 @@ export const getExpenseRequestList = async ({
     throw new Error(error.message);
   }
 
-  return (await enrichRequestsWithTaxonomy({
+  const items = await enrichRequestsWithTaxonomy({
     items: (data ?? []) as ExpenseListRow[],
     supabase,
+  });
+
+  return items.map((item) => ({
+    ...item,
+    attachment_count: item.attachments?.length ?? 0,
   })) as ExpenseRequestListItem[];
 };
 

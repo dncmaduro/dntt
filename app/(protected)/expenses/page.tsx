@@ -1,4 +1,7 @@
+import { Download } from "lucide-react";
+
 import { PageIntro } from "@/components/shared/page-intro";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ExpenseFilterBar } from "@/features/payment-requests/components/expense-filter-bar";
 import { ExpenseRequestList } from "@/features/payment-requests/components/expense-request-list";
@@ -18,8 +21,9 @@ type ExpensesPageProps = {
 export default async function ExpensesPage({ searchParams }: ExpensesPageProps) {
   await requireRole(["accountant", "director"]);
 
+  const resolvedSearchParams = await searchParams;
   const [filters, categories, subCategories] = await Promise.all([
-    parseExpenseFilters(searchParams),
+    parseExpenseFilters(Promise.resolve(resolvedSearchParams)),
     getCategories(),
     getSubCategories(),
   ]);
@@ -28,10 +32,31 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
     (total, request) => total + (request.amount ?? 0),
     0,
   );
+  const exportQuery = new URLSearchParams();
+
+  (Object.entries(filters) as Array<[keyof typeof filters, string]>).forEach(
+    ([key, value]) => {
+      if (value && value !== "all") {
+        exportQuery.set(key, value);
+      }
+    },
+  );
+
+  const exportHref = exportQuery.toString()
+    ? `/expenses/export?${exportQuery.toString()}`
+    : "/expenses/export";
 
   return (
     <div className="space-y-6">
       <PageIntro
+        actions={
+          <Button asChild>
+            <a download href={exportHref}>
+              <Download className="size-4" />
+              Xuất DNTT
+            </a>
+          </Button>
+        }
         description="Theo dõi chi phí theo danh mục, danh mục con, tháng và trạng thái thanh toán."
         eyebrow="Chi phí"
         title="Chi phí"

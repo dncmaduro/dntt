@@ -84,6 +84,7 @@ export type ExpenseFilters = {
 
 export type ExpenseRequestListItem = PaymentRequestRow & {
   owner: RequestOwner | null;
+  attachment_count: number;
   category: Category | null;
   sub_category: SubCategoryWithCategory | null;
 };
