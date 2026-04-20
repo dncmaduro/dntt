@@ -220,6 +220,11 @@ export const ACCOUNTANT_NAVIGATION: NavigationItem[] = [
     icon: WalletCards,
   },
   {
+    href: APP_ROUTES.paymentQr,
+    label: "QR thanh toán",
+    icon: ScanQrCode,
+  },
+  {
     href: APP_ROUTES.notifications,
     label: "Thông báo",
     icon: BellRing,

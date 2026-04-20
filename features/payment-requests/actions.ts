@@ -916,7 +916,7 @@ export const confirmPaymentRequestPaidAction = async (
   formData: FormData,
 ): Promise<ActionResult<{ paymentReference: string; requestId: string }>> => {
   try {
-    const profile = await requireRole(['director']);
+    const profile = await requireRole(['accountant', 'director']);
     const parsed = confirmPaymentSchema.safeParse({
       requestId: formData.get('requestId'),
       payment_reference: formData.get('payment_reference'),
@@ -1047,7 +1047,7 @@ export const confirmPaymentRequestPaidAction = async (
       recipientIds: [request.user_id],
       type: 'marked_paid',
       title: NOTIFICATION_LABELS.marked_paid,
-      body: `${profile.full_name ?? 'Giám đốc'} đã xác nhận thanh toán cho đề nghị của bạn với mã ${parsed.data.payment_reference}.`,
+      body: `${profile.full_name ?? 'Người xử lý'} đã xác nhận thanh toán cho đề nghị của bạn với mã ${parsed.data.payment_reference}.`,
       requestId: request.id,
     });
 

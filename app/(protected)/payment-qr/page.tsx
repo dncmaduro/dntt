@@ -15,7 +15,7 @@ type PaymentQrPageProps = {
 export default async function PaymentQrPage({
   searchParams,
 }: PaymentQrPageProps) {
-  await requireRole(["director"]);
+  await requireRole(["accountant", "director"]);
 
   const { employeeId, month, page, year } =
     await parsePaymentQrSearchParams(searchParams);

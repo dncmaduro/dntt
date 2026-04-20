@@ -33,5 +33,5 @@ export const canMarkAsPaid = (
   role: UserRole,
   status: PaymentRequestStatus,
 ) =>
-  role === "director" &&
+  (role === "accountant" || role === "director") &&
   (status === "pending_director" || status === "director_approved");
