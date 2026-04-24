@@ -21,10 +21,10 @@ export const paymentRequestFormSchema = z.object({
   description: z
     .string()
     .trim()
-    .max(2000, "Mô tả không được vượt quá 2000 ký tự")
-    .optional()
-    .or(z.literal("")),
-  payment_date: z.string().min(1, "Vui lòng chọn ngày thanh toán"),
+    .min(1, "Vui lòng nhập mô tả")
+    .max(2000, "Mô tả không được vượt quá 2000 ký tự"),
+  creator_paid_before: z.boolean(),
+  payment_date: z.string().nullable().optional(),
   sub_category_id: z
     .string()
     .trim()
@@ -33,6 +33,14 @@ export const paymentRequestFormSchema = z.object({
       (value) => z.uuid().safeParse(value).success,
       "Danh mục con không hợp lệ",
     ),
+}).superRefine((value, ctx) => {
+  if (value.creator_paid_before && !value.payment_date?.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Vui lòng chọn ngày thanh toán",
+      path: ["payment_date"],
+    });
+  }
 });
 
 export const reviewSchema = z

@@ -16,7 +16,7 @@ type PaymentQrRequestRow = {
   created_at: string;
   description: string | null;
   id: string;
-  payment_date: string;
+  payment_date: string | null;
   status: string;
   title: string;
 };
@@ -178,6 +178,10 @@ export const getSelectedEmployeePaymentQr = async (
     new Set(
       allUnpaidRequests
         .map((request) => {
+          if (!request.payment_date) {
+            return null;
+          }
+
           const date = new Date(request.payment_date);
           return Number.isNaN(date.getTime()) ? null : date.getFullYear();
         })
@@ -188,6 +192,10 @@ export const getSelectedEmployeePaymentQr = async (
   const filteredUnpaidRequests = allUnpaidRequests.filter((request) => {
     if (!filters?.year) {
       return true;
+    }
+
+    if (!request.payment_date) {
+      return false;
     }
 
     const date = new Date(request.payment_date);

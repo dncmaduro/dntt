@@ -66,6 +66,8 @@ export default async function EditMyRequestPage({ params }: EditPageProps) {
           fileType: request.payment_qr_type,
           signedUrl: request.payment_qr_signed_url,
         }}
+        hasProfileQr={Boolean(request.owner?.qr_payment_url)}
+        initialCreatorPaidBefore={!request.payment_qr_name}
         initialCategoryId={request.sub_category?.category_id ?? null}
         initialValues={{
           amount: request.amount ?? null,

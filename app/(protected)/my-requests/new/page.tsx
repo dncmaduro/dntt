@@ -7,7 +7,7 @@ import {
 import { requireRole } from "@/lib/auth/session";
 
 export default async function NewRequestPage() {
-  await requireRole(["employee", "accountant"]);
+  const profile = await requireRole(["employee", "accountant"]);
   const [categories, subCategories] = await Promise.all([
     getCategories(),
     getSubCategories(),
@@ -23,6 +23,7 @@ export default async function NewRequestPage() {
 
       <RequestForm
         categories={categories}
+        hasProfileQr={Boolean(profile.qr_payment_url)}
         mode="create"
         subCategories={subCategories}
       />

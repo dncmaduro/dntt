@@ -90,6 +90,9 @@ const parseAmountValue = (value: FormDataEntryValue | null) => {
 const parseUuidField = (value: FormDataEntryValue | null) =>
   typeof value === 'string' ? value.trim() : '';
 
+const parseOptionalStringField = (value: FormDataEntryValue | null) =>
+  typeof value === 'string' && value.trim() ? value.trim() : null;
+
 const revalidateRequestPaths = (requestId: string) => {
   revalidatePath(APP_ROUTES.dashboard);
   revalidatePath(APP_ROUTES.expenses);
@@ -360,7 +363,8 @@ export const createPaymentRequestAction = async (
       title: formData.get('title'),
       amount: parseAmountValue(formData.get('amount')),
       description: formData.get('description'),
-      payment_date: formData.get('payment_date'),
+      payment_date: parseOptionalStringField(formData.get('payment_date')),
+      creator_paid_before: parseBoolean(formData.get('creator_paid_before')),
       sub_category_id: parseUuidField(formData.get('sub_category_id')),
     });
 
@@ -372,6 +376,19 @@ export const createPaymentRequestAction = async (
       };
     }
 
+    if (!parsed.data.creator_paid_before && !paymentQrFile && !profile.qr_payment_url) {
+      const message =
+        'Vui lòng cung cấp QR thanh toán để kế toán có thể chuyển khoản cho đề nghị này.';
+
+      return {
+        success: false,
+        error: message,
+        fieldErrors: {
+          payment_qr: [message],
+        },
+      };
+    }
+
     const { data: createdRequest, error } = await supabase
       .from('payment_requests')
       .insert({
@@ -379,7 +396,7 @@ export const createPaymentRequestAction = async (
         title: parsed.data.title,
         amount: parsed.data.amount ?? null,
         description: parsed.data.description || null,
-        payment_date: parsed.data.payment_date,
+        payment_date: parsed.data.payment_date ?? null,
         status: DEFAULT_REQUEST_STATUS,
         is_deleted: false,
         sub_category_id: parsed.data.sub_category_id,
@@ -495,7 +512,8 @@ export const updatePaymentRequestAction = async (
       title: formData.get('title'),
       amount: parseAmountValue(formData.get('amount')),
       description: formData.get('description'),
-      payment_date: formData.get('payment_date'),
+      payment_date: parseOptionalStringField(formData.get('payment_date')),
+      creator_paid_before: parseBoolean(formData.get('creator_paid_before')),
       sub_category_id: parseUuidField(formData.get('sub_category_id')),
     });
 
@@ -530,6 +548,26 @@ export const updatePaymentRequestAction = async (
           },
         };
       }
+    }
+
+    const hasCurrentPaymentQr = Boolean(request.payment_qr_path && !removePaymentQr);
+
+    if (
+      !parsed.data.creator_paid_before &&
+      !paymentQrFile &&
+      !hasCurrentPaymentQr &&
+      !profile.qr_payment_url
+    ) {
+      const message =
+        'Vui lòng cung cấp QR thanh toán để kế toán có thể chuyển khoản cho đề nghị này.';
+
+      return {
+        success: false,
+        error: message,
+        fieldErrors: {
+          payment_qr: [message],
+        },
+      };
     }
 
     const { data: existingAttachments, error: attachmentError } = await supabase
@@ -568,7 +606,7 @@ export const updatePaymentRequestAction = async (
         title: parsed.data.title,
         amount: parsed.data.amount ?? null,
         description: parsed.data.description || null,
-        payment_date: parsed.data.payment_date,
+        payment_date: parsed.data.payment_date ?? null,
         status: nextStatus,
         sub_category_id: parsed.data.sub_category_id,
         updated_at: new Date().toISOString(),

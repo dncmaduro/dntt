@@ -222,7 +222,7 @@ export type Database = {
           payment_qr_name: string | null;
           payment_qr_path: string | null;
           payment_qr_type: string | null;
-          payment_date: string;
+          payment_date: string | null;
           payment_reference: string | null;
           status: string;
           sub_category_id: string | null;
@@ -248,7 +248,7 @@ export type Database = {
           payment_qr_name?: string | null;
           payment_qr_path?: string | null;
           payment_qr_type?: string | null;
-          payment_date: string;
+          payment_date?: string | null;
           payment_reference?: string | null;
           status: string;
           sub_category_id?: string | null;
@@ -274,7 +274,7 @@ export type Database = {
           payment_qr_name?: string | null;
           payment_qr_path?: string | null;
           payment_qr_type?: string | null;
-          payment_date?: string;
+          payment_date?: string | null;
           payment_reference?: string | null;
           status?: string;
           sub_category_id?: string | null;

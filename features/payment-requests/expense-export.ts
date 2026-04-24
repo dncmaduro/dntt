@@ -240,7 +240,7 @@ export const buildExpenseExportWorkbook = async ({
   }
 
   const exportItems = [...items].sort((left, right) =>
-    left.payment_date.localeCompare(right.payment_date) ||
+    (left.payment_date ?? "").localeCompare(right.payment_date ?? "") ||
     left.created_at.localeCompare(right.created_at),
   );
   const summaryRows = buildSummaryRows(exportItems);
