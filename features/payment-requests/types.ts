@@ -26,6 +26,10 @@ export type PaymentBillWithUrl = PaymentRequestPaymentBillRow & {
   signed_url: string | null;
 };
 
+export type ExpenseAttachmentWithUrl = PaymentRequestAttachmentRow & {
+  signed_url: string | null;
+};
+
 export type Category = CategoryRow;
 export type SubCategory = SubCategoryRow;
 export type SubCategoryWithCategory = SubCategory & {
@@ -85,6 +89,7 @@ export type ExpenseFilters = {
 export type ExpenseRequestListItem = PaymentRequestRow & {
   owner: RequestOwner | null;
   attachment_count: number;
+  attachments: ExpenseAttachmentWithUrl[];
   category: Category | null;
   sub_category: SubCategoryWithCategory | null;
 };

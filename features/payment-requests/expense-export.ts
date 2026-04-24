@@ -4,9 +4,11 @@ import path from "node:path";
 import ExcelJS from "exceljs";
 
 import type {
+  ExpenseAttachmentWithUrl,
   ExpenseFilters,
   ExpenseRequestListItem,
 } from "@/features/payment-requests/types";
+import { isImageMimeType } from "@/lib/utils";
 
 const TEMPLATE_PATH = path.join(
   process.cwd(),
@@ -17,6 +19,14 @@ const DETAIL_START_ROW = 9;
 const DETAIL_END_ROW = 74;
 const DETAIL_SLOT_COUNT = DETAIL_END_ROW - DETAIL_START_ROW + 1;
 const TOTAL_ROW_TEMPLATE = 75;
+const EVIDENCE_SHEET_NAME = "Minh chứng";
+const REPORT_EVIDENCE_COLUMN = 7;
+const EVIDENCE_IMAGE_START_COLUMN = 3;
+const EVIDENCE_IMAGE_WIDTH = 480;
+const EVIDENCE_IMAGE_HEIGHT = 360;
+const EVIDENCE_IMAGE_COLUMN_WIDTH = 68;
+const EVIDENCE_IMAGE_ROW_HEIGHT = 280;
+const EVIDENCE_FONT_NAME = "Times New Roman";
 
 const CATEGORY_COLOR_PALETTE: string[] = [
   "FFFCE8E6",
@@ -42,6 +52,14 @@ type ExpenseSummaryRow = {
   color: string;
   label: string;
   total: number;
+};
+
+type WorkbookImageExtension = "gif" | "jpeg" | "png";
+
+type ResolvedAttachmentImage = {
+  attachment: ExpenseAttachmentWithUrl;
+  base64: string;
+  extension: WorkbookImageExtension;
 };
 
 const cloneValue = <T>(value: T): T => structuredClone(value);
@@ -222,6 +240,179 @@ const clearMergeIfExists = (worksheet: ExcelJS.Worksheet, range: string) => {
   }
 };
 
+const buildRequestEvidenceLabel = (item: ExpenseRequestListItem) => {
+  const categoryLabel = formatCategoryLabel(item);
+
+  return categoryLabel && categoryLabel !== "Chưa phân loại"
+    ? `${item.title} - ${categoryLabel}`
+    : item.title;
+};
+
+const normalizeWorkbookImageExtension = (
+  attachment: ExpenseAttachmentWithUrl,
+): WorkbookImageExtension | null => {
+  const normalizedMimeType = attachment.file_type?.trim().toLowerCase();
+
+  if (normalizedMimeType === "image/jpeg" || normalizedMimeType === "image/jpg") {
+    return "jpeg";
+  }
+
+  if (normalizedMimeType === "image/png") {
+    return "png";
+  }
+
+  if (normalizedMimeType === "image/gif") {
+    return "gif";
+  }
+
+  const normalizedExtension = path.extname(attachment.file_name).trim().toLowerCase();
+
+  if (normalizedExtension === ".jpg" || normalizedExtension === ".jpeg") {
+    return "jpeg";
+  }
+
+  if (normalizedExtension === ".png") {
+    return "png";
+  }
+
+  if (normalizedExtension === ".gif") {
+    return "gif";
+  }
+
+  return null;
+};
+
+const downloadAttachmentImage = async (
+  attachment: ExpenseAttachmentWithUrl,
+): Promise<ResolvedAttachmentImage | null> => {
+  if (!attachment.signed_url || !isImageMimeType(attachment.file_type)) {
+    return null;
+  }
+
+  const extension = normalizeWorkbookImageExtension(attachment);
+
+  if (!extension) {
+    return null;
+  }
+
+  const response = await fetch(attachment.signed_url);
+
+  if (!response.ok) {
+    throw new Error(`Unable to download attachment image: ${attachment.file_name}`);
+  }
+
+  return {
+    attachment,
+    base64: Buffer.from(await response.arrayBuffer()).toString("base64"),
+    extension,
+  };
+};
+
+const getExcelColumnName = (value: number) => {
+  let currentValue = value;
+  let result = "";
+
+  while (currentValue > 0) {
+    const remainder = (currentValue - 1) % 26;
+
+    result = String.fromCharCode(65 + remainder) + result;
+    currentValue = Math.floor((currentValue - 1) / 26);
+  }
+
+  return result;
+};
+
+const buildEvidenceSheet = async ({
+  items,
+  workbook,
+}: {
+  items: ExpenseRequestListItem[];
+  workbook: ExcelJS.Workbook;
+}) => {
+  const evidenceSheet = workbook.addWorksheet(EVIDENCE_SHEET_NAME, {
+    views: [{ state: "frozen", xSplit: 2, ySplit: 1 }],
+  });
+  const imageMatrix = await Promise.all(
+    items.map((item) =>
+      Promise.all(item.attachments.map((attachment) => downloadAttachmentImage(attachment))),
+    ),
+  );
+  const maxImageCount = Math.max(
+    1,
+    ...imageMatrix.map((images) => images.filter(Boolean).length),
+  );
+
+  evidenceSheet.columns = [
+    { header: "STT", key: "index", width: 8 },
+    { header: "Đề nghị", key: "request", width: 52 },
+    ...Array.from({ length: maxImageCount }, (_, index) => ({
+      header: `Ảnh ${index + 1}`,
+      key: `image_${index + 1}`,
+      width: EVIDENCE_IMAGE_COLUMN_WIDTH,
+    })),
+  ];
+
+  evidenceSheet.properties.defaultRowHeight = 24;
+  evidenceSheet.eachRow({ includeEmpty: true }, (row) => {
+    row.font = { name: EVIDENCE_FONT_NAME, size: 12 };
+  });
+
+  const headerRow = evidenceSheet.getRow(1);
+  headerRow.font = { name: EVIDENCE_FONT_NAME, size: 12, bold: true };
+  headerRow.alignment = { horizontal: "center", vertical: "middle" };
+  headerRow.height = 24;
+
+  const linkTargetByRequestId = new Map<string, string>();
+
+  imageMatrix.forEach((images, index) => {
+    const item = items[index];
+    const rowNumber = index + 2;
+    const row = evidenceSheet.getRow(rowNumber);
+    const resolvedImages = images.filter(
+      (image): image is ResolvedAttachmentImage => image !== null,
+    );
+
+    row.getCell(1).value = index + 1;
+    row.getCell(2).value = buildRequestEvidenceLabel(item);
+    row.getCell(1).font = { name: EVIDENCE_FONT_NAME, size: 12 };
+    row.getCell(2).font = { name: EVIDENCE_FONT_NAME, size: 12 };
+    row.getCell(2).alignment = { vertical: "middle", wrapText: true };
+
+    if (!resolvedImages.length) {
+      row.getCell(EVIDENCE_IMAGE_START_COLUMN).value = "Không có ảnh minh chứng";
+      row.getCell(EVIDENCE_IMAGE_START_COLUMN).font = {
+        name: EVIDENCE_FONT_NAME,
+        size: 12,
+      };
+      row.height = 24;
+      return;
+    }
+
+    row.height = EVIDENCE_IMAGE_ROW_HEIGHT;
+
+    resolvedImages.forEach((image, imageIndex) => {
+      const columnNumber = EVIDENCE_IMAGE_START_COLUMN + imageIndex;
+      const cellAddress = `${getExcelColumnName(columnNumber)}${rowNumber}`;
+      const imageId = workbook.addImage({
+        base64: image.base64,
+        extension: image.extension,
+      });
+
+      evidenceSheet.addImage(imageId, {
+        tl: { col: columnNumber - 1 + 0.08, row: rowNumber - 1 + 0.08 },
+        ext: { width: EVIDENCE_IMAGE_WIDTH, height: EVIDENCE_IMAGE_HEIGHT },
+      });
+      evidenceSheet.getColumn(columnNumber).width = EVIDENCE_IMAGE_COLUMN_WIDTH;
+
+      if (imageIndex === 0) {
+        linkTargetByRequestId.set(item.id, cellAddress);
+      }
+    });
+  });
+
+  return linkTargetByRequestId;
+};
+
 export const buildExpenseExportWorkbook = async ({
   filters,
   items,
@@ -243,6 +434,10 @@ export const buildExpenseExportWorkbook = async ({
     (left.payment_date ?? "").localeCompare(right.payment_date ?? "") ||
     left.created_at.localeCompare(right.created_at),
   );
+  const evidenceLinkTargetByRequestId = await buildEvidenceSheet({
+    items: exportItems,
+    workbook,
+  });
   const summaryRows = buildSummaryRows(exportItems);
   const extraRows = Math.max(exportItems.length - DETAIL_SLOT_COUNT, 0);
   const detailEndRow = DETAIL_END_ROW + extraRows;
@@ -252,12 +447,14 @@ export const buildExpenseExportWorkbook = async ({
   const signatureBottomRow = 84 + extraRows;
 
   worksheet.name = buildWorksheetName(filters.month);
+  worksheet.getColumn(REPORT_EVIDENCE_COLUMN).width = 18;
 
   clearMergeIfExists(worksheet, "A75:E75");
   clearMergeIfExists(worksheet, "E77:F77");
   clearMergeIfExists(worksheet, "A83:B83");
   clearMergeIfExists(worksheet, "C83:E83");
   clearMergeIfExists(worksheet, "C84:F84");
+  clearMergeIfExists(worksheet, "G7:G8");
 
   if (extraRows > 0) {
     worksheet.spliceRows(
@@ -280,6 +477,10 @@ export const buildExpenseExportWorkbook = async ({
   worksheet.mergeCells(`A${signatureTopRow}:B${signatureTopRow}`);
   worksheet.mergeCells(`C${signatureTopRow}:E${signatureTopRow}`);
   worksheet.mergeCells(`C${signatureBottomRow}:F${signatureBottomRow}`);
+  worksheet.mergeCells("G7:G8");
+  worksheet.getCell("G7").value = "Minh chứng";
+  worksheet.getCell("G7").style = cloneValue(worksheet.getCell("F7").style);
+  worksheet.getCell("G8").style = cloneValue(worksheet.getCell("F8").style);
 
   const actualRowStyles = {
     A: cloneValue(worksheet.getCell("A9").style),
@@ -288,6 +489,7 @@ export const buildExpenseExportWorkbook = async ({
     D: withWrapText(worksheet.getCell("D9").style),
     E: cloneValue(worksheet.getCell("E9").style),
     F: cloneValue(worksheet.getCell("F9").style),
+    G: cloneValue(worksheet.getCell("E9").style),
   };
   const blankRowStyles = {
     A: cloneValue(worksheet.getCell("A68").style),
@@ -296,6 +498,7 @@ export const buildExpenseExportWorkbook = async ({
     D: withWrapText(worksheet.getCell("D68").style),
     E: cloneValue(worksheet.getCell("E68").style),
     F: cloneValue(worksheet.getCell("F68").style),
+    G: cloneValue(worksheet.getCell("E68").style),
   };
   const summaryStyles = {
     blankLabel: cloneValue(worksheet.getCell("I24").style),
@@ -322,10 +525,15 @@ export const buildExpenseExportWorkbook = async ({
     const cellD = row.getCell(4);
     const cellE = row.getCell(5);
     const cellF = row.getCell(6);
+    const cellG = row.getCell(7);
 
     if (item) {
       const label = formatCategoryLabel(item);
       const fillColor = categoryColorByLabel.get(label) ?? CATEGORY_COLOR_PALETTE[0];
+      const evidenceLinkTarget = evidenceLinkTargetByRequestId.get(item.id);
+      const imageCount = item.attachments.filter((attachment) =>
+        isImageMimeType(attachment.file_type),
+      ).length;
       row.height = resolveDetailRowHeight(label);
 
       cellA.style = cloneValue(actualRowStyles.A);
@@ -334,6 +542,7 @@ export const buildExpenseExportWorkbook = async ({
       cellD.style = buildFilledStyle(actualRowStyles.D, fillColor);
       cellE.style = cloneValue(actualRowStyles.E);
       cellF.style = cloneValue(actualRowStyles.F);
+      cellG.style = cloneValue(actualRowStyles.G);
 
       cellA.value = index + 1;
       cellB.value = item.attachment_count > 0 ? "Có hoá đơn" : null;
@@ -341,6 +550,22 @@ export const buildExpenseExportWorkbook = async ({
       cellD.value = label;
       cellE.value = item.title;
       cellF.value = item.amount ?? 0;
+      cellG.value = evidenceLinkTarget
+        ? {
+            text: `Xem ảnh (${imageCount})`,
+            hyperlink: `#'${EVIDENCE_SHEET_NAME}'!${evidenceLinkTarget}`,
+            tooltip: `Đi tới sheet ${EVIDENCE_SHEET_NAME}`,
+          }
+        : "Không có ảnh";
+      cellG.font = evidenceLinkTarget
+        ? {
+            ...(typeof actualRowStyles.G.font === "object" && actualRowStyles.G.font
+              ? actualRowStyles.G.font
+              : {}),
+            color: { argb: "FF0563C1" },
+            underline: true,
+          }
+        : cloneValue(cellG.font);
     } else {
       row.height = 30;
       cellA.style = cloneValue(blankRowStyles.A);
@@ -349,6 +574,7 @@ export const buildExpenseExportWorkbook = async ({
       cellD.style = cloneValue(blankRowStyles.D);
       cellE.style = cloneValue(blankRowStyles.E);
       cellF.style = cloneValue(blankRowStyles.F);
+      cellG.style = cloneValue(blankRowStyles.G);
 
       cellA.value = null;
       cellB.value = null;
@@ -356,6 +582,7 @@ export const buildExpenseExportWorkbook = async ({
       cellD.value = null;
       cellE.value = null;
       cellF.value = null;
+      cellG.value = null;
     }
   }
 

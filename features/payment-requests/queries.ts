@@ -11,6 +11,7 @@ import { canViewGlobalRequests } from '@/lib/auth/permissions';
 import { getPaymentBillPreviewUrl } from '@/features/payment-requests/payment-bill-storage';
 import { getPaymentRequestQrPreviewUrl } from '@/features/payment-requests/payment-request-qr-storage';
 import type {
+  AttachmentWithUrl,
   Category,
   DashboardData,
   ExpenseFilters,
@@ -44,6 +45,19 @@ const REQUEST_LIST_SELECT = `
   )
 `;
 
+const EXPENSE_LIST_SELECT = `
+  ${REQUEST_OWNER_SELECT},
+  attachments:payment_request_attachments (
+    id,
+    created_at,
+    created_by,
+    file_name,
+    file_path,
+    file_type,
+    payment_request_id
+  )
+`;
+
 type RequestWithOwnerRow = {
   owner: RequestOwner | null;
   sub_category_id: string | null;
@@ -60,7 +74,7 @@ type ExpenseListRow = Omit<
   ExpenseRequestListItem,
   "attachment_count" | "category" | "sub_category"
 > & {
-  attachments: { id: string }[] | null;
+  attachments: AttachmentWithUrl[] | null;
 };
 
 type EmployeeFilterRow = {
@@ -403,7 +417,7 @@ export const getExpenseRequestList = async ({
   filters: ExpenseFilters;
 }): Promise<ExpenseRequestListItem[]> => {
   const supabase = await createClient();
-  let query = supabase.from('payment_requests').select(REQUEST_LIST_SELECT);
+  let query = supabase.from('payment_requests').select(EXPENSE_LIST_SELECT);
 
   query = query.eq('is_deleted', false);
 
@@ -451,9 +465,27 @@ export const getExpenseRequestList = async ({
     supabase,
   });
 
-  return items.map((item) => ({
+  const itemsWithAttachmentUrls = await Promise.all(
+    items.map(async (item) => ({
+      ...item,
+      attachments: await Promise.all(
+        (item.attachments ?? []).map(async (attachment) => {
+          const { data: signedUrlData } = await supabase.storage
+            .from(STORAGE_BUCKET)
+            .createSignedUrl(attachment.file_path, 60 * 60);
+
+          return {
+            ...attachment,
+            signed_url: signedUrlData?.signedUrl ?? null,
+          };
+        }),
+      ),
+    })),
+  );
+
+  return itemsWithAttachmentUrls.map((item) => ({
     ...item,
-    attachment_count: item.attachments?.length ?? 0,
+    attachment_count: item.attachments.length,
   })) as ExpenseRequestListItem[];
 };
 
