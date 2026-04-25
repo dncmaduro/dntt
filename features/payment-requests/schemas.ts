@@ -63,6 +63,15 @@ export const reviewSchema = z
     }
   });
 
+export const undoAccountingReviewSchema = z.object({
+  note: z
+    .string()
+    .trim()
+    .max(2000, "Ghi chú không được vượt quá 2000 ký tự")
+    .optional()
+    .or(z.literal("")),
+});
+
 export const paymentBillImageSchema = z
   .instanceof(File, {
     message: "Vui lòng chọn một ảnh bill hợp lệ",

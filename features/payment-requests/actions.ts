@@ -14,10 +14,11 @@ import {
 } from '@/lib/constants';
 import { requireRole } from '@/lib/auth/session';
 import {
+  canDeleteRequest,
   canMarkAsPaid,
   canManageOwnRequest,
   canReviewAccounting,
-  canSoftDeleteOwnRequest,
+  canUndoAccountingReview,
 } from '@/lib/auth/permissions';
 import {
   MAX_ATTACHMENTS,
@@ -28,6 +29,7 @@ import {
   paymentBillImageSchema,
   paymentRequestQrImageSchema,
   reviewSchema,
+  undoAccountingReviewSchema,
 } from '@/features/payment-requests/schemas';
 import { uploadPaymentBillFiles } from '@/features/payment-requests/payment-bill-storage';
 import { uploadPaymentRequestQrFile } from '@/features/payment-requests/payment-request-qr-storage';
@@ -753,25 +755,24 @@ export const softDeletePaymentRequestAction = async (
   requestId: string,
 ): Promise<ActionResult> => {
   try {
-    const profile = await requireRole(['employee', 'accountant']);
+    const profile = await requireRole(['employee', 'accountant', 'director']);
     const request = await getRequestForMutation(requestId);
-
-    if (request.user_id !== profile.id) {
-      return {
-        success: false,
-        error: 'Bạn không có quyền xóa đề nghị này',
-      };
-    }
+    const requestStatus = request.status as PaymentRequestStatus;
+    const isOwner = request.user_id === profile.id;
 
     if (
-      !canSoftDeleteOwnRequest(
-        profile.role,
-        request.status as PaymentRequestStatus,
-      )
+      !canDeleteRequest({
+        isOwner,
+        role: profile.role,
+        status: requestStatus,
+      })
     ) {
       return {
         success: false,
-        error: 'Không thể xóa đề nghị ở trạng thái hiện tại',
+        error:
+          profile.role !== 'director' && !isOwner
+            ? 'Bạn không có quyền xóa đề nghị này'
+            : 'Chỉ có thể xóa đề nghị khi đang chờ kế toán duyệt',
       };
     }
 
@@ -791,7 +792,7 @@ export const softDeletePaymentRequestAction = async (
       requestStatus: request.status,
     });
 
-    const { error } = await supabase
+    const baseUpdateQuery = supabase
       .from('payment_requests')
       .update({
         is_deleted: true,
@@ -799,13 +800,16 @@ export const softDeletePaymentRequestAction = async (
         updated_at: now,
       })
       .eq('id', requestId)
-      .eq('user_id', profile.id)
-      .in('status', [
-        'pending_accounting',
-        'accounting_rejected',
-        'director_rejected',
-      ])
       .is('is_deleted', false);
+
+    const updateQuery =
+      profile.role === 'director'
+        ? baseUpdateQuery
+        : baseUpdateQuery
+            .eq('user_id', profile.id)
+            .eq('status', 'pending_accounting');
+
+    const { error } = await updateQuery;
 
     if (error) {
       throw new Error(error.message);
@@ -942,6 +946,84 @@ export const reviewPaymentRequestAction = async ({
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Không thể xử lý đề nghị',
+    };
+  }
+};
+
+export const undoPaymentRequestReviewAction = async ({
+  requestId,
+  note,
+}: {
+  requestId: string;
+  note?: string;
+}): Promise<ActionResult> => {
+  try {
+    const profile = await requireRole(['accountant']);
+    const parsed = undoAccountingReviewSchema.safeParse({
+      note: note ?? '',
+    });
+
+    if (!parsed.success) {
+      return {
+        success: false,
+        error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ',
+      };
+    }
+
+    const request = await getRequestForMutation(requestId);
+    const supabase = await createActionClient();
+
+    if (
+      request.is_deleted ||
+      !canUndoAccountingReview(
+        profile.role,
+        request.status as PaymentRequestStatus,
+      )
+    ) {
+      return {
+        success: false,
+        error: 'Đề nghị này không thể hoàn tác quyết định của kế toán',
+      };
+    }
+
+    const now = new Date().toISOString();
+    const { error } = await supabase
+      .from('payment_requests')
+      .update({
+        status: 'pending_accounting',
+        ...clearReviewFields,
+        updated_at: now,
+      })
+      .eq('id', requestId);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    await insertLog({
+      client: supabase,
+      requestId,
+      actorId: profile.id,
+      action: 'accounting_review_reverted',
+      meta: {
+        note: parsed.data.note || null,
+        previous_status: request.status,
+      },
+    });
+
+    revalidateRequestPaths(requestId);
+
+    return {
+      success: true,
+      message: 'Đã hoàn tác quyết định của kế toán',
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Không thể hoàn tác quyết định của kế toán',
     };
   }
 };

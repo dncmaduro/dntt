@@ -35,6 +35,7 @@ export const PAYMENT_REQUEST_LOG_ACTIONS = [
   "soft_deleted",
   "accounting_approved",
   "accounting_rejected",
+  "accounting_review_reverted",
   "director_approved",
   "director_rejected",
   "marked_paid",
@@ -104,6 +105,7 @@ export const LOG_ACTION_LABELS: Record<PaymentRequestLogAction, string> = {
   soft_deleted: "Xóa mềm đề nghị",
   accounting_approved: "Kế toán duyệt",
   accounting_rejected: "Kế toán từ chối",
+  accounting_review_reverted: "Hoàn tác quyết định kế toán",
   director_approved: "Đề nghị đã duyệt",
   director_rejected: "Đề nghị bị từ chối",
   marked_paid: "Đánh dấu đã thanh toán",
@@ -124,7 +126,7 @@ export const EMPLOYEE_EDITABLE_STATUSES: PaymentRequestStatus[] = [
   "director_rejected",
 ];
 
-export const DELETABLE_STATUSES = EMPLOYEE_EDITABLE_STATUSES;
+export const DELETABLE_STATUSES: PaymentRequestStatus[] = ["pending_accounting"];
 
 export const PAGE_TITLES: Record<string, string> = {
   "/": "Tổng quan",

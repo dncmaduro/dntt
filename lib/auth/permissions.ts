@@ -1,5 +1,4 @@
 import {
-  DELETABLE_STATUSES,
   EMPLOYEE_EDITABLE_STATUSES,
   type PaymentRequestStatus,
   type UserRole,
@@ -22,12 +21,31 @@ export const canSoftDeleteOwnRequest = (
   status: PaymentRequestStatus,
 ) =>
   (role === "employee" || role === "accountant") &&
-  DELETABLE_STATUSES.includes(status);
+  status === "pending_accounting";
+
+export const canDeleteRequest = ({
+  isOwner,
+  role,
+  status,
+}: {
+  isOwner: boolean;
+  role: UserRole;
+  status: PaymentRequestStatus;
+}) =>
+  role === "director" ||
+  (isOwner && canSoftDeleteOwnRequest(role, status));
 
 export const canReviewAccounting = (
   role: UserRole,
   status: PaymentRequestStatus,
 ) => role === "accountant" && status === "pending_accounting";
+
+export const canUndoAccountingReview = (
+  role: UserRole,
+  status: PaymentRequestStatus,
+) =>
+  role === "accountant" &&
+  (status === "director_approved" || status === "accounting_rejected");
 
 export const canMarkAsPaid = (
   role: UserRole,

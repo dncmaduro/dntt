@@ -120,6 +120,13 @@ export function RequestForm({
     name: 'payment_date',
   });
 
+  const clearServerFieldError = (fieldName: string) => {
+    setServerErrors((current) => ({
+      ...current,
+      [fieldName]: undefined,
+    }));
+  };
+
   useEffect(() => {
     return () => {
       selectedFiles.forEach((draft) => {
@@ -380,6 +387,7 @@ export function RequestForm({
               onValueChange={(value) => {
                 const nextCategoryId = value;
                 setSelectedCategoryId(nextCategoryId);
+                clearServerFieldError('sub_category_id');
                 form.setValue('sub_category_id', '', {
                   shouldDirty: true,
                   shouldTouch: true,
@@ -416,7 +424,10 @@ export function RequestForm({
               render={({ field }) => (
                 <Select
                   disabled={!selectedCategoryId}
-                  onValueChange={field.onChange}
+                  onValueChange={(value) => {
+                    clearServerFieldError('sub_category_id');
+                    field.onChange(value);
+                  }}
                   value={field.value || undefined}
                 >
                   <SelectTrigger>

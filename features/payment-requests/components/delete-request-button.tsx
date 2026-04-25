@@ -19,7 +19,13 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-export function DeleteRequestButton({ requestId }: { requestId: string }) {
+export function DeleteRequestButton({
+  requestId,
+  redirectHref = "/my-requests",
+}: {
+  requestId: string;
+  redirectHref?: string;
+}) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -57,7 +63,7 @@ export function DeleteRequestButton({ requestId }: { requestId: string }) {
                   }
 
                   toast.success(result.message ?? "Đã xóa đề nghị");
-                  router.push("/my-requests");
+                  router.push(redirectHref);
                   router.refresh();
                 })
               }
