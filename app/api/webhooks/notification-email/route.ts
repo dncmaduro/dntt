@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
     const safeBody = notification.body ? escapeHtml(notification.body) : '';
 
     await transporter.sendMail({
-      from: `"Hệ thống DNTT" <${process.env.GMAIL_SMTP_USER}>`,
+      from: `"My Candy VN IT Department" <${process.env.GMAIL_SMTP_USER}>`,
       to: receiverEmail,
       subject: notification.title,
       html: `
