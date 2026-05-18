@@ -127,6 +127,11 @@ export function RequestForm({
     }));
   };
 
+  const clearFieldError = (fieldName: keyof FormValues) => {
+    clearServerFieldError(fieldName);
+    form.clearErrors(fieldName);
+  };
+
   useEffect(() => {
     return () => {
       selectedFiles.forEach((draft) => {
@@ -387,7 +392,7 @@ export function RequestForm({
               onValueChange={(value) => {
                 const nextCategoryId = value;
                 setSelectedCategoryId(nextCategoryId);
-                clearServerFieldError('sub_category_id');
+                clearFieldError('sub_category_id');
                 form.setValue('sub_category_id', '', {
                   shouldDirty: true,
                   shouldTouch: true,
@@ -425,7 +430,7 @@ export function RequestForm({
                 <Select
                   disabled={!selectedCategoryId}
                   onValueChange={(value) => {
-                    clearServerFieldError('sub_category_id');
+                    clearFieldError('sub_category_id');
                     field.onChange(value);
                   }}
                   value={field.value || undefined}

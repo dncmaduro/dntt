@@ -1,7 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
-import { useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
 import { LoaderCircle, LogIn, Eye, EyeOff } from "lucide-react";
 
@@ -18,6 +17,14 @@ const initialState = {
 export function LoginForm({ redirectTo }: { redirectTo?: string }) {
   const [state, formAction, isPending] = useActionState(loginAction, initialState);
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  useEffect(() => {
+    if (state.error) {
+      setPassword("");
+    }
+  }, [state.error]);
 
   return (
     <form action={formAction} className="space-y-5">
@@ -31,6 +38,8 @@ export function LoginForm({ redirectTo }: { redirectTo?: string }) {
           name="email"
           placeholder="ban@example.com"
           type="email"
+          onChange={(event) => setEmail(event.target.value)}
+          value={email}
         />
       </div>
 
@@ -43,6 +52,8 @@ export function LoginForm({ redirectTo }: { redirectTo?: string }) {
             name="password"
             placeholder="Nhập mật khẩu"
             type={showPassword ? "text" : "password"}
+            onChange={(event) => setPassword(event.target.value)}
+            value={password}
           />
           <button
             type="button"

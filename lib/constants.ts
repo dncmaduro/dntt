@@ -60,13 +60,31 @@ export const DEFAULT_REQUEST_STATUS: PaymentRequestStatus =
   "pending_accounting";
 export const STORAGE_BUCKET = "payment-request-files";
 
-export const STATUS_LABELS: Record<PaymentRequestStatus, string> = {
+export const PAYMENT_REQUEST_STATUS_LABELS: Record<string, string> = {
   pending_accounting: "Chờ kế toán",
   accounting_rejected: "Kế toán từ chối",
-  pending_director: "Đã duyệt",
-  director_rejected: "Kế toán từ chối",
-  director_approved: "Đã duyệt",
+  approved: "Kế toán đã duyệt",
+  director_rejected: "Giám đốc từ chối",
   paid: "Đã thanh toán",
+};
+
+export const DEPRECATED_PAYMENT_REQUEST_STATUS_LABELS: Record<string, string> = {
+  pending_director: "Chờ giám đốc xử lý",
+  director_approved: "Kế toán đã duyệt",
+};
+
+export const getPaymentRequestStatusLabel = (status: string) =>
+  PAYMENT_REQUEST_STATUS_LABELS[status] ??
+  DEPRECATED_PAYMENT_REQUEST_STATUS_LABELS[status] ??
+  status;
+
+export const STATUS_LABELS: Record<PaymentRequestStatus, string> = {
+  pending_accounting: getPaymentRequestStatusLabel("pending_accounting"),
+  accounting_rejected: getPaymentRequestStatusLabel("accounting_rejected"),
+  pending_director: getPaymentRequestStatusLabel("pending_director"),
+  director_rejected: getPaymentRequestStatusLabel("director_rejected"),
+  director_approved: getPaymentRequestStatusLabel("director_approved"),
+  paid: getPaymentRequestStatusLabel("paid"),
 };
 
 export const REQUEST_STATUS_OPTIONS = ACTIVE_PAYMENT_REQUEST_STATUSES.map((status) => ({
@@ -79,18 +97,39 @@ export const REQUEST_DELETION_FILTER_OPTIONS = [
   { value: "deleted", label: "Đã xóa" },
 ] as const;
 
-export const STATUS_BADGE_VARIANTS: Record<PaymentRequestStatus, string> = {
+export const PAYMENT_REQUEST_STATUS_BADGE_VARIANTS: Record<string, string> = {
   pending_accounting:
     "border-amber-200 bg-amber-50 text-amber-700 ring-amber-100",
   accounting_rejected:
     "border-rose-200 bg-rose-50 text-rose-700 ring-rose-100",
-  pending_director:
-    "border-emerald-200 bg-emerald-50 text-emerald-700 ring-emerald-100",
+  approved: "border-emerald-200 bg-emerald-50 text-emerald-700 ring-emerald-100",
   director_rejected:
     "border-rose-200 bg-rose-50 text-rose-700 ring-rose-100",
+  paid: "border-teal-200 bg-teal-50 text-teal-700 ring-teal-100",
+};
+
+export const DEPRECATED_PAYMENT_REQUEST_STATUS_BADGE_VARIANTS: Record<
+  string,
+  string
+> = {
+  pending_director:
+    "border-emerald-200 bg-emerald-50 text-emerald-700 ring-emerald-100",
   director_approved:
     "border-emerald-200 bg-emerald-50 text-emerald-700 ring-emerald-100",
-  paid: "border-teal-200 bg-teal-50 text-teal-700 ring-teal-100",
+};
+
+export const getPaymentRequestStatusBadgeVariant = (status: string) =>
+  PAYMENT_REQUEST_STATUS_BADGE_VARIANTS[status] ??
+  DEPRECATED_PAYMENT_REQUEST_STATUS_BADGE_VARIANTS[status] ??
+  "border-border/70";
+
+export const STATUS_BADGE_VARIANTS: Record<PaymentRequestStatus, string> = {
+  pending_accounting: getPaymentRequestStatusBadgeVariant("pending_accounting"),
+  accounting_rejected: getPaymentRequestStatusBadgeVariant("accounting_rejected"),
+  pending_director: getPaymentRequestStatusBadgeVariant("pending_director"),
+  director_rejected: getPaymentRequestStatusBadgeVariant("director_rejected"),
+  director_approved: getPaymentRequestStatusBadgeVariant("director_approved"),
+  paid: getPaymentRequestStatusBadgeVariant("paid"),
 };
 
 export const ROLE_LABELS: Record<UserRole, string> = {
@@ -103,20 +142,20 @@ export const LOG_ACTION_LABELS: Record<PaymentRequestLogAction, string> = {
   created: "Tạo đề nghị",
   updated: "Cập nhật đề nghị",
   soft_deleted: "Xóa mềm đề nghị",
-  accounting_approved: "Kế toán duyệt",
+  accounting_approved: "Kế toán đã duyệt",
   accounting_rejected: "Kế toán từ chối",
   accounting_review_reverted: "Hoàn tác quyết định kế toán",
-  director_approved: "Đề nghị đã duyệt",
-  director_rejected: "Đề nghị bị từ chối",
+  director_approved: "Đã xử lý",
+  director_rejected: "Giám đốc từ chối",
   marked_paid: "Đánh dấu đã thanh toán",
 };
 
 export const NOTIFICATION_LABELS: Record<NotificationType, string> = {
   request_created: "Đề nghị mới",
-  accounting_approved: "Đề nghị đã duyệt",
+  accounting_approved: "Kế toán đã duyệt",
   accounting_rejected: "Kế toán từ chối",
-  director_approved: "Đề nghị đã duyệt",
-  director_rejected: "Đề nghị bị từ chối",
+  director_approved: "Đã xử lý",
+  director_rejected: "Giám đốc từ chối",
   marked_paid: "Đã thanh toán",
 };
 

@@ -179,27 +179,14 @@ const notifyUsers = async ({
   body: string;
   requestId: string;
 }) => {
-  if (!recipientIds.length) {
-    return;
-  }
+  void client;
+  void recipientIds;
+  void type;
+  void title;
+  void body;
+  void requestId;
 
-  const supabase =
-    client ?? createAdminClient() ?? (await createActionClient());
-  const { error } = await supabase.from('notifications').insert(
-    recipientIds.map((userId) => ({
-      user_id: userId,
-      type,
-      title,
-      body,
-      entity_type: 'payment_request',
-      entity_id: requestId,
-      is_read: false,
-    })),
-  );
-
-  if (error) {
-    console.error('Notification insert failed', error.message);
-  }
+  // Notifications are created by database trigger.
 };
 
 const getProfilesByRole = async (role: 'accountant' | 'director') => {

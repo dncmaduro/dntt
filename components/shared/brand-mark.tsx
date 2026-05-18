@@ -11,12 +11,13 @@ export function BrandMark({
 }) {
   return (
     <div className={cn("flex items-center gap-3", className)}>
-      <div className="relative flex size-11 items-center justify-center overflow-hidden rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.3),transparent_60%)]" />
-        <span className="relative text-sm font-semibold tracking-[0.24em]">
-          D
-        </span>
-      </div>
+      <img
+        alt="DNTT nội bộ"
+        className="size-11 rounded-2xl shadow-lg shadow-primary/15"
+        height="44"
+        src="/icon.svg"
+        width="44"
+      />
 
       {compact ? null : (
         <div className="space-y-1">

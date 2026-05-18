@@ -1,18 +1,17 @@
 import { Badge } from "@/components/ui/badge";
 import {
-  STATUS_BADGE_VARIANTS,
-  STATUS_LABELS,
-  type PaymentRequestStatus,
+  getPaymentRequestStatusBadgeVariant,
+  getPaymentRequestStatusLabel,
 } from "@/lib/constants";
 
 export function StatusBadge({
   status,
 }: {
-  status: PaymentRequestStatus;
+  status: string;
 }) {
   return (
-    <Badge className={STATUS_BADGE_VARIANTS[status]} variant="outline">
-      {STATUS_LABELS[status]}
+    <Badge className={getPaymentRequestStatusBadgeVariant(status)} variant="outline">
+      {getPaymentRequestStatusLabel(status)}
     </Badge>
   );
 }

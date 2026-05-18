@@ -772,7 +772,7 @@ export const getDashboardData = async ({
           description: 'Cần xác nhận hồ sơ ngay',
         },
         {
-          label: 'Đã duyệt',
+          label: 'Kế toán đã duyệt',
           value: approved,
           description: 'Đã sẵn sàng để thanh toán',
         },
@@ -810,9 +810,9 @@ export const getDashboardData = async ({
 
     return [
       {
-        label: 'Chờ thanh toán',
+        label: 'Chờ giám đốc xử lý',
         value: readyToPay,
-        description: 'Các hồ sơ đã được duyệt và chờ chi trả',
+        description: 'Các hồ sơ đã được kế toán duyệt',
       },
       {
         label: 'Đã thanh toán',

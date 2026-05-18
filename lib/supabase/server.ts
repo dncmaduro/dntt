@@ -1,4 +1,4 @@
-import { createBrowserClient, createServerClient } from "@supabase/ssr";
+import { createServerClient } from "@supabase/ssr";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
@@ -31,21 +31,6 @@ export const createActionClient = async () => {
       },
     },
   });
-};
-
-let browserClient:
-  | ReturnType<typeof createBrowserClient<Database>>
-  | undefined;
-
-export const createBrowserSupabaseClient = () => {
-  if (!browserClient) {
-    browserClient = createBrowserClient<Database>(
-      env.supabaseUrl,
-      env.supabaseAnonKey,
-    );
-  }
-
-  return browserClient;
 };
 
 export const createAdminClient = () => {
