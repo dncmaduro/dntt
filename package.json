@@ -3,7 +3,8 @@
   "version": "0.1.5",
   "private": true,
   "scripts": {
-    "dev": "next dev --port 4411",
+    "dev": "next dev --webpack --port 4411",
+    "dev:turbo": "next dev --port 4411",
     "build": "next build",
     "start": "next start --port 4411",
     "lint": "eslint"
@@ -20,12 +21,14 @@
     "@radix-ui/react-slot": "^1.2.4",
     "@supabase/ssr": "^0.10.0",
     "@supabase/supabase-js": "^2.102.1",
+    "@types/nodemailer": "^8.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "exceljs": "^4.4.0",
     "lucide-react": "^1.7.0",
     "next": "16.2.2",
+    "nodemailer": "^8.0.7",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-hook-form": "^7.72.1",
@@ -34,13 +37,13 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
+    "@tailwindcss/postcss": "4.2.2",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.2",
-    "tailwindcss": "^4",
+    "tailwindcss": "4.2.2",
     "typescript": "^5"
   }
 }
