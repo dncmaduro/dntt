@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export function BrandMark({
   className,
@@ -10,7 +10,7 @@ export function BrandMark({
   inverted?: boolean;
 }) {
   return (
-    <div className={cn("flex items-center gap-3", className)}>
+    <div className={cn('flex items-center gap-3', className)}>
       <img
         alt="DNTT nội bộ"
         className="size-11 rounded-2xl shadow-lg shadow-primary/15"
@@ -21,18 +21,10 @@ export function BrandMark({
 
       {compact ? null : (
         <div className="space-y-1">
-          <p
-            className={cn(
-              "text-xs font-semibold uppercase leading-none tracking-[0.24em]",
-              inverted ? "text-white/60" : "text-primary",
-            )}
-          >
-            Nội bộ
-          </p>
           <h1
             className={cn(
-              "text-base font-semibold leading-[1.2]",
-              inverted ? "text-white" : "text-foreground",
+              'text-base font-semibold leading-[1.2]',
+              inverted ? 'text-white' : 'text-foreground',
             )}
           >
             Đề nghị thanh toán

@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export function PageIntro({
   eyebrow,
@@ -16,13 +16,13 @@ export function PageIntro({
   return (
     <div
       className={cn(
-        "mb-6 flex flex-col gap-4 rounded-[2rem] border border-border/70 bg-white/70 p-6 backdrop-blur-md md:flex-row md:items-end md:justify-between",
+        'mb-6 flex flex-col gap-4 rounded-[2rem] border border-border/70 bg-white/70 p-6 backdrop-blur-md md:flex-row md:items-end md:justify-between',
         className,
       )}
     >
       <div className="min-w-0 space-y-2">
         {eyebrow ? (
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/75">
+          <p className="text-xs font-semibold uppercase tracking-[0.05em] font-bold text-primary/75">
             {eyebrow}
           </p>
         ) : null}

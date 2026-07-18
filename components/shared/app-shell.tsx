@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { useRef } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { ChevronRight, LogOut } from "lucide-react";
+import { useRef } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { ChevronRight, LogOut } from 'lucide-react';
 
-import { logoutAction } from "@/features/auth/actions";
-import { BrandMark } from "@/components/shared/brand-mark";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { logoutAction } from '@/features/auth/actions';
+import { BrandMark } from '@/components/shared/brand-mark';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,10 +16,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { NotificationBell } from "@/features/notifications/components/notification-bell";
-import { NotificationsProvider } from "@/features/notifications/components/notifications-provider";
-import type { Notification } from "@/features/notifications/types";
+} from '@/components/ui/dropdown-menu';
+import { NotificationBell } from '@/features/notifications/components/notification-bell';
+import { NotificationsProvider } from '@/features/notifications/components/notifications-provider';
+import type { Notification } from '@/features/notifications/types';
 import {
   ACCOUNTANT_NAVIGATION,
   APP_ROUTES,
@@ -28,8 +28,8 @@ import {
   PAGE_TITLES,
   ROLE_LABELS,
   type UserRole,
-} from "@/lib/constants";
-import { cn, getInitials } from "@/lib/utils";
+} from '@/lib/constants';
+import { cn, getInitials } from '@/lib/utils';
 
 type ShellProfile = {
   id: string;
@@ -51,26 +51,30 @@ const getActiveNavigationHref = (
 ) =>
   navigation
     .filter((item) => isMatchingNavigationPath(pathname, item.href))
-    .sort((left, right) => right.href.length - left.href.length)[0]?.href ?? null;
+    .sort((left, right) => right.href.length - left.href.length)[0]?.href ??
+  null;
 
 const resolveTitle = (pathname: string) => {
   if (PAGE_TITLES[pathname]) {
     return PAGE_TITLES[pathname];
   }
 
-  if (pathname.startsWith("/my-requests/") && pathname.endsWith("/edit")) {
-    return "Chỉnh sửa đề nghị";
+  if (pathname.startsWith('/my-requests/') && pathname.endsWith('/edit')) {
+    return 'Chỉnh sửa đề nghị';
   }
 
-  if (pathname.startsWith("/my-requests/") && pathname !== APP_ROUTES.newRequest) {
-    return "Chi tiết đề nghị";
+  if (
+    pathname.startsWith('/my-requests/') &&
+    pathname !== APP_ROUTES.newRequest
+  ) {
+    return 'Chi tiết đề nghị';
   }
 
-  if (pathname.startsWith("/requests/")) {
-    return "Chi tiết duyệt đề nghị";
+  if (pathname.startsWith('/requests/')) {
+    return 'Chi tiết duyệt đề nghị';
   }
 
-  return "DNTT nội bộ";
+  return 'DNTT nội bộ';
 };
 
 export function AppShell({
@@ -91,9 +95,9 @@ export function AppShell({
   const pathname = usePathname();
   const logoutFormRef = useRef<HTMLFormElement>(null);
   const navigation =
-    profile.role === "employee"
+    profile.role === 'employee'
       ? EMPLOYEE_NAVIGATION
-      : profile.role === "director"
+      : profile.role === 'director'
         ? DIRECTOR_NAVIGATION
         : ACCOUNTANT_NAVIGATION;
   const pageTitle = resolveTitle(pathname);
@@ -122,15 +126,17 @@ export function AppShell({
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all",
+                    'flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all',
                     isActive
-                      ? "bg-white/12 text-white"
-                      : "text-sidebar-foreground/70 hover:bg-white/6 hover:text-white",
+                      ? 'bg-white/12 text-white'
+                      : 'text-sidebar-foreground/70 hover:bg-white/6 hover:text-white',
                   )}
                 >
                   <item.icon className="size-4" />
                   <span>{item.label}</span>
-                  {isActive ? <ChevronRight className="ml-auto size-4" /> : null}
+                  {isActive ? (
+                    <ChevronRight className="ml-auto size-4" />
+                  ) : null}
                 </Link>
               );
             })}
@@ -138,7 +144,7 @@ export function AppShell({
 
           <div className="border-t border-sidebar-border px-6 py-5">
             <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
-              <p className="text-xs uppercase tracking-[0.28em] text-white/50">
+              <p className="text-xs font-bold uppercase text-white/50">
                 Vai trò
               </p>
               <p className="mt-2 text-base font-semibold">
@@ -156,9 +162,6 @@ export function AppShell({
               </div>
 
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">
-                  DNTT nội bộ
-                </p>
                 <h2 className="truncate text-xl font-semibold">{pageTitle}</h2>
               </div>
               <span className="hidden rounded-xl border border-border/70 bg-muted/40 px-3 py-1 text-xs font-medium text-muted-foreground sm:inline-flex">
@@ -171,10 +174,12 @@ export function AppShell({
                 <DropdownMenuTrigger asChild>
                   <Button className="rounded-2xl px-2.5" variant="secondary">
                     <Avatar className="size-8">
-                      <AvatarFallback>{getInitials(profile.full_name)}</AvatarFallback>
+                      <AvatarFallback>
+                        {getInitials(profile.full_name)}
+                      </AvatarFallback>
                     </Avatar>
                     <span className="hidden sm:block">
-                      {profile.full_name ?? "Người dùng"}
+                      {profile.full_name ?? 'Người dùng'}
                     </span>
                   </Button>
                 </DropdownMenuTrigger>
@@ -182,7 +187,7 @@ export function AppShell({
                   <DropdownMenuLabel>
                     <div className="space-y-1">
                       <p className="font-semibold text-foreground">
-                        {profile.full_name ?? "Người dùng"}
+                        {profile.full_name ?? 'Người dùng'}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {ROLE_LABELS[profile.role]}
@@ -226,10 +231,10 @@ export function AppShell({
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "flex flex-col items-center gap-1 rounded-[1.25rem] px-2 py-3 text-[11px] font-medium transition-colors",
+                      'flex flex-col items-center gap-1 rounded-[1.25rem] px-2 py-3 text-[11px] font-medium transition-colors',
                       isActive
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground",
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground',
                     )}
                   >
                     <item.icon className="size-4" />
