@@ -15,7 +15,7 @@ type PaymentQrPageProps = {
 export default async function PaymentQrPage({
   searchParams,
 }: PaymentQrPageProps) {
-  await requireRole(["accountant", "director"]);
+  const profile = await requireRole(["accountant", "director"]);
 
   const { employeeId, month, page, year } =
     await parsePaymentQrSearchParams(searchParams);
@@ -37,12 +37,17 @@ export default async function PaymentQrPage({
       />
 
       <PaymentQrLookupControls
+        compact={profile.role === "director"}
         key={selectedEmployee?.id ?? employeeId ?? "empty"}
         employees={employees}
         selectedEmployeeId={employeeId}
       />
 
-      <SelectedEmployeeQrPanel employee={selectedEmployee} />
+      <SelectedEmployeeQrPanel
+        employee={selectedEmployee}
+        key={selectedEmployee?.id ?? employeeId ?? "empty-panel"}
+        viewerRole={profile.role}
+      />
     </div>
   );
 }

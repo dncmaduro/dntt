@@ -1,31 +1,38 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FileClock, QrCode } from "lucide-react";
 
 import { EmptyState } from "@/components/shared/empty-state";
+import type { UserRole } from "@/lib/constants";
 import { PaymentQrPanel } from "./payment-qr-panel";
 import { PaymentQrUnpaidRequestsPanel } from "./payment-qr-unpaid-requests-panel";
 import type { SelectedEmployeePaymentQr } from "@/features/payment-qr/types";
 
 export function SelectedEmployeeQrPanel({
   employee,
+  viewerRole,
 }: {
   employee: SelectedEmployeePaymentQr | null;
+  viewerRole: UserRole;
 }) {
   const [selectionSummary, setSelectionSummary] = useState({
     selectedCount: 0,
     selectedTotalAmount: 0,
   });
-
-  useEffect(() => {
-    setSelectionSummary({
-      selectedCount: 0,
-      selectedTotalAmount: 0,
-    });
-  }, [employee?.id]);
+  const isDirector = viewerRole === "director";
 
   if (!employee) {
+    if (isDirector) {
+      return (
+        <EmptyState
+          description="Chọn nhân sự ở phía trên để hiển thị các đề nghị cần thanh toán."
+          icon={FileClock}
+          title="Chưa chọn nhân sự"
+        />
+      );
+    }
+
     return (
       <div className="grid gap-5 xl:grid-cols-2">
         <EmptyState
@@ -39,6 +46,19 @@ export function SelectedEmployeeQrPanel({
           title="Chưa có dữ liệu đề nghị"
         />
       </div>
+    );
+  }
+
+  if (isDirector) {
+    return (
+      <PaymentQrUnpaidRequestsPanel
+        compact
+        employeeName={employee.full_name}
+        onSelectionSummaryChange={setSelectionSummary}
+        requests={employee.unpaid_requests}
+        totalAmount={employee.unpaid_total_amount}
+        totalCount={employee.unpaid_request_count}
+      />
     );
   }
 

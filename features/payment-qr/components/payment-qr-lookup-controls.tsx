@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { LoaderCircle, RotateCcw } from "lucide-react";
+import { LoaderCircle, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -16,9 +16,11 @@ import {
 import type { PaymentQrEmployeeOption } from "@/features/payment-qr/types";
 
 export function PaymentQrLookupControls({
+  compact = false,
   employees,
   selectedEmployeeId,
 }: {
+  compact?: boolean;
   employees: PaymentQrEmployeeOption[];
   selectedEmployeeId?: string;
 }) {
@@ -44,44 +46,85 @@ export function PaymentQrLookupControls({
 
   return (
     <div className="surface-panel rounded-[1.5rem] p-4">
-      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
-        <div className="space-y-2">
-          <Label htmlFor="payment-qr-employee">Nhân sự</Label>
-          <Select
-            disabled={!employees.length || isPending}
-            onValueChange={(value) => updateSelectedEmployee(value)}
-            value={selectedEmployeeId}
-          >
-            <SelectTrigger id="payment-qr-employee">
-              <SelectValue placeholder="Chọn nhân sự để thanh toán" />
-            </SelectTrigger>
-            <SelectContent>
-              {employees.map((employee) => (
-                <SelectItem key={employee.id} value={employee.id}>
-                  {employee.full_name ?? "Chưa cập nhật"}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-muted-foreground">
-            Chọn nhân sự để xem QR và xử lý đề nghị chờ thanh toán trong cùng màn hình.
-          </p>
-        </div>
+      {compact ? (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <Label className="shrink-0 text-sm font-medium" htmlFor="payment-qr-employee">
+            Nhân sự
+          </Label>
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <Select
+              disabled={!employees.length || isPending}
+              onValueChange={(value) => updateSelectedEmployee(value)}
+              value={selectedEmployeeId}
+            >
+              <SelectTrigger className="flex-1" id="payment-qr-employee">
+                <SelectValue placeholder="Chọn nhân sự để thanh toán" />
+              </SelectTrigger>
+              <SelectContent>
+                {employees.map((employee) => (
+                  <SelectItem key={employee.id} value={employee.id}>
+                    {employee.full_name ?? "Chưa cập nhật"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-        <Button
-          disabled={!selectedEmployeeId || isPending}
-          onClick={() => updateSelectedEmployee()}
-          type="button"
-          variant="outline"
-        >
-          {isPending ? (
-            <LoaderCircle className="size-4 animate-spin" />
-          ) : (
-            <RotateCcw className="size-4" />
-          )}
-          Bỏ chọn
-        </Button>
-      </div>
+            <Button
+              aria-label="Bỏ chọn nhân sự"
+              disabled={!selectedEmployeeId || isPending}
+              onClick={() => updateSelectedEmployee()}
+              size="icon"
+              type="button"
+              variant="outline"
+            >
+              {isPending ? (
+                <LoaderCircle className="size-4 animate-spin" />
+              ) : (
+                <X className="size-4" />
+              )}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+          <div className="space-y-2">
+            <Label htmlFor="payment-qr-employee">Nhân sự</Label>
+            <Select
+              disabled={!employees.length || isPending}
+              onValueChange={(value) => updateSelectedEmployee(value)}
+              value={selectedEmployeeId}
+            >
+              <SelectTrigger id="payment-qr-employee">
+                <SelectValue placeholder="Chọn nhân sự để thanh toán" />
+              </SelectTrigger>
+              <SelectContent>
+                {employees.map((employee) => (
+                  <SelectItem key={employee.id} value={employee.id}>
+                    {employee.full_name ?? "Chưa cập nhật"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Chọn nhân sự để xem QR và xử lý đề nghị chờ thanh toán trong cùng màn hình.
+            </p>
+          </div>
+
+          <Button
+            disabled={!selectedEmployeeId || isPending}
+            onClick={() => updateSelectedEmployee()}
+            type="button"
+            variant="outline"
+          >
+            {isPending ? (
+              <LoaderCircle className="size-4 animate-spin" />
+            ) : (
+              <X className="size-4" />
+            )}
+            Bỏ chọn
+          </Button>
+        </div>
+      )}
 
       {!employees.length ? (
         <p className="mt-3 text-sm text-muted-foreground">

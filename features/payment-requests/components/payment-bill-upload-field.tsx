@@ -227,7 +227,7 @@ export function PaymentBillUploadField({
                 />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{draft.file.name}</p>
+                <p className="break-all text-sm font-medium leading-5">{draft.file.name}</p>
                 <p className="text-xs text-muted-foreground">
                   {formatFileSize(draft.file.size)}
                 </p>

@@ -50,13 +50,11 @@ export function PaymentRequestItem({
             <div className="min-w-0 flex-1">
               <p className="truncate font-medium leading-6">{request.title}</p>
 
-              <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                <p>Tạo lúc {formatDate(request.created_at)}</p>
-                <p>Ngày thanh toán {formatDate(request.payment_date)}</p>
-              </div>
-
-              <div className="mt-1 flex flex-wrap items-center gap-2">
-                <p className="text-sm font-medium text-foreground">
+              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+                <p className="text-muted-foreground">
+                  Ngày thanh toán {formatDate(request.payment_date)}
+                </p>
+                <p className="font-medium text-foreground">
                   {formatCurrency(request.amount)}
                 </p>
                 <StatusBadge status={request.status as PaymentRequestStatus} />
@@ -125,10 +123,6 @@ export function PaymentRequestItem({
               </DialogContent>
             </Dialog>
           </div>
-
-          {request.attachment_file_name ? (
-            <p className="mt-1 text-xs text-muted-foreground">Có minh chứng đính kèm</p>
-          ) : null}
         </div>
       </div>
     </div>

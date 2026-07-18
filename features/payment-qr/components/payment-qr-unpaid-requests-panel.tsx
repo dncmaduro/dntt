@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { ChevronLeft, ChevronRight, LoaderCircle } from "lucide-react";
+import {
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  LoaderCircle,
+} from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
@@ -70,12 +75,14 @@ const parseTimeFilterValue = (
 };
 
 export function PaymentQrUnpaidRequestsPanel({
+  compact = false,
   employeeName,
   onSelectionSummaryChange,
   requests,
   totalAmount,
   totalCount,
 }: {
+  compact?: boolean;
   employeeName?: string | null;
   onSelectionSummaryChange?: (summary: {
     selectedCount: number;
@@ -295,9 +302,13 @@ export function PaymentQrUnpaidRequestsPanel({
   return (
     <section className="rounded-[1.75rem] border border-border/70 bg-white/80 p-5 lg:p-6">
       <div className="space-y-1">
-        <h3 className="text-xl font-semibold">Đề nghị chờ thanh toán</h3>
+        <h3 className="text-xl font-semibold">
+          {compact ? "Các đề nghị thanh toán" : "Đề nghị chờ thanh toán"}
+        </h3>
         <p className="text-sm text-muted-foreground">
-          Tick đề nghị cần chi trả, chuyển khoản theo QR, sau đó xác nhận hàng loạt.
+          {compact
+            ? "Chọn đề nghị cần chi trả, mở chi tiết bằng modal để không làm mất trạng thái đang chọn."
+            : "Tick đề nghị cần chi trả, chuyển khoản theo QR, sau đó xác nhận hàng loạt."}
         </p>
       </div>
 
@@ -325,33 +336,35 @@ export function PaymentQrUnpaidRequestsPanel({
         </div>
       </div>
 
-      <div className="mt-4 rounded-[1.25rem] border border-primary/20 bg-primary/5 p-4">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-sm font-medium">Bill dùng chung cho các đề nghị đang chọn</p>
-          <label className="inline-flex items-center gap-2 text-xs text-muted-foreground">
-            <input
-              checked={isAllChecked}
-              className="size-4 accent-[var(--color-primary)]"
-              disabled={!allCurrentPageIds.length || isSubmitting || isNavigating}
-              onChange={toggleAllCurrentPage}
-              type="checkbox"
+      {!compact ? (
+        <div className="mt-4 rounded-[1.25rem] border border-primary/20 bg-primary/5 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-medium">Bill dùng chung cho các đề nghị đang chọn</p>
+            <label className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+              <input
+                checked={isAllChecked}
+                className="size-4 accent-[var(--color-primary)]"
+                disabled={!allCurrentPageIds.length || isSubmitting || isNavigating}
+                onChange={toggleAllCurrentPage}
+                type="checkbox"
+              />
+              Chọn tất cả trên trang
+            </label>
+          </div>
+          <div className="mt-3">
+            <PaymentBillUploadField
+              compact
+              disabled={isSubmitting || isNavigating}
+              error={sharedBillError}
+              helperText={`Tải từ 1 đến tối đa ${MAX_PAYMENT_BILLS} bill dùng chung cho các đề nghị đang chọn.`}
+              maxFiles={MAX_PAYMENT_BILLS}
+              onChange={replaceSharedBills}
+              onErrorChange={setSharedBillError}
+              value={sharedBillDrafts}
             />
-            Chọn tất cả trên trang
-          </label>
+          </div>
         </div>
-        <div className="mt-3">
-          <PaymentBillUploadField
-            compact
-            disabled={isSubmitting || isNavigating}
-            error={sharedBillError}
-            helperText={`Tải từ 1 đến tối đa ${MAX_PAYMENT_BILLS} bill dùng chung cho các đề nghị đang chọn.`}
-            maxFiles={MAX_PAYMENT_BILLS}
-            onChange={replaceSharedBills}
-            onErrorChange={setSharedBillError}
-            value={sharedBillDrafts}
-          />
-        </div>
-      </div>
+      ) : null}
 
       <div className="mt-4">
         <PaymentRequestList
@@ -393,13 +406,77 @@ export function PaymentQrUnpaidRequestsPanel({
         </div>
       </div>
 
-      <PaymentSelectionSummary
-        disabled={!selectedIds.length || !sharedBillDrafts.length || isNavigating}
-        isSubmitting={isSubmitting}
-        onConfirm={confirmSelectedRequests}
-        selectedCount={selectedIds.length}
-        selectedTotalAmount={selectedTotalAmount}
-      />
+      {compact ? (
+        <div className="mt-5 rounded-[1.25rem] border border-primary/20 bg-primary/5 p-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div className="space-y-1">
+              <p className="text-sm font-semibold">Bill thanh toán</p>
+              <p className="text-sm text-muted-foreground">
+                Chọn bill dùng chung rồi xác nhận các đề nghị đã tick.
+              </p>
+            </div>
+
+            <label className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+              <input
+                checked={isAllChecked}
+                className="size-4 accent-[var(--color-primary)]"
+                disabled={!allCurrentPageIds.length || isSubmitting || isNavigating}
+                onChange={toggleAllCurrentPage}
+                type="checkbox"
+              />
+              Chọn tất cả trên trang
+            </label>
+          </div>
+
+          <div className="mt-3">
+            <PaymentBillUploadField
+              compact
+              disabled={isSubmitting || isNavigating}
+              error={sharedBillError}
+              helperText={`Tải từ 1 đến tối đa ${MAX_PAYMENT_BILLS} bill dùng chung cho các đề nghị đang chọn.`}
+              maxFiles={MAX_PAYMENT_BILLS}
+              onChange={replaceSharedBills}
+              onErrorChange={setSharedBillError}
+              value={sharedBillDrafts}
+            />
+          </div>
+
+          <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="text-sm">
+              <p className="font-semibold">Đã chọn {selectedIds.length} đề nghị</p>
+              <p className="text-muted-foreground">
+                Số tiền cần chuyển {formatCurrency(selectedTotalAmount)}
+              </p>
+            </div>
+
+            <Button
+              disabled={
+                !selectedIds.length ||
+                !sharedBillDrafts.length ||
+                isNavigating ||
+                isSubmitting
+              }
+              onClick={confirmSelectedRequests}
+              type="button"
+            >
+              {isSubmitting ? (
+                <LoaderCircle className="size-4 animate-spin" />
+              ) : (
+                <CheckCircle2 className="size-4" />
+              )}
+              Xác nhận đã thanh toán
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <PaymentSelectionSummary
+          disabled={!selectedIds.length || !sharedBillDrafts.length || isNavigating}
+          isSubmitting={isSubmitting}
+          onConfirm={confirmSelectedRequests}
+          selectedCount={selectedIds.length}
+          selectedTotalAmount={selectedTotalAmount}
+        />
+      )}
     </section>
   );
 }
