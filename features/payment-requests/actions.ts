@@ -17,6 +17,7 @@ import {
   canDeleteRequest,
   canMarkAsPaid,
   canManageOwnRequest,
+  canRejectAsDirector,
   canReviewAccounting,
   canUndoAccountingReview,
 } from '@/lib/auth/permissions';
@@ -933,6 +934,94 @@ export const reviewPaymentRequestAction = async ({
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Không thể xử lý đề nghị',
+    };
+  }
+};
+
+export const rejectPaymentRequestByDirectorAction = async ({
+  requestId,
+  note,
+}: {
+  requestId: string;
+  note?: string;
+}): Promise<ActionResult> => {
+  try {
+    const profile = await requireRole(['director']);
+    const parsed = reviewSchema.safeParse({
+      decision: 'reject',
+      note: note ?? '',
+    });
+
+    if (!parsed.success) {
+      return {
+        success: false,
+        error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ',
+      };
+    }
+
+    const request = await getRequestForMutation(requestId);
+
+    if (
+      request.is_deleted ||
+      !canRejectAsDirector(
+        profile.role,
+        request.status as PaymentRequestStatus,
+      )
+    ) {
+      return {
+        success: false,
+        error: 'Chỉ có thể từ chối đề nghị chưa được thanh toán',
+      };
+    }
+
+    const supabase = await createActionClient();
+    const now = new Date().toISOString();
+    const { error } = await supabase
+      .from('payment_requests')
+      .update({
+        status: 'director_rejected',
+        director_note: parsed.data.note?.trim() || null,
+        director_approved_by: profile.id,
+        director_approved_at: now,
+        updated_at: now,
+      })
+      .eq('id', requestId);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    await insertLog({
+      client: supabase,
+      requestId,
+      actorId: profile.id,
+      action: 'director_rejected',
+      meta: {
+        note: parsed.data.note?.trim() || null,
+        previous_status: request.status,
+      },
+    });
+
+    await notifyUsers({
+      client: supabase,
+      recipientIds: [request.user_id],
+      type: 'director_rejected',
+      title: NOTIFICATION_LABELS.director_rejected,
+      body: `${profile.full_name ?? 'Giám đốc'} đã từ chối đề nghị thanh toán của bạn.`,
+      requestId,
+    });
+
+    revalidateRequestPaths(requestId);
+
+    return {
+      success: true,
+      message: 'Đã từ chối đề nghị',
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : 'Không thể từ chối đề nghị',
     };
   }
 };

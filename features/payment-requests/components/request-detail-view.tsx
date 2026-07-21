@@ -19,6 +19,7 @@ import {
   canDeleteRequest,
   canManageOwnRequest,
   canMarkAsPaid,
+  canRejectAsDirector,
   canReviewAccounting,
   canUndoAccountingReview,
 } from "@/lib/auth/permissions";
@@ -54,6 +55,10 @@ export async function RequestDetailView({
     status: requestStatus,
   });
   const allowAccountingReview = canReviewAccounting(viewerRole, requestStatus);
+  const allowDirectorRejection = canRejectAsDirector(
+    viewerRole,
+    requestStatus,
+  );
   const allowUndoAccountingReview = canUndoAccountingReview(
     viewerRole,
     requestStatus,
@@ -155,6 +160,13 @@ export async function RequestDetailView({
                   </p>
                 </InfoItem>
               ) : null}
+              {request.director_note ? (
+                <InfoItem label="Ghi chú giám đốc">
+                  <p className="leading-6 text-muted-foreground">
+                    {request.director_note}
+                  </p>
+                </InfoItem>
+              ) : null}
             </CardContent>
           </Card>
         </div>
@@ -162,6 +174,7 @@ export async function RequestDetailView({
         <div className="space-y-6">
           <ReviewPanel
             allowAccountingReview={allowAccountingReview}
+            allowDirectorRejection={allowDirectorRejection}
             allowUndoAccountingReview={allowUndoAccountingReview}
             requestId={request.id}
           />

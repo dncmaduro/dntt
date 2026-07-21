@@ -25,6 +25,7 @@ export type PaymentRequestStatus = (typeof PAYMENT_REQUEST_STATUSES)[number];
 export const ACTIVE_PAYMENT_REQUEST_STATUSES = [
   "pending_accounting",
   "accounting_rejected",
+  "director_rejected",
   "director_approved",
   "paid",
 ] as const satisfies readonly PaymentRequestStatus[];

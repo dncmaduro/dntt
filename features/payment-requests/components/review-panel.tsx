@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import {
+  rejectPaymentRequestByDirectorAction,
   reviewPaymentRequestAction,
   undoPaymentRequestReviewAction,
 } from "@/features/payment-requests/actions";
@@ -18,10 +19,12 @@ export function ReviewPanel({
   requestId,
   allowAccountingReview,
   allowUndoAccountingReview,
+  allowDirectorRejection,
 }: {
   requestId: string;
   allowAccountingReview: boolean;
   allowUndoAccountingReview: boolean;
+  allowDirectorRejection: boolean;
 }) {
   const router = useRouter();
   const [note, setNote] = useState("");
@@ -64,7 +67,29 @@ export function ReviewPanel({
     });
   };
 
-  if (!allowAccountingReview && !allowUndoAccountingReview) {
+  const rejectAsDirector = () => {
+    startTransition(async () => {
+      const result = await rejectPaymentRequestByDirectorAction({
+        requestId,
+        note,
+      });
+
+      if (!result.success) {
+        toast.error(result.error);
+        return;
+      }
+
+      toast.success(result.message ?? "Đã từ chối đề nghị");
+      setNote("");
+      router.refresh();
+    });
+  };
+
+  if (
+    !allowAccountingReview &&
+    !allowUndoAccountingReview &&
+    !allowDirectorRejection
+  ) {
     return null;
   }
 
@@ -74,7 +99,7 @@ export function ReviewPanel({
         <CardTitle className="text-xl">Thao tác xử lý</CardTitle>
       </CardHeader>
       <CardContent className="space-y-5">
-        {allowAccountingReview || allowUndoAccountingReview ? (
+        {allowAccountingReview || allowUndoAccountingReview || allowDirectorRejection ? (
           <div className="space-y-2">
             <Label htmlFor="review-note">Ghi chú xử lý</Label>
             <Textarea
@@ -83,6 +108,8 @@ export function ReviewPanel({
               placeholder={
                 allowUndoAccountingReview
                   ? "Nhập ghi chú hoàn tác nếu cần"
+                  : allowDirectorRejection
+                    ? "Nhập lý do từ chối"
                   : "Nhập ghi chú duyệt hoặc lý do từ chối"
               }
               value={note}
@@ -115,6 +142,22 @@ export function ReviewPanel({
                 Từ chối
               </Button>
             </>
+          ) : null}
+
+          {allowDirectorRejection ? (
+            <Button
+              disabled={isPending}
+              onClick={rejectAsDirector}
+              type="button"
+              variant="destructive"
+            >
+              {isPending ? (
+                <LoaderCircle className="size-4 animate-spin" />
+              ) : (
+                <XCircle className="size-4" />
+              )}
+              Từ chối đề nghị
+            </Button>
           ) : null}
 
           {allowUndoAccountingReview ? (

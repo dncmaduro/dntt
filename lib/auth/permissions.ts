@@ -47,6 +47,14 @@ export const canUndoAccountingReview = (
   role === "accountant" &&
   (status === "director_approved" || status === "accounting_rejected");
 
+export const canRejectAsDirector = (
+  role: UserRole,
+  status: PaymentRequestStatus,
+) =>
+  role === "director" &&
+  status !== "paid" &&
+  status !== "director_rejected";
+
 export const canMarkAsPaid = (
   role: UserRole,
   status: PaymentRequestStatus,
