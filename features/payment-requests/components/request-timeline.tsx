@@ -2,6 +2,23 @@ import { LOG_ACTION_LABELS, ROLE_LABELS } from "@/lib/constants";
 import { formatDateTime } from "@/lib/utils";
 import type { PaymentRequestLogWithActor } from "@/features/payment-requests/types";
 
+const getActionLabel = (log: PaymentRequestLogWithActor) => {
+  if (
+    log.action === "updated" &&
+    log.meta &&
+    typeof log.meta === "object" &&
+    "resubmitted_for_accounting_review" in log.meta &&
+    log.meta.resubmitted_for_accounting_review === true
+  ) {
+    return "Cập nhật và gửi lại kế toán duyệt";
+  }
+
+  return (
+    LOG_ACTION_LABELS[log.action as keyof typeof LOG_ACTION_LABELS] ??
+    log.action
+  );
+};
+
 export function RequestTimeline({
   logs,
 }: {
@@ -24,8 +41,7 @@ export function RequestTimeline({
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="font-semibold [overflow-wrap:anywhere]">
-                  {LOG_ACTION_LABELS[log.action as keyof typeof LOG_ACTION_LABELS] ??
-                    log.action}
+                  {getActionLabel(log)}
                 </p>
                 <p className="text-sm [overflow-wrap:anywhere] text-muted-foreground">
                   {log.actor?.full_name ?? "Hệ thống"}

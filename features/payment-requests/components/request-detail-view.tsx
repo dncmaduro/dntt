@@ -64,6 +64,12 @@ export async function RequestDetailView({
     requestStatus,
   );
   const allowMarkPaid = canMarkAsPaid(viewerRole, requestStatus);
+  const editResubmitsForAccounting =
+    requestStatus === "accounting_rejected" ||
+    requestStatus === "approved" ||
+    requestStatus === "pending_director" ||
+    requestStatus === "director_approved" ||
+    requestStatus === "director_rejected";
 
   const editHref = `${APP_ROUTES.myRequests}/${request.id}/edit`;
 
@@ -79,7 +85,9 @@ export async function RequestDetailView({
               <Button asChild variant="secondary">
                 <Link href={editHref}>
                   <PencilLine className="size-4" />
-                  Chỉnh sửa
+                  {editResubmitsForAccounting
+                    ? "Chỉnh sửa & gửi lại"
+                    : "Chỉnh sửa"}
                 </Link>
               </Button>
             ) : null}

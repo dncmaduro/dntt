@@ -41,6 +41,12 @@ export default async function EditMyRequestPage({ params }: EditPageProps) {
   }
 
   const detailHref = `${APP_ROUTES.myRequests}/${request.id}`;
+  const resubmitsForAccounting =
+    request.status === "accounting_rejected" ||
+    request.status === "approved" ||
+    request.status === "pending_director" ||
+    request.status === "director_approved" ||
+    request.status === "director_rejected";
 
   return (
     <div className="space-y-6">
@@ -53,7 +59,11 @@ export default async function EditMyRequestPage({ params }: EditPageProps) {
             </Link>
           </Button>
         }
-        description="Cập nhật nội dung đề nghị và danh sách chứng từ trước khi gửi lại quy trình xử lý."
+        description={
+          resubmitsForAccounting
+            ? "Sau khi lưu, đề nghị sẽ được gửi lại về trạng thái chờ kế toán duyệt."
+            : "Cập nhật nội dung đề nghị và danh sách chứng từ trước khi gửi lại quy trình xử lý."
+        }
         eyebrow="Chỉnh sửa"
         title={request.title}
       />

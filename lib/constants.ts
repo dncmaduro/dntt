@@ -15,6 +15,7 @@ export type UserRole = (typeof ROLES)[number];
 export const PAYMENT_REQUEST_STATUSES = [
   "pending_accounting",
   "accounting_rejected",
+  "approved",
   "pending_director",
   "director_rejected",
   "director_approved",
@@ -82,6 +83,7 @@ export const getPaymentRequestStatusLabel = (status: string) =>
 export const STATUS_LABELS: Record<PaymentRequestStatus, string> = {
   pending_accounting: getPaymentRequestStatusLabel("pending_accounting"),
   accounting_rejected: getPaymentRequestStatusLabel("accounting_rejected"),
+  approved: getPaymentRequestStatusLabel("approved"),
   pending_director: getPaymentRequestStatusLabel("pending_director"),
   director_rejected: getPaymentRequestStatusLabel("director_rejected"),
   director_approved: getPaymentRequestStatusLabel("director_approved"),
@@ -127,6 +129,7 @@ export const getPaymentRequestStatusBadgeVariant = (status: string) =>
 export const STATUS_BADGE_VARIANTS: Record<PaymentRequestStatus, string> = {
   pending_accounting: getPaymentRequestStatusBadgeVariant("pending_accounting"),
   accounting_rejected: getPaymentRequestStatusBadgeVariant("accounting_rejected"),
+  approved: getPaymentRequestStatusBadgeVariant("approved"),
   pending_director: getPaymentRequestStatusBadgeVariant("pending_director"),
   director_rejected: getPaymentRequestStatusBadgeVariant("director_rejected"),
   director_approved: getPaymentRequestStatusBadgeVariant("director_approved"),
@@ -163,7 +166,20 @@ export const NOTIFICATION_LABELS: Record<NotificationType, string> = {
 export const EMPLOYEE_EDITABLE_STATUSES: PaymentRequestStatus[] = [
   "pending_accounting",
   "accounting_rejected",
+  "approved",
+  // `director_approved` is the current persisted value for an accounting approval.
+  // Keep `pending_director` editable too so requests approved under the older flow
+  // can be corrected and returned to accounting.
+  "pending_director",
+  "director_approved",
   "director_rejected",
+];
+
+export const ACCOUNTING_REVIEWED_STATUSES: PaymentRequestStatus[] = [
+  "accounting_rejected",
+  "approved",
+  "pending_director",
+  "director_approved",
 ];
 
 export const DELETABLE_STATUSES: PaymentRequestStatus[] = ["pending_accounting"];

@@ -5,6 +5,7 @@ import { z } from 'zod';
 
 import {
   APP_ROUTES,
+  ACCOUNTING_REVIEWED_STATUSES,
   DEFAULT_REQUEST_STATUS,
   NOTIFICATION_LABELS,
   STORAGE_BUCKET,
@@ -584,11 +585,14 @@ export const updatePaymentRequestAction = async (
 
     validateFiles(files, remainingAttachmentCount);
 
+    const previousStatus = request.status as PaymentRequestStatus;
+    const shouldResubmitForAccounting =
+      ACCOUNTING_REVIEWED_STATUSES.includes(previousStatus) ||
+      previousStatus === 'director_rejected';
     const nextStatus: PaymentRequestStatus =
-      request.status === 'accounting_rejected' ||
-      request.status === 'director_rejected'
+      shouldResubmitForAccounting
         ? 'pending_accounting'
-        : (request.status as PaymentRequestStatus);
+        : previousStatus;
 
     const { error: updateError } = await supabase
       .from('payment_requests')
@@ -706,6 +710,8 @@ export const updatePaymentRequestAction = async (
       action: 'updated',
       meta: {
         status: nextStatus,
+        previous_status: previousStatus,
+        resubmitted_for_accounting_review: shouldResubmitForAccounting,
         removed_attachment_ids: removeAttachmentIds,
         removed_payment_qr: removePaymentQr && !paymentQrFile,
       },
