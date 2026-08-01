@@ -16,7 +16,7 @@ export default async function MyRequestDetailPage({
   const { id } = await params;
   const request = await getPaymentRequestDetail(id);
 
-  if (!request || request.user_id !== profile.id || request.is_deleted) {
+  if (!request || request.user_id !== profile.id) {
     notFound();
   }
 

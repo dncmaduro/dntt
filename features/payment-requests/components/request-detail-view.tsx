@@ -46,24 +46,27 @@ export async function RequestDetailView({
     : "QR thanh toán mặc định";
   const requesterName = request.owner?.full_name ?? request.user_id;
   const isOwner = request.user_id === viewerUserId;
+  const isDeleted = request.is_deleted;
 
   const requestStatus = request.status as PaymentRequestStatus;
-  const canEdit = isOwner && canManageOwnRequest(viewerRole, requestStatus);
-  const canDelete = canDeleteRequest({
+  const canEdit =
+    !isDeleted && isOwner && canManageOwnRequest(viewerRole, requestStatus);
+  const canDelete = !isDeleted && canDeleteRequest({
     isOwner,
     role: viewerRole,
     status: requestStatus,
   });
-  const allowAccountingReview = canReviewAccounting(viewerRole, requestStatus);
-  const allowDirectorRejection = canRejectAsDirector(
+  const allowAccountingReview =
+    !isDeleted && canReviewAccounting(viewerRole, requestStatus);
+  const allowDirectorRejection = !isDeleted && canRejectAsDirector(
     viewerRole,
     requestStatus,
   );
-  const allowUndoAccountingReview = canUndoAccountingReview(
+  const allowUndoAccountingReview = !isDeleted && canUndoAccountingReview(
     viewerRole,
     requestStatus,
   );
-  const allowMarkPaid = canMarkAsPaid(viewerRole, requestStatus);
+  const allowMarkPaid = !isDeleted && canMarkAsPaid(viewerRole, requestStatus);
   const editResubmitsForAccounting =
     requestStatus === "accounting_rejected" ||
     requestStatus === "approved" ||
@@ -99,7 +102,11 @@ export async function RequestDetailView({
             ) : null}
           </div>
         }
-        description="Xem hồ sơ, chứng từ, lịch sử xử lý và thực hiện thao tác theo quyền hiện tại."
+        description={
+          isDeleted
+            ? "Hồ sơ đã xóa chỉ dùng để tra cứu; không thể thực hiện thêm thao tác."
+            : "Xem hồ sơ, chứng từ, lịch sử xử lý và thực hiện thao tác theo quyền hiện tại."
+        }
         eyebrow="Chi tiết đề nghị"
         title={request.title}
       />
