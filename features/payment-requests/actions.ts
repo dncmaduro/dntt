@@ -857,8 +857,10 @@ export const restorePaymentRequestAction = async (
       };
     }
 
-    const supabase = await createActionClient();
-    const { error } = await supabase
+    // Deleted rows may not match the user's RLS update policy. Authorization has
+    // already been checked above, so use the server-only client when available.
+    const supabase = createAdminClient() ?? (await createActionClient());
+    const { data: restoredRequest, error } = await supabase
       .from('payment_requests')
       .update({
         is_deleted: false,
@@ -867,10 +869,19 @@ export const restorePaymentRequestAction = async (
       })
       .eq('id', requestId)
       .eq('user_id', profile.id)
-      .eq('is_deleted', true);
+      .eq('is_deleted', true)
+      .select('id')
+      .maybeSingle();
 
     if (error) {
       throw new Error(error.message);
+    }
+
+    if (!restoredRequest) {
+      return {
+        success: false,
+        error: 'Không thể khôi phục đề nghị. Vui lòng tải lại trang và thử lại.',
+      };
     }
 
     try {

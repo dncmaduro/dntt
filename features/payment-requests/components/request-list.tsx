@@ -33,7 +33,10 @@ export function RequestList({
   return (
     <>
       <div className="hidden overflow-hidden rounded-[2rem] border border-border/70 bg-white/75 md:block">
-        <table className="min-w-full divide-y divide-border/70">
+        <table className="min-w-full table-fixed divide-y divide-border/70">
+          <colgroup>
+            <col className="w-[40%]" />
+          </colgroup>
           <thead className="bg-muted/35">
             <tr className="text-left text-sm text-muted-foreground">
               <th className="px-5 py-4 font-medium">Tiêu đề</th>
