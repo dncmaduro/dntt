@@ -6,17 +6,22 @@ export function PageIntro({
   description,
   actions,
   className,
+  titleClassName,
+  actionsBelow = false,
 }: {
   eyebrow?: string;
   title: string;
   description?: string;
   actions?: React.ReactNode;
   className?: string;
+  titleClassName?: string;
+  actionsBelow?: boolean;
 }) {
   return (
     <div
       className={cn(
-        'mb-6 flex flex-col gap-4 rounded-[2rem] border border-border/70 bg-white/70 p-6 backdrop-blur-md md:flex-row md:items-end md:justify-between',
+        'mb-6 flex flex-col gap-4 rounded-[2rem] border border-border/70 bg-white/70 p-6 backdrop-blur-md',
+        actionsBelow ? '' : 'md:flex-row md:items-end md:justify-between',
         className,
       )}
     >
@@ -26,7 +31,12 @@ export function PageIntro({
             {eyebrow}
           </p>
         ) : null}
-        <h1 className="text-2xl font-semibold [overflow-wrap:anywhere] md:text-3xl">
+        <h1
+          className={cn(
+            'text-2xl font-semibold [overflow-wrap:anywhere] md:text-3xl',
+            titleClassName,
+          )}
+        >
           {title}
         </h1>
         {description ? (
@@ -36,7 +46,12 @@ export function PageIntro({
         ) : null}
       </div>
       {actions ? (
-        <div className="flex w-full flex-wrap items-center gap-3 md:w-auto md:justify-end">
+        <div
+          className={cn(
+            'flex w-full flex-wrap items-center gap-3',
+            actionsBelow ? 'justify-end' : 'md:w-auto md:justify-end',
+          )}
+        >
           {actions}
         </div>
       ) : null}

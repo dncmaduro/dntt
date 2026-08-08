@@ -12,6 +12,7 @@ const PUBLIC_PATHS = [
   APP_ROUTES.authConfirm,
 ];
 const PUBLIC_WEBHOOK_PATH = "/api/webhooks/notification-email";
+const PUBLIC_SHARE_PATH = "/r";
 
 export const updateSession = async (request: NextRequest) => {
   const pathname = request.nextUrl.pathname;
@@ -48,9 +49,12 @@ export const updateSession = async (request: NextRequest) => {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const isPublicPath = PUBLIC_PATHS.some(
-    (publicPath) => pathname === publicPath || pathname.startsWith(`${publicPath}/`),
-  );
+  const isPublicPath =
+    pathname === PUBLIC_SHARE_PATH ||
+    pathname.startsWith(`${PUBLIC_SHARE_PATH}/`) ||
+    PUBLIC_PATHS.some(
+      (publicPath) => pathname === publicPath || pathname.startsWith(`${publicPath}/`),
+    );
 
   if (!user && !isPublicPath) {
     const redirectUrl = new URL(APP_ROUTES.login, request.url);

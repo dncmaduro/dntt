@@ -83,12 +83,16 @@ export async function RequestDetailView({
   return (
     <div className="space-y-6">
       <PageIntro
+        actionsBelow
         actions={
           <div className="flex flex-wrap gap-3">
             <Button asChild variant="secondary">
               <Link href={backHref}>Quay lại danh sách</Link>
             </Button>
-            <CopyRequestLinkButton requestId={request.id} />
+            <CopyRequestLinkButton
+              requestId={request.id}
+              shortCode={request.short_code}
+            />
             {canEdit ? (
               <Button asChild variant="secondary">
                 <Link href={editHref}>
@@ -108,15 +112,9 @@ export async function RequestDetailView({
             {canRestore ? <RestoreRequestButton requestId={request.id} /> : null}
           </div>
         }
-        description={
-          isDeleted
-            ? canRestore
-              ? "Hồ sơ đã xóa. Bạn có thể khôi phục đề nghị của mình."
-              : "Hồ sơ đã xóa chỉ dùng để tra cứu; không thể thực hiện thêm thao tác."
-            : "Xem hồ sơ, chứng từ, lịch sử xử lý và thực hiện thao tác theo quyền hiện tại."
-        }
         eyebrow="Chi tiết đề nghị"
         title={request.title}
+        titleClassName="text-xl md:text-2xl"
       />
 
       <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">

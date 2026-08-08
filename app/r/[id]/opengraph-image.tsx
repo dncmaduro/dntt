@@ -1,6 +1,9 @@
 import { ImageResponse } from "next/og";
 
 import { getSharedPaymentRequestPreview } from "@/features/payment-requests/queries";
+import { isPaymentRequestShareIdentifier } from "@/features/payment-requests/share";
+
+export const dynamic = "force-dynamic";
 
 export const alt = "QR thanh toán";
 export const size = {
@@ -15,7 +18,10 @@ export default async function OpenGraphImage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const request = await getSharedPaymentRequestPreview(id);
+  const identifier = id.trim().toLowerCase();
+  const request = isPaymentRequestShareIdentifier(identifier)
+    ? await getSharedPaymentRequestPreview(identifier)
+    : null;
   const description = request?.description || "Đề nghị thanh toán nội bộ";
 
   return new ImageResponse(

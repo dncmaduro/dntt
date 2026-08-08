@@ -4,16 +4,22 @@ import { Link2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { buildPaymentRequestSharePath } from "@/features/payment-requests/share";
 
 export function CopyRequestLinkButton({
   requestId,
+  shortCode,
   compact = false,
 }: {
   requestId: string;
+  shortCode?: string | null;
   compact?: boolean;
 }) {
   const copyLink = async () => {
-    const link = `${window.location.origin}/r/${requestId}`;
+    const link = `${window.location.origin}${buildPaymentRequestSharePath(
+      requestId,
+      shortCode,
+    )}`;
 
     try {
       await navigator.clipboard.writeText(link);

@@ -3,7 +3,10 @@ import { notFound, redirect } from "next/navigation";
 
 import { getCurrentProfile } from "@/lib/auth/session";
 import { getSharedPaymentRequestPreview } from "@/features/payment-requests/queries";
+import { isPaymentRequestShareIdentifier } from "@/features/payment-requests/share";
 import { APP_ROUTES } from "@/lib/constants";
+
+export const dynamic = "force-dynamic";
 
 type SharedRequestPageProps = {
   params: Promise<{ id: string }>;
@@ -11,7 +14,11 @@ type SharedRequestPageProps = {
 
 const getRequestPreview = async (params: SharedRequestPageProps["params"]) => {
   const { id } = await params;
-  return getSharedPaymentRequestPreview(id);
+  const identifier = id.trim().toLowerCase();
+
+  return isPaymentRequestShareIdentifier(identifier)
+    ? getSharedPaymentRequestPreview(identifier)
+    : null;
 };
 
 export async function generateMetadata({

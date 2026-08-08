@@ -12,6 +12,7 @@ import { formatCurrency, toPlainString } from '@/lib/utils';
 import { canViewGlobalRequests } from '@/lib/auth/permissions';
 import { getPaymentBillPreviewUrl } from '@/features/payment-requests/payment-bill-storage';
 import { getPaymentRequestQrPreviewUrl } from '@/features/payment-requests/payment-request-qr-storage';
+import { isPaymentRequestShortCode } from '@/features/payment-requests/share';
 import { getProfileQrPreviewUrl } from '@/features/profile/queries';
 import type {
   AttachmentWithUrl,
@@ -609,28 +610,17 @@ export const getPaymentRequestDetail = async (
   } as PaymentRequestDetail;
 };
 
-export const getPaymentRequestOwnerId = async (requestId: string) => {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("payment_requests")
-    .select("user_id")
-    .eq("id", requestId)
-    .maybeSingle();
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data?.user_id ?? null;
-};
-
-export const getSharedPaymentRequestPreview = cache(async (requestId: string) => {
+export const getSharedPaymentRequestPreview = cache(async (identifier: string) => {
   const supabase = createAdminClient() ?? (await createClient());
-  const { data: request, error } = await supabase
+  let query = supabase
     .from('payment_requests')
-    .select('title, description, payment_qr_path, user_id')
-    .eq('id', requestId)
-    .maybeSingle();
+    .select('title, description, payment_qr_path, short_code, user_id');
+
+  query = isPaymentRequestShortCode(identifier)
+    ? query.eq('short_code', identifier)
+    : query.eq('id', identifier);
+
+  const { data: request, error } = await query.maybeSingle();
 
   if (error) {
     throw new Error(error.message);

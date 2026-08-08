@@ -180,7 +180,11 @@ export function ReviewRequestList({
                         <p className="text-xs text-muted-foreground">Có QR thanh toán riêng</p>
                       ) : null}
                     </Link>
-                    <CopyRequestLinkButton compact requestId={item.id} />
+                    <CopyRequestLinkButton
+                      compact
+                      requestId={item.id}
+                      shortCode={item.short_code}
+                    />
                   </div>
                 </td>
                 {showOwner ? (
