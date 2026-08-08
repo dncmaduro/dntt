@@ -39,7 +39,12 @@ export async function generateMetadata({
       title: request.title,
       description,
       images: request.qrPreviewUrl
-        ? [{ url: `/r/${(await params).id}/qr`, alt: `QR thanh toán — ${request.title}` }]
+        ? [
+            {
+              url: `/r/${(await params).id}/qr`,
+              alt: `QR thanh toán — ${request.title}`,
+            },
+          ]
         : [],
       type: "website",
     },
