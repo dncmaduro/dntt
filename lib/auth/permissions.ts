@@ -23,6 +23,8 @@ export const canSoftDeleteOwnRequest = (
   (role === "employee" || role === "accountant") &&
   status === "pending_accounting";
 
+export const canRestoreOwnRequest = (isOwner: boolean) => isOwner;
+
 export const canDeleteRequest = ({
   isOwner,
   role,

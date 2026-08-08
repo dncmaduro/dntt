@@ -10,6 +10,7 @@ import { PaymentBillGallery } from "@/features/payment-requests/components/payme
 import { PaymentConfirmationCard } from "@/features/payment-requests/components/payment-confirmation-card";
 import { RequestTimeline } from "@/features/payment-requests/components/request-timeline";
 import { ReviewPanel } from "@/features/payment-requests/components/review-panel";
+import { RestoreRequestButton } from "@/features/payment-requests/components/restore-request-button";
 import { StatusBadge } from "@/features/payment-requests/components/status-badge";
 import { getProfileQrPreviewUrl } from "@/features/profile/queries";
 import type {
@@ -21,6 +22,7 @@ import {
   canMarkAsPaid,
   canRejectAsDirector,
   canReviewAccounting,
+  canRestoreOwnRequest,
   canUndoAccountingReview,
 } from "@/lib/auth/permissions";
 import { APP_ROUTES, type PaymentRequestStatus, type UserRole } from "@/lib/constants";
@@ -56,6 +58,7 @@ export async function RequestDetailView({
     role: viewerRole,
     status: requestStatus,
   });
+  const canRestore = isDeleted && canRestoreOwnRequest(isOwner);
   const allowAccountingReview =
     !isDeleted && canReviewAccounting(viewerRole, requestStatus);
   const allowDirectorRejection = !isDeleted && canRejectAsDirector(
@@ -100,11 +103,14 @@ export async function RequestDetailView({
                 requestId={request.id}
               />
             ) : null}
+            {canRestore ? <RestoreRequestButton requestId={request.id} /> : null}
           </div>
         }
         description={
           isDeleted
-            ? "Hồ sơ đã xóa chỉ dùng để tra cứu; không thể thực hiện thêm thao tác."
+            ? canRestore
+              ? "Hồ sơ đã xóa. Bạn có thể khôi phục đề nghị của mình."
+              : "Hồ sơ đã xóa chỉ dùng để tra cứu; không thể thực hiện thêm thao tác."
             : "Xem hồ sơ, chứng từ, lịch sử xử lý và thực hiện thao tác theo quyền hiện tại."
         }
         eyebrow="Chi tiết đề nghị"

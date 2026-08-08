@@ -41,7 +41,6 @@ export function RequestList({
               <th className="px-5 py-4 font-medium">Danh mục</th>
               <th className="px-5 py-4 font-medium">Ngày thanh toán</th>
               <th className="px-5 py-4 font-medium">Trạng thái</th>
-              <th className="px-5 py-4 font-medium">Chứng từ</th>
               <th className="px-5 py-4 font-medium">Tạo lúc</th>
             </tr>
           </thead>
@@ -82,9 +81,6 @@ export function RequestList({
                 </td>
                 <td className="px-5 py-4">
                   <StatusBadge status={item.status as PaymentRequestStatus} />
-                </td>
-                <td className="px-5 py-4 text-muted-foreground">
-                  {item.attachment_count} tệp
                 </td>
                 <td className="px-5 py-4 text-muted-foreground">
                   {formatDate(item.created_at)}

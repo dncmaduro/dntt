@@ -20,6 +20,7 @@ import {
   canManageOwnRequest,
   canRejectAsDirector,
   canReviewAccounting,
+  canRestoreOwnRequest,
   canUndoAccountingReview,
 } from '@/lib/auth/permissions';
 import {
@@ -831,6 +832,69 @@ export const softDeletePaymentRequestAction = async (
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Không thể xóa đề nghị',
+    };
+  }
+};
+
+export const restorePaymentRequestAction = async (
+  requestId: string,
+): Promise<ActionResult> => {
+  try {
+    const profile = await requireRole(['employee', 'accountant', 'director']);
+    const request = await getRequestForMutation(requestId);
+
+    if (!canRestoreOwnRequest(request.user_id === profile.id)) {
+      return {
+        success: false,
+        error: 'Bạn không có quyền khôi phục đề nghị này',
+      };
+    }
+
+    if (!request.is_deleted) {
+      return {
+        success: false,
+        error: 'Đề nghị này chưa bị xóa',
+      };
+    }
+
+    const supabase = await createActionClient();
+    const { error } = await supabase
+      .from('payment_requests')
+      .update({
+        is_deleted: false,
+        deleted_at: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', requestId)
+      .eq('user_id', profile.id)
+      .eq('is_deleted', true);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    try {
+      await insertLog({
+        client: supabase,
+        requestId,
+        actorId: profile.id,
+        action: 'restored',
+      });
+    } catch (logError) {
+      // Do not fail the restore flow when audit log insertion is blocked by RLS.
+      console.error('Failed to insert restore log', logError);
+    }
+
+    revalidateRequestPaths(requestId);
+
+    return {
+      success: true,
+      message: 'Đã khôi phục đề nghị',
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Không thể khôi phục đề nghị',
     };
   }
 };
