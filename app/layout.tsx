@@ -18,6 +18,9 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL ?? "https://dntt-mcd.vercel.app",
+  ),
   title: {
     default: "DNTT nội bộ",
     template: "%s | DNTT nội bộ",

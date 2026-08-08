@@ -1,3 +1,5 @@
+import { cache } from 'react';
+
 import {
   ACTIVE_PAYMENT_REQUEST_STATUSES,
   ROLES,
@@ -5,11 +7,12 @@ import {
   type PaymentRequestStatus,
   type UserRole,
 } from '@/lib/constants';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient, createClient } from '@/lib/supabase/server';
 import { formatCurrency, toPlainString } from '@/lib/utils';
 import { canViewGlobalRequests } from '@/lib/auth/permissions';
 import { getPaymentBillPreviewUrl } from '@/features/payment-requests/payment-bill-storage';
 import { getPaymentRequestQrPreviewUrl } from '@/features/payment-requests/payment-request-qr-storage';
+import { getProfileQrPreviewUrl } from '@/features/profile/queries';
 import type {
   AttachmentWithUrl,
   Category,
@@ -605,6 +608,59 @@ export const getPaymentRequestDetail = async (
     payment_qr_signed_url: paymentQrSignedUrl,
   } as PaymentRequestDetail;
 };
+
+export const getPaymentRequestOwnerId = async (requestId: string) => {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("payment_requests")
+    .select("user_id")
+    .eq("id", requestId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data?.user_id ?? null;
+};
+
+export const getSharedPaymentRequestPreview = cache(async (requestId: string) => {
+  const supabase = createAdminClient() ?? (await createClient());
+  const { data: request, error } = await supabase
+    .from('payment_requests')
+    .select('title, description, payment_qr_path, user_id')
+    .eq('id', requestId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  if (!request) {
+    return null;
+  }
+
+  const { data: owner, error: ownerError } = await supabase
+    .from('profiles')
+    .select('qr_payment_url')
+    .eq('id', request.user_id)
+    .maybeSingle();
+
+  if (ownerError) {
+    throw new Error(ownerError.message);
+  }
+
+  const qrPreviewUrl = request.payment_qr_path
+    ? await getPaymentRequestQrPreviewUrl(request.payment_qr_path)
+    : await getProfileQrPreviewUrl(owner?.qr_payment_url ?? null);
+
+  return {
+    description: request.description,
+    qrPreviewUrl,
+    title: request.title,
+    userId: request.user_id,
+  };
+});
 
 const countRequests = async ({
   role,

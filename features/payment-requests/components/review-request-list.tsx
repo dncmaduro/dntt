@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { bulkApproveAccountingRequestsAction } from "@/features/payment-requests/actions";
+import { CopyRequestLinkButton } from "@/features/payment-requests/components/copy-request-link-button";
 import { StatusBadge } from "@/features/payment-requests/components/status-badge";
 import type { PaymentRequestListItem } from "@/features/payment-requests/types";
 import type { PaymentRequestStatus, UserRole } from "@/lib/constants";
@@ -166,18 +167,21 @@ export function ReviewRequestList({
                   </td>
                 ) : null}
                 <td className="px-5 py-4">
-                  <Link
-                    className="block space-y-1"
-                    href={`${detailHrefBase}/${item.id}`}
-                  >
-                    <p className="font-semibold text-foreground">{item.title}</p>
-                    <p className="line-clamp-1 text-muted-foreground">
-                      {item.description || "Không có mô tả"}
-                    </p>
-                    {item.payment_qr_name ? (
-                      <p className="text-xs text-muted-foreground">Có QR thanh toán riêng</p>
-                    ) : null}
-                  </Link>
+                  <div className="flex items-start gap-2">
+                    <Link
+                      className="min-w-0 flex-1 space-y-1"
+                      href={`${detailHrefBase}/${item.id}`}
+                    >
+                      <p className="font-semibold text-foreground">{item.title}</p>
+                      <p className="line-clamp-1 text-muted-foreground">
+                        {item.description || "Không có mô tả"}
+                      </p>
+                      {item.payment_qr_name ? (
+                        <p className="text-xs text-muted-foreground">Có QR thanh toán riêng</p>
+                      ) : null}
+                    </Link>
+                    <CopyRequestLinkButton compact requestId={item.id} />
+                  </div>
                 </td>
                 {showOwner ? (
                   <td className="px-5 py-4 text-muted-foreground">

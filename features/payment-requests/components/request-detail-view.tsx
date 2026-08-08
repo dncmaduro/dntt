@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttachmentGallery } from "@/features/payment-requests/components/attachment-gallery";
 import { DeleteRequestButton } from "@/features/payment-requests/components/delete-request-button";
+import { CopyRequestLinkButton } from "@/features/payment-requests/components/copy-request-link-button";
 import { PaymentBillGallery } from "@/features/payment-requests/components/payment-bill-gallery";
 import { PaymentConfirmationCard } from "@/features/payment-requests/components/payment-confirmation-card";
 import { RequestTimeline } from "@/features/payment-requests/components/request-timeline";
@@ -87,6 +88,7 @@ export async function RequestDetailView({
             <Button asChild variant="secondary">
               <Link href={backHref}>Quay lại danh sách</Link>
             </Button>
+            <CopyRequestLinkButton requestId={request.id} />
             {canEdit ? (
               <Button asChild variant="secondary">
                 <Link href={editHref}>

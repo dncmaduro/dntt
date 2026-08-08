@@ -3,6 +3,7 @@ import { CalendarDays, Files, FolderSearch } from "lucide-react";
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { Card, CardContent } from "@/components/ui/card";
+import { CopyRequestLinkButton } from "@/features/payment-requests/components/copy-request-link-button";
 import { StatusBadge } from "@/features/payment-requests/components/status-badge";
 import type { PaymentRequestStatus } from "@/lib/constants";
 import { formatDate } from "@/lib/utils";
@@ -51,18 +52,21 @@ export function RequestList({
             {items.map((item) => (
               <tr key={item.id} className="hover:bg-muted/20">
                 <td className="px-5 py-4">
-                  <Link
-                    className="block space-y-1"
-                    href={`${detailHrefBase}/${item.id}`}
-                  >
-                    <p className="font-semibold text-foreground">{item.title}</p>
-                    <p className="line-clamp-1 text-muted-foreground">
-                      {item.description || "Không có mô tả"}
-                    </p>
-                    {item.payment_qr_name ? (
-                      <p className="text-xs text-muted-foreground">Có QR thanh toán riêng</p>
-                    ) : null}
-                  </Link>
+                  <div className="flex items-start gap-2">
+                    <Link
+                      className="min-w-0 flex-1 space-y-1"
+                      href={`${detailHrefBase}/${item.id}`}
+                    >
+                      <p className="font-semibold text-foreground">{item.title}</p>
+                      <p className="line-clamp-1 text-muted-foreground">
+                        {item.description || "Không có mô tả"}
+                      </p>
+                      {item.payment_qr_name ? (
+                        <p className="text-xs text-muted-foreground">Có QR thanh toán riêng</p>
+                      ) : null}
+                    </Link>
+                    <CopyRequestLinkButton compact requestId={item.id} />
+                  </div>
                 </td>
                 {showOwner ? (
                   <td className="px-5 py-4 text-muted-foreground">
