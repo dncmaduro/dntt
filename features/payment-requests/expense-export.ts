@@ -59,7 +59,13 @@ type WorkbookImageExtension = "gif" | "jpeg" | "png";
 type ResolvedAttachmentImage = {
   attachment: ExpenseAttachmentWithUrl;
   base64: string;
+  dimensions: ImageDimensions;
   extension: WorkbookImageExtension;
+};
+
+type ImageDimensions = {
+  height: number;
+  width: number;
 };
 
 const cloneValue = <T>(value: T): T => structuredClone(value);
@@ -154,7 +160,26 @@ const buildDateValue = (value?: string | null) => {
     return null;
   }
 
-  const [year, month, day] = value.split("-").map(Number);
+  const normalizedValue = /^\d{4}-\d{2}-\d{2}$/.test(value)
+    ? value
+    : (() => {
+        const date = new Date(value);
+
+        if (Number.isNaN(date.getTime())) {
+          return "";
+        }
+
+        // Payments are recorded as UTC timestamps but accounting reports use
+        // Vietnam's business date.
+        const vietnamDate = new Date(date.getTime() + 7 * 60 * 60 * 1_000);
+
+        return [
+          vietnamDate.getUTCFullYear(),
+          String(vietnamDate.getUTCMonth() + 1).padStart(2, "0"),
+          String(vietnamDate.getUTCDate()).padStart(2, "0"),
+        ].join("-");
+      })();
+  const [year, month, day] = normalizedValue.split("-").map(Number);
 
   if (!year || !month || !day) {
     return null;
@@ -282,6 +307,96 @@ const normalizeWorkbookImageExtension = (
   return null;
 };
 
+const readUInt16LittleEndian = (bytes: Uint8Array, offset: number) =>
+  bytes[offset]! | (bytes[offset + 1]! << 8);
+
+const readUInt16BigEndian = (bytes: Uint8Array, offset: number) =>
+  (bytes[offset]! << 8) | bytes[offset + 1]!;
+
+const readUInt32BigEndian = (bytes: Uint8Array, offset: number) =>
+  ((bytes[offset]! * 2 ** 24) +
+    (bytes[offset + 1]! << 16) +
+    (bytes[offset + 2]! << 8) +
+    bytes[offset + 3]!) >>>
+  0;
+
+const getImageDimensions = (
+  bytes: Uint8Array,
+  extension: WorkbookImageExtension,
+): ImageDimensions | null => {
+  if (extension === "png" && bytes.length >= 24) {
+    const width = readUInt32BigEndian(bytes, 16);
+    const height = readUInt32BigEndian(bytes, 20);
+
+    return width && height ? { width, height } : null;
+  }
+
+  if (extension === "gif" && bytes.length >= 10) {
+    const width = readUInt16LittleEndian(bytes, 6);
+    const height = readUInt16LittleEndian(bytes, 8);
+
+    return width && height ? { width, height } : null;
+  }
+
+  if (extension !== "jpeg" || bytes.length < 4) {
+    return null;
+  }
+
+  let offset = 2;
+
+  while (offset + 9 < bytes.length) {
+    if (bytes[offset] !== 0xff) {
+      offset += 1;
+      continue;
+    }
+
+    const marker = bytes[offset + 1];
+    offset += 2;
+
+    if (!marker || marker === 0xd8 || marker === 0xd9) {
+      continue;
+    }
+
+    if (offset + 1 >= bytes.length) {
+      return null;
+    }
+
+    const segmentLength = readUInt16BigEndian(bytes, offset);
+    const isStartOfFrame =
+      (marker >= 0xc0 && marker <= 0xc3) ||
+      (marker >= 0xc5 && marker <= 0xc7) ||
+      (marker >= 0xc9 && marker <= 0xcb) ||
+      (marker >= 0xcd && marker <= 0xcf);
+
+    if (isStartOfFrame && offset + 7 < bytes.length) {
+      const height = readUInt16BigEndian(bytes, offset + 3);
+      const width = readUInt16BigEndian(bytes, offset + 5);
+
+      return width && height ? { width, height } : null;
+    }
+
+    if (segmentLength < 2) {
+      return null;
+    }
+
+    offset += segmentLength;
+  }
+
+  return null;
+};
+
+const getContainedImageSize = ({ height, width }: ImageDimensions) => {
+  const scale = Math.min(
+    EVIDENCE_IMAGE_WIDTH / width,
+    EVIDENCE_IMAGE_HEIGHT / height,
+  );
+
+  return {
+    height: Math.round(height * scale),
+    width: Math.round(width * scale),
+  };
+};
+
 const downloadAttachmentImage = async (
   attachment: ExpenseAttachmentWithUrl,
 ): Promise<ResolvedAttachmentImage | null> => {
@@ -301,9 +416,17 @@ const downloadAttachmentImage = async (
     throw new Error(`Unable to download attachment image: ${attachment.file_name}`);
   }
 
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  const dimensions = getImageDimensions(bytes, extension);
+
+  if (!dimensions) {
+    return null;
+  }
+
   return {
     attachment,
-    base64: Buffer.from(await response.arrayBuffer()).toString("base64"),
+    base64: Buffer.from(bytes).toString("base64"),
+    dimensions,
     extension,
   };
 };
@@ -397,10 +520,11 @@ const buildEvidenceSheet = async ({
         base64: image.base64,
         extension: image.extension,
       });
+      const imageSize = getContainedImageSize(image.dimensions);
 
       evidenceSheet.addImage(imageId, {
         tl: { col: columnNumber - 1 + 0.08, row: rowNumber - 1 + 0.08 },
-        ext: { width: EVIDENCE_IMAGE_WIDTH, height: EVIDENCE_IMAGE_HEIGHT },
+        ext: imageSize,
       });
       evidenceSheet.getColumn(columnNumber).width = EVIDENCE_IMAGE_COLUMN_WIDTH;
 
@@ -431,7 +555,7 @@ export const buildExpenseExportWorkbook = async ({
   }
 
   const exportItems = [...items].sort((left, right) =>
-    (left.payment_date ?? "").localeCompare(right.payment_date ?? "") ||
+    (left.paid_at ?? "").localeCompare(right.paid_at ?? "") ||
     left.created_at.localeCompare(right.created_at),
   );
   const evidenceLinkTargetByRequestId = await buildEvidenceSheet({
@@ -546,7 +670,7 @@ export const buildExpenseExportWorkbook = async ({
 
       cellA.value = index + 1;
       cellB.value = item.attachment_count > 0 ? "Có hoá đơn" : null;
-      cellC.value = buildDateValue(item.payment_date);
+      cellC.value = buildDateValue(item.paid_at);
       cellD.value = label;
       cellE.value = item.title;
       cellF.value = item.amount ?? 0;

@@ -229,20 +229,23 @@ const getSubCategoryIdsByCategory = async ({
   return (data ?? []).map((item) => item.id);
 };
 
-const getMonthRange = (month: string) => {
+const getPaidAtMonthRange = (month: string) => {
   if (!/^\d{4}-\d{2}$/.test(month)) {
     return null;
   }
 
   const [yearValue, monthValue] = month.split('-').map(Number);
-  const start = new Date(Date.UTC(yearValue, monthValue - 1, 1));
-  const end = new Date(Date.UTC(yearValue, monthValue, 1));
-
-  const formatDatePart = (value: Date) => value.toISOString().slice(0, 10);
+  // `paid_at` is an ISO timestamp while the accounting screen is operated in
+  // Vietnam. Convert the local month boundaries to UTC before querying it.
+  const vietnamUtcOffsetMs = 7 * 60 * 60 * 1_000;
+  const start = new Date(
+    Date.UTC(yearValue, monthValue - 1, 1) - vietnamUtcOffsetMs,
+  );
+  const end = new Date(Date.UTC(yearValue, monthValue, 1) - vietnamUtcOffsetMs);
 
   return {
-    from: formatDatePart(start),
-    toExclusive: formatDatePart(end),
+    from: start.toISOString(),
+    toExclusive: end.toISOString(),
   };
 };
 
@@ -447,16 +450,16 @@ export const getExpenseRequestList = async ({
   }
 
   if (filters.month) {
-    const monthRange = getMonthRange(filters.month);
+    const monthRange = getPaidAtMonthRange(filters.month);
 
     if (monthRange) {
       query = query
-        .gte('payment_date', monthRange.from)
-        .lt('payment_date', monthRange.toExclusive);
+        .gte('paid_at', monthRange.from)
+        .lt('paid_at', monthRange.toExclusive);
     }
   }
 
-  query = query.order('payment_date', { ascending: false });
+  query = query.order('paid_at', { ascending: false });
 
   const { data, error } = await query;
 
