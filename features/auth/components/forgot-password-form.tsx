@@ -30,21 +30,24 @@ export function ForgotPasswordForm() {
         <Label htmlFor="email">Email</Label>
         <Input
           autoComplete="email"
+          className="h-12"
           id="email"
           name="email"
           placeholder="ban@example.com"
           type="email"
+          aria-invalid={Boolean(state.error)}
+          aria-describedby={state.error ? "forgot-password-error" : undefined}
         />
       </div>
 
       {state.error ? (
-        <p className="rounded-2xl border border-destructive/15 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+        <p id="forgot-password-error" role="alert" className="rounded-lg border border-destructive/15 bg-destructive/5 px-4 py-3 text-sm text-destructive">
           {state.error}
         </p>
       ) : null}
 
       {state.success ? (
-        <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+        <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
           {state.success}
         </p>
       ) : null}

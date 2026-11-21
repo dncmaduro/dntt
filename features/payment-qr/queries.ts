@@ -58,6 +58,10 @@ const normalizeRole = (value?: string | null): UserRole | null => {
 const mapLookupRowToEmployee = (
   row: PaymentQrLookupRpcRow,
 ): PaymentQrLookupEmployee | null => {
+  if (!row.id) {
+    return null;
+  }
+
   const role = normalizeRole(row.role);
 
   if (role !== "employee") {
@@ -245,21 +249,43 @@ export const getSelectedEmployeePaymentQr = async (
     });
   }
 
-  const previewUrlEntries = await Promise.all(
-    paginatedUnpaidRequests.map(async (request) => {
-      const attachment = attachmentsByRequestId.get(request.id);
+  const previewPaths = Array.from(
+    new Set(
+      paginatedUnpaidRequests.flatMap((request) => {
+        const attachment = attachmentsByRequestId.get(request.id);
 
-      if (!attachment || !attachment.file_type?.startsWith("image/")) {
-        return [request.id, null] as const;
-      }
-
-      const { data } = await supabase.storage
-        .from(STORAGE_BUCKET)
-        .createSignedUrl(attachment.file_path, 60 * 60);
-
-      return [request.id, data?.signedUrl ?? null] as const;
-    }),
+        return attachment?.file_type?.startsWith("image/")
+          ? [attachment.file_path]
+          : [];
+      }),
+    ),
   );
+  const previewUrlByPath = new Map<string, string>();
+
+  if (previewPaths.length) {
+    const { data: signedUrls, error: signedUrlError } = await supabase.storage
+      .from(STORAGE_BUCKET)
+      .createSignedUrls(previewPaths, 60 * 60);
+
+    if (signedUrlError) {
+      throw new Error(signedUrlError.message);
+    }
+
+    signedUrls.forEach((signedUrl) => {
+      if (signedUrl.path && signedUrl.signedUrl) {
+        previewUrlByPath.set(signedUrl.path, signedUrl.signedUrl);
+      }
+    });
+  }
+
+  const previewUrlEntries = paginatedUnpaidRequests.map((request) => {
+    const attachment = attachmentsByRequestId.get(request.id);
+
+    return [
+      request.id,
+      attachment ? previewUrlByPath.get(attachment.file_path) ?? null : null,
+    ] as const;
+  });
 
   const previewUrlByRequestId = new Map<string, string | null>(previewUrlEntries);
   const mappedPaginatedRequests = paginatedUnpaidRequests.map((request) => {

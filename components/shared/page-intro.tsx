@@ -1,7 +1,6 @@
 import { cn } from '@/lib/utils';
 
 export function PageIntro({
-  eyebrow,
   title,
   description,
   actions,
@@ -9,7 +8,6 @@ export function PageIntro({
   titleClassName,
   actionsBelow = false,
 }: {
-  eyebrow?: string;
   title: string;
   description?: string;
   actions?: React.ReactNode;
@@ -20,27 +18,22 @@ export function PageIntro({
   return (
     <div
       className={cn(
-        'mb-6 flex flex-col gap-4 rounded-[2rem] border border-border/70 bg-white/70 p-6 backdrop-blur-md',
+        'mb-6 flex flex-col gap-4 rounded-lg border border-border bg-card p-4 md:p-5',
         actionsBelow ? '' : 'md:flex-row md:items-end md:justify-between',
         className,
       )}
     >
       <div className="min-w-0 space-y-2">
-        {eyebrow ? (
-          <p className="text-xs font-semibold uppercase tracking-[0.05em] font-bold text-primary/75">
-            {eyebrow}
-          </p>
-        ) : null}
         <h1
           className={cn(
-            'text-2xl font-semibold [overflow-wrap:anywhere] md:text-3xl',
+            'text-2xl font-semibold [overflow-wrap:anywhere] md:text-[1.75rem]',
             titleClassName,
           )}
         >
           {title}
         </h1>
         {description ? (
-          <p className="max-w-2xl text-sm leading-6 [overflow-wrap:anywhere] text-muted-foreground">
+          <p className="max-w-prose text-sm leading-6 [overflow-wrap:anywhere] text-muted-foreground">
             {description}
           </p>
         ) : null}

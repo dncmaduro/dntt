@@ -19,14 +19,13 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <PageIntro
-        description="Theo dõi tiến độ DNTT theo vai trò của bạn và truy cập nhanh các hồ sơ gần đây."
-        eyebrow="Tổng quan"
+        description="Theo dõi tiến độ xử lý và mở các hồ sơ gần đây."
         title="Tổng quan xử lý"
       />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {dashboard.metrics.map((metric) => (
-          <Card key={metric.label} className="rounded-[1.75rem]">
+          <Card key={metric.label} className="rounded-lg">
             <CardContent className="space-y-4 p-6">
               <div>
                 <p className="text-sm text-muted-foreground">{metric.label}</p>
@@ -44,9 +43,6 @@ export default async function DashboardPage() {
         <div className="flex items-center justify-between gap-3">
           <div>
             <h2 className="text-xl font-semibold">Đề nghị gần đây</h2>
-            <p className="text-sm text-muted-foreground">
-              Truy cập nhanh các hồ sơ mới nhất trên hệ thống.
-            </p>
           </div>
           <Link className="text-sm font-medium text-primary" href={detailBase}>
             Xem tất cả
@@ -55,7 +51,7 @@ export default async function DashboardPage() {
 
         <RequestList
           detailHrefBase={detailBase}
-          emptyDescription="Khi có đề nghị mới, dữ liệu gần đây sẽ xuất hiện tại đây."
+          emptyDescription="Chưa có đề nghị gần đây."
           items={dashboard.recentRequests}
           showOwner={profile.role !== "employee"}
         />

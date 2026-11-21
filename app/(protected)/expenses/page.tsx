@@ -1,14 +1,17 @@
 import { Download } from "lucide-react";
 
+import { DataNavigationRegion } from "@/components/shared/data-loading-overlay";
 import { PageIntro } from "@/components/shared/page-intro";
+import { PaginationControls } from "@/components/shared/pagination-controls";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ExpenseFilterBar } from "@/features/payment-requests/components/expense-filter-bar";
 import { ExpenseRequestList } from "@/features/payment-requests/components/expense-request-list";
 import {
   getCategories,
-  getExpenseRequestList,
+  getExpenseRequestListPage,
   getSubCategories,
+  parseListPage,
   parseExpenseFilters,
 } from "@/features/payment-requests/queries";
 import { requireRole } from "@/lib/auth/session";
@@ -22,16 +25,14 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
   await requireRole(["accountant", "director"]);
 
   const resolvedSearchParams = await searchParams;
-  const [filters, categories, subCategories] = await Promise.all([
-    parseExpenseFilters(Promise.resolve(resolvedSearchParams)),
+  const filters = await parseExpenseFilters(Promise.resolve(resolvedSearchParams));
+  const page = parseListPage(resolvedSearchParams.page);
+  const [categories, subCategories, requests] = await Promise.all([
     getCategories(),
     getSubCategories(),
+    getExpenseRequestListPage({ filters, page }),
   ]);
-  const requests = await getExpenseRequestList({ filters });
-  const totalAmount = requests.reduce(
-    (total, request) => total + (request.amount ?? 0),
-    0,
-  );
+  const totalAmount = requests.totalAmount ?? 0;
   const exportQuery = new URLSearchParams();
 
   (Object.entries(filters) as Array<[keyof typeof filters, string]>).forEach(
@@ -57,9 +58,15 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
             </a>
           </Button>
         }
-        description="Theo dõi chi phí theo danh mục, danh mục con, tháng và trạng thái thanh toán."
-        eyebrow="Chi phí"
+        description="Lọc chi phí theo danh mục, tháng và trạng thái."
         title="Chi phí"
+      />
+
+      <PaginationControls
+        page={requests.page}
+        pageSize={requests.pageSize}
+        totalItems={requests.totalItems}
+        totalPages={requests.totalPages}
       />
 
       <ExpenseFilterBar
@@ -68,16 +75,27 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
         subCategories={subCategories}
       />
 
-      <Card className="rounded-[1.75rem]">
-        <CardContent className="p-6">
-          <p className="text-sm text-muted-foreground">Tổng tiền</p>
-          <p className="mt-2 text-3xl font-semibold">
-            {formatCurrency(totalAmount)}
-          </p>
-        </CardContent>
-      </Card>
+      <DataNavigationRegion>
+        <div className="space-y-6">
+          <Card className="rounded-lg">
+            <CardContent className="p-6">
+              <p className="text-sm text-muted-foreground">Tổng tiền</p>
+              <p className="mt-2 text-3xl font-semibold">
+                {formatCurrency(totalAmount)}
+              </p>
+            </CardContent>
+          </Card>
 
-      <ExpenseRequestList items={requests} />
+          <ExpenseRequestList items={requests.items} />
+          <PaginationControls
+            className="mb-10"
+            page={requests.page}
+            pageSize={requests.pageSize}
+            totalItems={requests.totalItems}
+            totalPages={requests.totalPages}
+          />
+        </div>
+      </DataNavigationRegion>
     </div>
   );
 }

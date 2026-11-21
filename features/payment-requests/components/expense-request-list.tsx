@@ -25,7 +25,7 @@ export function ExpenseRequestList({
 
   return (
     <>
-      <div className="hidden overflow-hidden rounded-[2rem] border border-border/70 bg-white/75 md:block">
+      <div className="hidden overflow-hidden rounded-lg border border-border bg-card md:block">
         <table className="min-w-full divide-y divide-border/70">
           <thead className="bg-muted/35">
             <tr className="text-left text-sm text-muted-foreground">
@@ -48,7 +48,7 @@ export function ExpenseRequestList({
                     <Link className="block space-y-1" href={`/requests/${item.id}`}>
                       <p className="font-semibold text-foreground">{item.title}</p>
                       <p className="line-clamp-1 text-muted-foreground">
-                        {item.description || "Không có mô tả"}
+                        {item.description || "—"}
                       </p>
                     </Link>
                   </td>
@@ -82,7 +82,7 @@ export function ExpenseRequestList({
           const isPaid = item.status === "paid";
 
           return (
-            <Card key={item.id} className="rounded-[1.75rem]">
+            <Card key={item.id} className="rounded-lg">
               <CardContent className="space-y-4 p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -90,13 +90,13 @@ export function ExpenseRequestList({
                       <p className="line-clamp-2 font-semibold">{item.title}</p>
                     </Link>
                     <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                      {item.description || "Không có mô tả"}
+                      {item.description || "—"}
                     </p>
                   </div>
                   <PaymentStateBadge isPaid={isPaid} />
                 </div>
 
-                <div className="grid gap-3 rounded-3xl bg-muted/40 p-4 text-sm">
+                <div className="grid gap-3 rounded-lg bg-muted/40 p-4 text-sm">
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-muted-foreground">Người đề nghị</span>
                     <span className="text-right font-medium">

@@ -16,8 +16,7 @@ export default async function NewRequestPage() {
   return (
     <div className="space-y-6">
       <PageIntro
-        description="Điền đầy đủ thông tin và đính kèm chứng từ để gửi đề nghị sang bước xác nhận của kế toán."
-        eyebrow="Khởi tạo"
+        description="Điền thông tin và đính kèm chứng từ."
         title="Tạo đề nghị thanh toán"
       />
 

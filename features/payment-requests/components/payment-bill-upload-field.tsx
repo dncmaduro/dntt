@@ -98,7 +98,7 @@ export function PaymentBillUploadField({
     <div className="space-y-3">
       <div
         className={cn(
-          "rounded-[1.5rem] border border-dashed transition-colors",
+          "rounded-lg border border-dashed transition-colors",
           isDragActive
             ? "border-primary/60 bg-primary/8"
             : "border-primary/25 bg-primary/5",
@@ -133,9 +133,9 @@ export function PaymentBillUploadField({
         }}
       >
         <div className={cn("flex gap-4", compact ? "items-start gap-3" : "items-center")}>
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-3xl bg-primary/10 text-primary sm:size-14">
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary sm:size-14">
             {firstDraft ? (
-              <div className="relative size-12 overflow-hidden rounded-3xl sm:size-14">
+              <div className="relative size-12 overflow-hidden rounded-lg sm:size-14">
                 <Image
                   alt={firstDraft.file.name}
                   className="object-cover"
@@ -215,9 +215,9 @@ export function PaymentBillUploadField({
           {value.map((draft) => (
             <div
               key={draft.id}
-              className="flex items-center gap-3 rounded-[1.25rem] border border-border/70 bg-white/70 p-3"
+              className="flex items-center gap-3 rounded-md border border-border bg-card p-3"
             >
-              <div className="relative size-14 overflow-hidden rounded-2xl bg-muted">
+              <div className="relative size-14 overflow-hidden rounded-lg bg-muted">
                 <Image
                   alt={draft.file.name}
                   className="object-cover"

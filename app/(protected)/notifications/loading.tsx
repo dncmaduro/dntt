@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function NotificationsLoading() {
   return (
     <div className="space-y-6">
-      <div className="rounded-[2rem] border border-border/70 bg-white/70 p-6">
+      <div className="rounded-lg border border-border bg-card p-6">
         <Skeleton className="h-4 w-24" />
         <Skeleton className="mt-3 h-9 w-40" />
       </div>
@@ -16,7 +16,7 @@ export default function NotificationsLoading() {
       <div className="grid gap-4">
         {Array.from({ length: 3 }).map((_, index) => (
           <div
-            className="rounded-[1.75rem] border border-border/70 bg-background p-5"
+            className="rounded-lg border border-border bg-background p-5"
             key={index}
           >
             <Skeleton className="h-5 w-3/5" />

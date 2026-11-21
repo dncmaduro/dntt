@@ -9,12 +9,11 @@ export default async function ChangePasswordPage() {
   return (
     <div className="space-y-6">
       <PageIntro
-        description="Cập nhật mật khẩu tài khoản để tăng cường an toàn truy cập hệ thống."
-        eyebrow="Hồ sơ"
+        description="Đổi mật khẩu tài khoản."
         title="Đổi mật khẩu"
       />
 
-      <Card className="max-w-2xl rounded-[2rem]">
+      <Card className="max-w-2xl rounded-lg">
         <CardHeader>
           <CardTitle>Thông tin mật khẩu</CardTitle>
           <CardDescription>

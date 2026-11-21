@@ -37,7 +37,7 @@ export function RequestTimeline({
               <span className="absolute left-1/2 top-4 bottom-0 w-px -translate-x-1/2 bg-border" />
             ) : null}
           </div>
-          <div className="min-w-0 flex-1 rounded-3xl border border-border/70 bg-white/70 p-4">
+          <div className="min-w-0 flex-1 rounded-lg border border-border bg-card p-4">
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="font-semibold [overflow-wrap:anywhere]">
@@ -54,7 +54,7 @@ export function RequestTimeline({
             </div>
             {log.meta && typeof log.meta === "object" && "note" in log.meta ? (
               <p className="mt-3 text-sm leading-6 [overflow-wrap:anywhere] text-muted-foreground">
-                {(log.meta.note as string) || "Không có ghi chú bổ sung"}
+                {(log.meta.note as string) || "—"}
               </p>
             ) : null}
           </div>

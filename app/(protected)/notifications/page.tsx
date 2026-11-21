@@ -4,7 +4,7 @@ import { NotificationList } from "@/features/notifications/components/notificati
 export default function NotificationsPage() {
   return (
     <div className="space-y-6">
-      <PageIntro eyebrow="Thông báo" title="Thông báo" />
+      <PageIntro title="Thông báo" />
 
       <NotificationList />
     </div>

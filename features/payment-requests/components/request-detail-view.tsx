@@ -112,14 +112,13 @@ export async function RequestDetailView({
             {canRestore ? <RestoreRequestButton requestId={request.id} /> : null}
           </div>
         }
-        eyebrow="Chi tiết đề nghị"
         title={request.title}
         titleClassName="text-xl md:text-2xl"
       />
 
       <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <div className="space-y-6">
-          <Card className="rounded-[2rem]">
+          <Card className="rounded-lg">
             <CardHeader>
               <CardTitle>Thông tin đề nghị</CardTitle>
             </CardHeader>
@@ -144,13 +143,13 @@ export async function RequestDetailView({
               </InfoItem>
               <InfoItem label="Mô tả">
                 <p className="leading-6 text-muted-foreground">
-                  {request.description || "Không có mô tả"}
+                  {request.description || "—"}
                 </p>
               </InfoItem>
               <InfoItem className="md:col-span-2" label="QR thanh toán">
                 {paymentQrPreviewUrl ? (
                   <div className="space-y-3">
-                    <div className="w-full max-w-[23rem] overflow-hidden rounded-[1.25rem] border border-border/70 bg-muted/30">
+                    <div className="w-full max-w-[23rem] overflow-hidden rounded-md border border-border bg-muted/30">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         alt={paymentQrName}
@@ -209,7 +208,7 @@ export async function RequestDetailView({
             requestId={request.id}
           />
 
-          <Card className="rounded-[2rem]">
+          <Card className="rounded-lg">
             <CardHeader>
               <CardTitle>Lịch sử xử lý</CardTitle>
             </CardHeader>
@@ -243,7 +242,7 @@ function InfoItem({
   className?: string;
 }) {
   return (
-    <div className={`min-w-0 rounded-3xl bg-muted/35 p-4 md:col-span-1 ${className ?? ""}`}>
+    <div className={`min-w-0 rounded-lg bg-muted/35 p-4 md:col-span-1 ${className ?? ""}`}>
       <p className="text-sm text-muted-foreground">{label}</p>
       <div className="mt-2 min-w-0 text-sm [overflow-wrap:anywhere]">{children}</div>
     </div>

@@ -6,6 +6,7 @@ import { CheckCircle2, CalendarDays, Files, FolderSearch, LoaderCircle } from "l
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
+import { DataLoadingOverlay } from "@/components/shared/data-loading-overlay";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -96,9 +97,9 @@ export function ReviewRequestList({
   }
 
   return (
-    <div className="space-y-4">
+    <div aria-busy={isPending} className="relative space-y-4">
       {showBulkOptions ? (
-        <div className="surface-panel rounded-[1.75rem] p-4">
+        <div className="surface-panel rounded-lg p-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="text-sm text-muted-foreground">
               {selectedIds.length
@@ -127,7 +128,7 @@ export function ReviewRequestList({
         </div>
       ) : null}
 
-      <div className="hidden overflow-hidden rounded-[2rem] border border-border/70 bg-white/75 md:block">
+      <div className="hidden overflow-hidden rounded-lg border border-border bg-card md:block">
         <table className="min-w-full table-fixed divide-y divide-border/70">
           <colgroup>
             {showBulkOptions ? <col className="w-14" /> : null}
@@ -174,7 +175,7 @@ export function ReviewRequestList({
                     >
                       <p className="font-semibold text-foreground">{item.title}</p>
                       <p className="line-clamp-1 text-muted-foreground">
-                        {item.description || "Không có mô tả"}
+                        {item.description || "—"}
                       </p>
                       {item.payment_qr_name ? (
                         <p className="text-xs text-muted-foreground">Có QR thanh toán riêng</p>
@@ -219,7 +220,7 @@ export function ReviewRequestList({
 
       <div className="grid gap-4 md:hidden">
         {items.map((item) => (
-          <Card key={item.id} className="rounded-[1.75rem]">
+          <Card key={item.id} className="rounded-lg">
             <CardContent className="space-y-4 p-5">
               <div
                 className={cn(
@@ -246,14 +247,14 @@ export function ReviewRequestList({
                   <p className="line-clamp-2 font-semibold">{item.title}</p>
                 </Link>
                 <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                  {item.description || "Không có mô tả"}
+                  {item.description || "—"}
                 </p>
                 {item.payment_qr_name ? (
                   <p className="mt-1 text-xs text-muted-foreground">Có QR thanh toán riêng</p>
                 ) : null}
               </div>
 
-              <div className="grid gap-3 rounded-3xl bg-muted/40 p-4 text-sm">
+              <div className="grid gap-3 rounded-lg bg-muted/40 p-4 text-sm">
                 {showOwner ? (
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-muted-foreground">Người đề nghị</span>
@@ -293,6 +294,11 @@ export function ReviewRequestList({
           </Card>
         ))}
       </div>
+
+      <DataLoadingOverlay
+        isLoading={isPending}
+        label="Đang cập nhật đề nghị"
+      />
     </div>
   );
 }

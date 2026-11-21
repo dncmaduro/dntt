@@ -10,6 +10,7 @@ import {
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
+import { useDataNavigation } from "@/components/shared/data-navigation";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -101,6 +102,8 @@ export function PaymentQrUnpaidRequestsPanel({
   const [sharedBillError, setSharedBillError] = useState<string>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isNavigating, startNavigationTransition] = useTransition();
+  const { isPending: isDataPending, start: startDataNavigation } =
+    useDataNavigation();
   const sharedBillPreviewUrlsRef = useRef<string[]>([]);
 
   useEffect(() => {
@@ -176,6 +179,7 @@ export function PaymentQrUnpaidRequestsPanel({
       }
     });
 
+    startDataNavigation();
     startNavigationTransition(() => {
       router.replace(params.toString() ? `${pathname}?${params.toString()}` : pathname);
     });
@@ -300,21 +304,26 @@ export function PaymentQrUnpaidRequestsPanel({
   };
 
   return (
-    <section className="rounded-[1.75rem] border border-border/70 bg-white/80 p-5 lg:p-6">
+    <section className="rounded-lg border border-border bg-card p-5 lg:p-6">
       <div className="space-y-1">
         <h3 className="text-xl font-semibold">
           {compact ? "Các đề nghị thanh toán" : "Đề nghị chờ thanh toán"}
         </h3>
         <p className="text-sm text-muted-foreground">
           {compact
-            ? "Chọn đề nghị cần chi trả, mở chi tiết bằng modal để không làm mất trạng thái đang chọn."
+            ? "Chọn đề nghị cần chi trả; trạng thái chọn được giữ khi mở chi tiết."
             : "Tick đề nghị cần chi trả, chuyển khoản theo QR, sau đó xác nhận hàng loạt."}
         </p>
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-[14rem_minmax(0,1fr)]">
         <Select
-          disabled={!timeFilterOptions.length || isNavigating || isSubmitting}
+          disabled={
+            !timeFilterOptions.length ||
+            isNavigating ||
+            isDataPending ||
+            isSubmitting
+          }
           onValueChange={handleTimeFilterChange}
           value={selectedTimeFilter}
         >
@@ -330,21 +339,26 @@ export function PaymentQrUnpaidRequestsPanel({
           </SelectContent>
         </Select>
 
-        <div className="rounded-2xl border border-border/70 bg-background/70 px-4 py-2.5 text-sm text-muted-foreground">
+        <div className="rounded-lg border border-border bg-background/70 px-4 py-2.5 text-sm text-muted-foreground">
           {employeeName ?? "Nhân sự"} • {totalCount} đề nghị chờ thanh toán • Tổng
-          hệ thống: {formatCurrency(totalAmount)}
+          Tổng: {formatCurrency(totalAmount)}
         </div>
       </div>
 
       {!compact ? (
-        <div className="mt-4 rounded-[1.25rem] border border-primary/20 bg-primary/5 p-4">
+        <div className="mt-4 rounded-md border border-primary/20 bg-primary/5 p-4">
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm font-medium">Bill dùng chung cho các đề nghị đang chọn</p>
             <label className="inline-flex items-center gap-2 text-xs text-muted-foreground">
               <input
                 checked={isAllChecked}
                 className="size-4 accent-[var(--color-primary)]"
-                disabled={!allCurrentPageIds.length || isSubmitting || isNavigating}
+                disabled={
+                  !allCurrentPageIds.length ||
+                  isSubmitting ||
+                  isNavigating ||
+                  isDataPending
+                }
                 onChange={toggleAllCurrentPage}
                 type="checkbox"
               />
@@ -354,7 +368,7 @@ export function PaymentQrUnpaidRequestsPanel({
           <div className="mt-3">
             <PaymentBillUploadField
               compact
-              disabled={isSubmitting || isNavigating}
+              disabled={isSubmitting || isNavigating || isDataPending}
               error={sharedBillError}
               helperText={`Tải từ 1 đến tối đa ${MAX_PAYMENT_BILLS} bill dùng chung cho các đề nghị đang chọn.`}
               maxFiles={MAX_PAYMENT_BILLS}
@@ -382,7 +396,12 @@ export function PaymentQrUnpaidRequestsPanel({
         </p>
         <div className="flex items-center gap-2">
           <Button
-            disabled={requests.page <= 1 || isNavigating || isSubmitting}
+            disabled={
+              requests.page <= 1 ||
+              isNavigating ||
+              isDataPending ||
+              isSubmitting
+            }
             onClick={() => handlePageChange(requests.page - 1)}
             type="button"
             variant="outline"
@@ -391,7 +410,12 @@ export function PaymentQrUnpaidRequestsPanel({
             Trước
           </Button>
           <Button
-            disabled={requests.page >= requests.total_pages || isNavigating || isSubmitting}
+            disabled={
+              requests.page >= requests.total_pages ||
+              isNavigating ||
+              isDataPending ||
+              isSubmitting
+            }
             onClick={() => handlePageChange(requests.page + 1)}
             type="button"
             variant="outline"
@@ -407,7 +431,7 @@ export function PaymentQrUnpaidRequestsPanel({
       </div>
 
       {compact ? (
-        <div className="mt-5 rounded-[1.25rem] border border-primary/20 bg-primary/5 p-4">
+        <div className="mt-5 rounded-md border border-primary/20 bg-primary/5 p-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
             <div className="space-y-1">
               <p className="text-sm font-semibold">Bill thanh toán</p>
@@ -420,7 +444,12 @@ export function PaymentQrUnpaidRequestsPanel({
               <input
                 checked={isAllChecked}
                 className="size-4 accent-[var(--color-primary)]"
-                disabled={!allCurrentPageIds.length || isSubmitting || isNavigating}
+                disabled={
+                  !allCurrentPageIds.length ||
+                  isSubmitting ||
+                  isNavigating ||
+                  isDataPending
+                }
                 onChange={toggleAllCurrentPage}
                 type="checkbox"
               />
@@ -431,7 +460,7 @@ export function PaymentQrUnpaidRequestsPanel({
           <div className="mt-3">
             <PaymentBillUploadField
               compact
-              disabled={isSubmitting || isNavigating}
+              disabled={isSubmitting || isNavigating || isDataPending}
               error={sharedBillError}
               helperText={`Tải từ 1 đến tối đa ${MAX_PAYMENT_BILLS} bill dùng chung cho các đề nghị đang chọn.`}
               maxFiles={MAX_PAYMENT_BILLS}
@@ -454,6 +483,7 @@ export function PaymentQrUnpaidRequestsPanel({
                 !selectedIds.length ||
                 !sharedBillDrafts.length ||
                 isNavigating ||
+                isDataPending ||
                 isSubmitting
               }
               onClick={confirmSelectedRequests}
@@ -470,7 +500,12 @@ export function PaymentQrUnpaidRequestsPanel({
         </div>
       ) : (
         <PaymentSelectionSummary
-          disabled={!selectedIds.length || !sharedBillDrafts.length || isNavigating}
+          disabled={
+            !selectedIds.length ||
+            !sharedBillDrafts.length ||
+            isNavigating ||
+            isDataPending
+          }
           isSubmitting={isSubmitting}
           onConfirm={confirmSelectedRequests}
           selectedCount={selectedIds.length}

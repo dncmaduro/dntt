@@ -17,13 +17,12 @@ export default async function ProfilePage() {
   return (
     <div className="space-y-6">
       <PageIntro
-        description="Cập nhật thông tin cá nhân và ảnh QR thanh toán để bộ phận kế toán xử lý nhanh chóng, chính xác."
-        eyebrow="Hồ sơ"
+        description="Cập nhật thông tin và QR thanh toán của bạn."
         title="Hồ sơ cá nhân"
       />
 
       <div className="grid gap-6 xl:grid-cols-[0.78fr_1.22fr]">
-        <Card className="rounded-[2rem]">
+        <Card className="rounded-lg">
           <CardContent className="space-y-6 p-6">
             <div>
               <Badge>Hồ sơ đang sử dụng</Badge>
@@ -34,27 +33,27 @@ export default async function ProfilePage() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-[1.5rem] border border-border/70 bg-white/65 p-4">
+              <div className="rounded-lg border border-border bg-card p-4">
                 <p className="text-sm text-muted-foreground">Vai trò</p>
                 <p className="mt-2 text-base font-semibold">
                   {ROLE_LABELS[profile.role]}
                 </p>
               </div>
 
-              <div className="rounded-[1.5rem] border border-border/70 bg-white/65 p-4">
+              <div className="rounded-lg border border-border bg-card p-4">
                 <p className="text-sm text-muted-foreground">Trạng thái ảnh QR</p>
                 <p className="mt-2 text-base font-semibold">
                   {profile.qr_payment_url ? "Đã cập nhật" : "Chưa cập nhật"}
                 </p>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
                   {profile.qr_payment_url
-                    ? "Ảnh QR đang được lưu trong hệ thống nội bộ."
+                    ? "Đã lưu ảnh QR."
                     : "Hãy tải ảnh QR để kế toán thuận tiện đối soát."}
                 </p>
               </div>
             </div>
 
-            <div className="rounded-[1.75rem] border border-border/70 bg-white/70 p-4">
+            <div className="rounded-lg border border-border bg-card p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium">Ảnh QR thanh toán</p>
@@ -67,9 +66,9 @@ export default async function ProfilePage() {
                 </Badge>
               </div>
 
-              <div className="mt-4 flex min-h-72 items-center justify-center rounded-[1.5rem] border border-dashed border-border/80 bg-muted/20 p-6">
+              <div className="mt-4 flex min-h-72 items-center justify-center rounded-lg border border-dashed border-border bg-muted/20 p-6">
                 {qrPreviewUrl ? (
-                  <div className="relative aspect-square w-full max-w-64 overflow-hidden rounded-[1.25rem] border border-border/70 bg-white shadow-sm">
+                  <div className="relative aspect-square w-full max-w-64 overflow-hidden rounded-md border border-border bg-white shadow-sm">
                     <Image
                       alt="QR thanh toán hiện tại"
                       className="object-contain p-4"
@@ -89,7 +88,7 @@ export default async function ProfilePage() {
         </Card>
 
         <div className="space-y-4">
-          <Card className="rounded-[2rem]">
+          <Card className="rounded-lg">
             <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm font-medium">Bảo mật tài khoản</p>
@@ -104,7 +103,7 @@ export default async function ProfilePage() {
           </Card>
 
           <div className="md:hidden">
-            <Card className="rounded-[2rem]">
+            <Card className="rounded-lg">
               <CardContent className="p-6">
                 <p className="text-sm leading-6 text-muted-foreground">
                   Để thao tác thuận tiện hơn trên mobile, cập nhật hồ sơ được tách

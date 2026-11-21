@@ -1,4 +1,5 @@
 import { PageIntro } from "@/components/shared/page-intro";
+import { DataNavigationRegion } from "@/components/shared/data-loading-overlay";
 import { requireRole } from "@/lib/auth/session";
 import { PaymentQrLookupControls } from "@/features/payment-qr/components/payment-qr-lookup-controls";
 import { SelectedEmployeeQrPanel } from "@/features/payment-qr/components/selected-employee-qr-panel";
@@ -31,8 +32,7 @@ export default async function PaymentQrPage({
   return (
     <div className="space-y-6">
       <PageIntro
-        description="Chọn nhân sự để xem nhanh mã QR phục vụ thanh toán."
-        eyebrow="Thanh toán"
+        description="Chọn nhân sự để xem QR và xử lý thanh toán."
         title="QR thanh toán"
       />
 
@@ -43,11 +43,13 @@ export default async function PaymentQrPage({
         selectedEmployeeId={employeeId}
       />
 
-      <SelectedEmployeeQrPanel
-        employee={selectedEmployee}
-        key={selectedEmployee?.id ?? employeeId ?? "empty-panel"}
-        viewerRole={profile.role}
-      />
+      <DataNavigationRegion>
+        <SelectedEmployeeQrPanel
+          employee={selectedEmployee}
+          key={selectedEmployee?.id ?? employeeId ?? "empty-panel"}
+          viewerRole={profile.role}
+        />
+      </DataNavigationRegion>
     </div>
   );
 }

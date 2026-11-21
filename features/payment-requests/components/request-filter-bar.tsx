@@ -7,6 +7,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useDataNavigation } from "@/components/shared/data-navigation";
 import {
   Select,
   SelectContent,
@@ -48,6 +49,7 @@ function FilterFields({
   setDraft,
   showCreator,
   creators,
+  disabled,
 }: {
   categories: Category[];
   subCategories: SubCategory[];
@@ -55,6 +57,7 @@ function FilterFields({
   setDraft: React.Dispatch<React.SetStateAction<DraftFilters>>;
   showCreator: boolean;
   creators: ProfileOption[];
+  disabled: boolean;
 }) {
   const availableSubCategories = draft.category
     ? subCategories.filter(
@@ -70,6 +73,7 @@ function FilterFields({
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="pl-9"
+            disabled={disabled}
             onChange={(event) =>
               setDraft((current) => ({ ...current, keyword: event.target.value }))
             }
@@ -82,6 +86,7 @@ function FilterFields({
       <div className="space-y-2">
         <Label>Trạng thái</Label>
         <Select
+          disabled={disabled}
           onValueChange={(value) =>
             setDraft((current) => ({ ...current, status: value === "all" ? "" : value }))
           }
@@ -104,6 +109,7 @@ function FilterFields({
       <div className="space-y-2">
         <Label>Danh mục</Label>
         <Select
+          disabled={disabled}
           onValueChange={(value) =>
             setDraft((current) => ({
               ...current,
@@ -130,7 +136,7 @@ function FilterFields({
       <div className="space-y-2">
         <Label>Danh mục con</Label>
         <Select
-          disabled={!draft.category}
+          disabled={!draft.category || disabled}
           onValueChange={(value) =>
             setDraft((current) => ({
               ...current,
@@ -156,6 +162,7 @@ function FilterFields({
       <div className="space-y-2">
         <Label>Tình trạng xóa</Label>
         <Select
+          disabled={disabled}
           onValueChange={(value) =>
             setDraft((current) => ({
               ...current,
@@ -181,6 +188,7 @@ function FilterFields({
         <div className="space-y-2">
           <Label>Người đề nghị</Label>
           <Select
+            disabled={disabled}
             onValueChange={(value) =>
               setDraft((current) => ({
                 ...current,
@@ -208,6 +216,7 @@ function FilterFields({
         <Label>Từ ngày</Label>
         <Input
           className={dateInputClassName}
+          disabled={disabled}
           onChange={(event) =>
             setDraft((current) => ({ ...current, from: event.target.value }))
           }
@@ -220,6 +229,7 @@ function FilterFields({
         <Label>Đến ngày</Label>
         <Input
           className={dateInputClassName}
+          disabled={disabled}
           onChange={(event) =>
             setDraft((current) => ({ ...current, to: event.target.value }))
           }
@@ -231,6 +241,7 @@ function FilterFields({
       <div className="space-y-2">
         <Label>Sắp xếp</Label>
         <Select
+          disabled={disabled}
           onValueChange={(value) =>
             setDraft((current) => ({
               ...current,
@@ -269,6 +280,8 @@ export function RequestFilterBar({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const { isPending: isDataPending, start: startDataNavigation } =
+    useDataNavigation();
   const [isOpen, setIsOpen] = useState(false);
   const [draft, setDraft] = useState<RequestFilters>(filters);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -287,6 +300,7 @@ export function RequestFilterBar({
 
   const applyFilters = (nextFilters: RequestFilters) => {
     const params = new URLSearchParams(searchParams.toString());
+    params.delete("page");
 
     (
       Object.entries(nextFilters) as Array<[keyof RequestFilters, string]>
@@ -307,6 +321,7 @@ export function RequestFilterBar({
       return;
     }
 
+    startDataNavigation();
     startTransition(() => {
       router.push(nextUrl);
     });
@@ -366,12 +381,13 @@ export function RequestFilterBar({
 
   return (
     <>
-      <div className="surface-panel hidden grid-cols-7 gap-4 rounded-[2rem] p-5 md:grid md:w-full">
+      <div className="surface-panel hidden grid-cols-7 gap-4 rounded-lg p-5 md:grid md:w-full">
         <div className="col-span-full grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           <FilterFields
             categories={categories}
             creators={creators}
             draft={draft}
+            disabled={isPending || isDataPending}
             setDraft={handleDraftUpdate}
             showCreator={showCreator}
             subCategories={subCategories}
@@ -379,9 +395,16 @@ export function RequestFilterBar({
         </div>
         <div className="col-span-full flex items-center justify-between gap-3">
           <div className="text-sm text-muted-foreground">
-            {isPending ? "Đang cập nhật bộ lọc..." : "Bộ lọc cập nhật tự động"}
+            {isPending || isDataPending
+              ? "Đang cập nhật bộ lọc..."
+              : "Bộ lọc cập nhật tự động"}
           </div>
-          <Button onClick={resetFilters} type="button" variant="ghost">
+          <Button
+            disabled={isPending || isDataPending}
+            onClick={resetFilters}
+            type="button"
+            variant="ghost"
+          >
             <RotateCcw className="size-4" />
             Đặt lại
           </Button>
@@ -391,7 +414,7 @@ export function RequestFilterBar({
       <div className="md:hidden">
         <Sheet onOpenChange={setIsOpen} open={isOpen}>
           <SheetTrigger asChild>
-            <Button className="w-full rounded-2xl" variant="secondary">
+            <Button className="w-full rounded-lg" variant="secondary">
               <Filter className="size-4" />
               Bộ lọc
             </Button>
@@ -399,15 +422,14 @@ export function RequestFilterBar({
           <SheetContent side="bottom">
             <SheetHeader>
               <SheetTitle>Lọc đề nghị</SheetTitle>
-              <SheetDescription>
-                Tùy chỉnh tiêu chí tìm kiếm phù hợp với màn hình hiện tại.
-              </SheetDescription>
+              <SheetDescription>Lọc theo thông tin đề nghị.</SheetDescription>
             </SheetHeader>
             <div className="grid gap-4">
               <FilterFields
                 categories={categories}
                 creators={creators}
                 draft={draft}
+                disabled={isPending || isDataPending}
                 setDraft={handleDraftUpdate}
                 showCreator={showCreator}
                 subCategories={subCategories}
@@ -415,7 +437,7 @@ export function RequestFilterBar({
             </div>
             <SheetFooter>
               <div className="mr-auto flex items-center text-sm text-muted-foreground">
-                {isPending ? (
+                {isPending || isDataPending ? (
                   <>
                     <LoaderCircle className="mr-2 size-4 animate-spin" />
                     Đang cập nhật...
@@ -424,7 +446,12 @@ export function RequestFilterBar({
                   "Đã tự động áp dụng"
                 )}
               </div>
-              <Button onClick={resetFilters} type="button" variant="ghost">
+              <Button
+                disabled={isPending || isDataPending}
+                onClick={resetFilters}
+                type="button"
+                variant="ghost"
+              >
                 <RotateCcw className="size-4" />
                 Đặt lại
               </Button>

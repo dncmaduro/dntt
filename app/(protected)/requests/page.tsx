@@ -1,11 +1,14 @@
 import { PageIntro } from "@/components/shared/page-intro";
+import { DataNavigationRegion } from "@/components/shared/data-loading-overlay";
+import { PaginationControls } from "@/components/shared/pagination-controls";
 import { RequestFilterBar } from "@/features/payment-requests/components/request-filter-bar";
 import { ReviewRequestList } from "@/features/payment-requests/components/review-request-list";
 import {
   getCategories,
   getEmployeesForFilter,
-  getRequestList,
+  getRequestListPage,
   getSubCategories,
+  parseListPage,
   parseRequestFilters,
 } from "@/features/payment-requests/queries";
 import { APP_ROUTES } from "@/lib/constants";
@@ -17,24 +20,33 @@ type RequestsPageProps = {
 
 export default async function RequestsPage({ searchParams }: RequestsPageProps) {
   const profile = await requireRole(["accountant", "director"]);
-  const [filters, categories, creators, subCategories] = await Promise.all([
-    parseRequestFilters(searchParams),
+  const resolvedSearchParams = await searchParams;
+  const filters = await parseRequestFilters(Promise.resolve(resolvedSearchParams));
+  const page = parseListPage(resolvedSearchParams.page);
+  const [categories, creators, subCategories, requests] = await Promise.all([
     getCategories(),
     getEmployeesForFilter(),
     getSubCategories(),
+    getRequestListPage({
+      filters,
+      page,
+      scope: "all",
+      userId: profile.id,
+    }),
   ]);
-  const requests = await getRequestList({
-    filters,
-    scope: "all",
-    userId: profile.id,
-  });
 
   return (
     <div className="space-y-6">
       <PageIntro
-        description="Theo dõi toàn bộ đề nghị trên hệ thống, lọc theo người tạo và xử lý theo đúng vai trò của bạn."
-        eyebrow="Duyệt hồ sơ"
+        description="Lọc theo người tạo, trạng thái và thời gian."
         title="Tất cả đề nghị thanh toán"
+      />
+
+      <PaginationControls
+        page={requests.page}
+        pageSize={requests.pageSize}
+        totalItems={requests.totalItems}
+        totalPages={requests.totalPages}
       />
 
       <RequestFilterBar
@@ -45,13 +57,24 @@ export default async function RequestsPage({ searchParams }: RequestsPageProps) 
         subCategories={subCategories}
       />
 
-      <ReviewRequestList
-        currentRole={profile.role}
-        detailHrefBase={APP_ROUTES.requests}
-        emptyDescription="Không có đề nghị nào khớp với bộ lọc đang áp dụng."
-        items={requests}
-        showOwner
-      />
+      <DataNavigationRegion>
+        <div className="space-y-4">
+          <ReviewRequestList
+            currentRole={profile.role}
+            detailHrefBase={APP_ROUTES.requests}
+            emptyDescription="Không có đề nghị nào khớp với bộ lọc đang áp dụng."
+            items={requests.items}
+            showOwner
+          />
+          <PaginationControls
+            className="mb-10"
+            page={requests.page}
+            pageSize={requests.pageSize}
+            totalItems={requests.totalItems}
+            totalPages={requests.totalPages}
+          />
+        </div>
+      </DataNavigationRegion>
     </div>
   );
 }

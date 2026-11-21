@@ -27,10 +27,13 @@ export function ResetPasswordForm() {
         <div className="relative">
           <Input
             autoComplete="new-password"
+            className="h-12"
             id="new_password"
             name="new_password"
             placeholder="Ít nhất 8 ký tự"
             type={showPassword ? "text" : "password"}
+            aria-invalid={Boolean(state.error)}
+            aria-describedby={state.error ? "reset-password-error" : undefined}
           />
           <button
             aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
@@ -47,21 +50,24 @@ export function ResetPasswordForm() {
         <Label htmlFor="confirm_password">Nhập lại mật khẩu mới</Label>
         <Input
           autoComplete="new-password"
+          className="h-12"
           id="confirm_password"
           name="confirm_password"
           placeholder="Nhập lại mật khẩu mới"
           type={showPassword ? "text" : "password"}
+          aria-invalid={Boolean(state.error)}
+          aria-describedby={state.error ? "reset-password-error" : undefined}
         />
       </div>
 
       {state.error ? (
-        <p className="rounded-2xl border border-destructive/15 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+        <p id="reset-password-error" role="alert" className="rounded-lg border border-destructive/15 bg-destructive/5 px-4 py-3 text-sm text-destructive">
           {state.error}
         </p>
       ) : null}
 
       {state.success ? (
-        <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+        <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
           {state.success}
         </p>
       ) : null}

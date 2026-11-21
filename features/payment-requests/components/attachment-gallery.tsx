@@ -14,10 +14,10 @@ export function AttachmentGallery({
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {attachments.map((attachment) => (
-        <Card key={attachment.id} className="overflow-hidden rounded-[1.75rem]">
+        <Card key={attachment.id} className="overflow-hidden rounded-lg">
           <CardContent className="space-y-4 p-4">
             {attachment.signed_url && isImageMimeType(attachment.file_type) ? (
-              <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-muted">
+              <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-muted">
                 <Image
                   alt={attachment.file_name}
                   className="object-cover"
@@ -27,7 +27,7 @@ export function AttachmentGallery({
                 />
               </div>
             ) : (
-              <div className="flex aspect-[4/3] items-center justify-center rounded-3xl bg-muted/50 text-muted-foreground">
+              <div className="flex aspect-[4/3] items-center justify-center rounded-lg bg-muted/50 text-muted-foreground">
                 {isImageMimeType(attachment.file_type) ? (
                   <FileImage className="size-10" />
                 ) : (

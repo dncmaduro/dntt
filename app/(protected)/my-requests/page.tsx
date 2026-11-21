@@ -1,13 +1,16 @@
 import Link from "next/link";
 
+import { DataNavigationRegion } from "@/components/shared/data-loading-overlay";
 import { PageIntro } from "@/components/shared/page-intro";
+import { PaginationControls } from "@/components/shared/pagination-controls";
 import { Button } from "@/components/ui/button";
 import { RequestFilterBar } from "@/features/payment-requests/components/request-filter-bar";
 import { RequestList } from "@/features/payment-requests/components/request-list";
 import {
   getCategories,
-  getRequestList,
+  getRequestListPage,
   getSubCategories,
+  parseListPage,
   parseRequestFilters,
 } from "@/features/payment-requests/queries";
 import { APP_ROUTES } from "@/lib/constants";
@@ -21,16 +24,19 @@ export default async function MyRequestsPage({
   searchParams,
 }: MyRequestsPageProps) {
   const profile = await requireRole(["employee", "accountant"]);
-  const [filters, categories, subCategories] = await Promise.all([
-    parseRequestFilters(searchParams),
+  const resolvedSearchParams = await searchParams;
+  const filters = await parseRequestFilters(Promise.resolve(resolvedSearchParams));
+  const page = parseListPage(resolvedSearchParams.page);
+  const [categories, subCategories, requests] = await Promise.all([
     getCategories(),
     getSubCategories(),
+    getRequestListPage({
+      filters,
+      page,
+      scope: "mine",
+      userId: profile.id,
+    }),
   ]);
-  const requests = await getRequestList({
-    filters,
-    scope: "mine",
-    userId: profile.id,
-  });
 
   return (
     <div className="space-y-6">
@@ -40,9 +46,15 @@ export default async function MyRequestsPage({
             <Link href={APP_ROUTES.newRequest}>Tạo đề nghị</Link>
           </Button>
         }
-        description="Quản lý các đề nghị thanh toán do bạn tạo, theo dõi trạng thái và chỉnh sửa khi được phép."
-        eyebrow="Cá nhân"
+        description="Theo dõi trạng thái các đề nghị do bạn tạo."
         title="DNTT của tôi"
+      />
+
+      <PaginationControls
+        page={requests.page}
+        pageSize={requests.pageSize}
+        totalItems={requests.totalItems}
+        totalPages={requests.totalPages}
       />
 
       <RequestFilterBar
@@ -51,11 +63,22 @@ export default async function MyRequestsPage({
         subCategories={subCategories}
       />
 
-      <RequestList
-        detailHrefBase={APP_ROUTES.myRequests}
-        emptyDescription="Tạo đề nghị mới để bắt đầu theo dõi quá trình hoàn ứng trên hệ thống."
-        items={requests}
-      />
+      <DataNavigationRegion>
+        <div className="space-y-4">
+          <RequestList
+            detailHrefBase={APP_ROUTES.myRequests}
+            emptyDescription="Tạo đề nghị mới để theo dõi tại đây."
+            items={requests.items}
+          />
+          <PaginationControls
+            className="mb-10"
+            page={requests.page}
+            pageSize={requests.pageSize}
+            totalItems={requests.totalItems}
+            totalPages={requests.totalPages}
+          />
+        </div>
+      </DataNavigationRegion>
     </div>
   );
 }

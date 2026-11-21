@@ -75,7 +75,7 @@ export function NotificationBell() {
       <DropdownMenuTrigger asChild>
         <Button
           aria-label="Thông báo"
-          className="relative size-11 rounded-2xl border border-border bg-white/80 p-0 shadow-sm transition hover:bg-white"
+          className="relative size-11 rounded-xl border border-border bg-card p-0 shadow-none transition-colors hover:bg-muted"
           size="icon"
           variant="ghost"
         >
@@ -88,7 +88,7 @@ export function NotificationBell() {
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-[26rem] p-0">
+      <DropdownMenuContent align="end" className="w-[min(380px,calc(100vw-2rem))] p-0">
         <div className="flex items-start justify-between gap-3 px-4 py-3">
           <div className="space-y-1">
             <p className="font-semibold text-foreground">Thông báo</p>
@@ -127,9 +127,9 @@ export function NotificationBell() {
                 return (
                   <button
                     className={cn(
-                      "w-full rounded-[1.25rem] border px-3 py-3 text-left transition-colors",
+                      "w-full rounded-lg border px-3 py-3 text-left transition-colors",
                       item.is_read
-                        ? "border-border/70 bg-muted/15 hover:bg-muted/35"
+                        ? "border-border bg-muted/15 hover:bg-muted/35"
                         : "border-primary/25 bg-primary/12 shadow-sm hover:bg-primary/18",
                     )}
                     disabled={isPending}

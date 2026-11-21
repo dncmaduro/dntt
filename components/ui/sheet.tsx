@@ -34,7 +34,7 @@ function SheetOverlay({
 }: React.ComponentProps<typeof DialogPrimitive.Overlay>) {
   return (
     <DialogPrimitive.Overlay
-      className={cn("fixed inset-0 z-50 bg-slate-950/45 backdrop-blur-sm", className)}
+      className={cn("fixed inset-0 z-50 bg-black/50", className)}
       {...props}
     />
   );
@@ -53,21 +53,21 @@ function SheetContent({
       <SheetOverlay />
       <DialogPrimitive.Content
         className={cn(
-          "fixed z-50 flex flex-col gap-4 border-border bg-background p-6 shadow-2xl",
+          "fixed z-50 flex flex-col gap-4 border-border bg-card p-6 shadow-lg",
           side === "right" &&
             "inset-y-0 right-0 h-full w-[min(92vw,28rem)] border-l",
           side === "left" &&
             "inset-y-0 left-0 h-full w-[min(92vw,28rem)] border-r",
           side === "bottom" &&
-            "inset-x-0 bottom-0 rounded-t-3xl border-t",
+            "inset-x-0 bottom-0 rounded-t-xl border-t",
           side === "top" &&
-            "inset-x-0 top-0 rounded-b-3xl border-b",
+            "inset-x-0 top-0 rounded-b-xl border-b",
           className,
         )}
         {...props}
       >
         {children}
-        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
           <X className="size-4" />
           <span className="sr-only">Đóng</span>
         </DialogPrimitive.Close>

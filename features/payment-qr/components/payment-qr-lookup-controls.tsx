@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { LoaderCircle, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+import { useDataNavigation } from "@/components/shared/data-navigation";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -28,6 +29,8 @@ export function PaymentQrLookupControls({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const { isPending: isDataPending, start: startDataNavigation } =
+    useDataNavigation();
 
   const updateSelectedEmployee = (employeeId?: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -39,13 +42,14 @@ export function PaymentQrLookupControls({
       params.delete("employee");
     }
 
+    startDataNavigation();
     startTransition(() => {
       router.replace(params.toString() ? `${pathname}?${params.toString()}` : pathname);
     });
   };
 
   return (
-    <div className="surface-panel rounded-[1.5rem] p-4">
+    <div className="surface-panel rounded-lg p-4">
       {compact ? (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <Label className="shrink-0 text-sm font-medium" htmlFor="payment-qr-employee">
@@ -53,7 +57,7 @@ export function PaymentQrLookupControls({
           </Label>
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <Select
-              disabled={!employees.length || isPending}
+              disabled={!employees.length || isPending || isDataPending}
               onValueChange={(value) => updateSelectedEmployee(value)}
               value={selectedEmployeeId}
             >
@@ -71,7 +75,7 @@ export function PaymentQrLookupControls({
 
             <Button
               aria-label="Bỏ chọn nhân sự"
-              disabled={!selectedEmployeeId || isPending}
+              disabled={!selectedEmployeeId || isPending || isDataPending}
               onClick={() => updateSelectedEmployee()}
               size="icon"
               type="button"
@@ -90,7 +94,7 @@ export function PaymentQrLookupControls({
           <div className="space-y-2">
             <Label htmlFor="payment-qr-employee">Nhân sự</Label>
             <Select
-              disabled={!employees.length || isPending}
+              disabled={!employees.length || isPending || isDataPending}
               onValueChange={(value) => updateSelectedEmployee(value)}
               value={selectedEmployeeId}
             >
@@ -106,12 +110,12 @@ export function PaymentQrLookupControls({
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              Chọn nhân sự để xem QR và xử lý đề nghị chờ thanh toán trong cùng màn hình.
+              Xem QR và các đề nghị chờ thanh toán.
             </p>
           </div>
 
           <Button
-            disabled={!selectedEmployeeId || isPending}
+            disabled={!selectedEmployeeId || isPending || isDataPending}
             onClick={() => updateSelectedEmployee()}
             type="button"
             variant="outline"

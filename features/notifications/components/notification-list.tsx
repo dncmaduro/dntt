@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { BellRing, LoaderCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import { DataLoadingRegion } from "@/components/shared/data-loading-overlay";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,6 +25,7 @@ export function NotificationList() {
   const {
     error,
     isMarkingAllRead,
+    isSyncing,
     markingNotificationId,
     markAllAsRead,
     markAsRead,
@@ -38,7 +40,7 @@ export function NotificationList() {
 
   if (error && !notifications.length) {
     return (
-      <Card className="rounded-[1.75rem] border-dashed">
+      <Card className="rounded-lg border-dashed">
         <CardContent className="px-6 py-10 text-center text-sm text-muted-foreground">
           Không thể tải thông báo
         </CardContent>
@@ -48,7 +50,7 @@ export function NotificationList() {
 
   if (!visibleNotifications.length) {
     return (
-      <div className="space-y-4">
+      <DataLoadingRegion className="space-y-4" isLoading={isSyncing}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="inline-flex rounded-full border border-border bg-background p-1">
             <Button
@@ -99,12 +101,12 @@ export function NotificationList() {
           icon={BellRing}
           title="Thông báo"
         />
-      </div>
+      </DataLoadingRegion>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <DataLoadingRegion className="space-y-4" isLoading={isSyncing}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="inline-flex rounded-full border border-border bg-background p-1">
           <Button
@@ -154,9 +156,9 @@ export function NotificationList() {
           return (
             <Card
               className={cn(
-                "rounded-[1.75rem] border transition-colors",
+                "rounded-lg border transition-colors",
                 item.is_read
-                  ? "border-border/70"
+                  ? "border-border"
                   : "border-primary/15 bg-primary/[0.035]",
               )}
               key={item.id}
@@ -226,6 +228,6 @@ export function NotificationList() {
           );
         })}
       </div>
-    </div>
+    </DataLoadingRegion>
   );
 }

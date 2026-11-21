@@ -62,9 +62,8 @@ export default async function EditMyRequestPage({ params }: EditPageProps) {
         description={
           resubmitsForAccounting
             ? "Sau khi lưu, đề nghị sẽ được gửi lại về trạng thái chờ kế toán duyệt."
-            : "Cập nhật nội dung đề nghị và danh sách chứng từ trước khi gửi lại quy trình xử lý."
+            : "Cập nhật nội dung và chứng từ trước khi gửi lại."
         }
-        eyebrow="Chỉnh sửa"
         title={request.title}
       />
 

@@ -33,7 +33,7 @@ export function RequestList({
 
   return (
     <>
-      <div className="hidden overflow-hidden rounded-[2rem] border border-border/70 bg-white/75 md:block">
+      <div className="hidden overflow-hidden rounded-lg border border-border bg-card md:block">
         <table className="min-w-full table-fixed divide-y divide-border/70">
           <colgroup>
             <col className="w-[40%]" />
@@ -59,7 +59,7 @@ export function RequestList({
                     >
                       <p className="font-semibold text-foreground">{item.title}</p>
                       <p className="line-clamp-1 text-muted-foreground">
-                        {item.description || "Không có mô tả"}
+                        {item.description || "—"}
                       </p>
                       {item.payment_qr_name ? (
                         <p className="text-xs text-muted-foreground">Có QR thanh toán riêng</p>
@@ -104,7 +104,7 @@ export function RequestList({
 
       <div className="grid gap-4 md:hidden">
         {items.map((item) => (
-          <Card key={item.id} className="rounded-[1.75rem]">
+          <Card key={item.id} className="rounded-lg">
             <CardContent className="space-y-4 p-5">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -112,7 +112,7 @@ export function RequestList({
                     <p className="line-clamp-2 font-semibold">{item.title}</p>
                   </Link>
                   <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                    {item.description || "Không có mô tả"}
+                    {item.description || "—"}
                   </p>
                   {item.payment_qr_name ? (
                     <p className="mt-1 text-xs text-muted-foreground">Có QR thanh toán riêng</p>
@@ -121,7 +121,7 @@ export function RequestList({
                 <StatusBadge status={item.status as PaymentRequestStatus} />
               </div>
 
-              <div className="grid gap-3 rounded-3xl bg-muted/40 p-4 text-sm">
+              <div className="grid gap-3 rounded-lg bg-muted/40 p-4 text-sm">
                 {showOwner ? (
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-muted-foreground">Người đề nghị</span>

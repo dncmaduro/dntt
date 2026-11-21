@@ -5,19 +5,19 @@ import { cn } from "@/lib/utils";
 function Card({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
-      className={cn("surface-panel rounded-3xl", className)}
+      className={cn("surface-panel rounded-lg", className)}
       {...props}
     />
   );
 }
 
 function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
-  return <div className={cn("flex flex-col gap-2 p-6", className)} {...props} />;
+  return <div className={cn("flex flex-col gap-2 p-4 md:p-5", className)} {...props} />;
 }
 
 function CardTitle({ className, ...props }: React.ComponentProps<"h3">) {
   return (
-    <h3 className={cn("text-lg font-semibold tracking-tight", className)} {...props} />
+    <h3 className={cn("text-lg font-semibold", className)} {...props} />
   );
 }
 
@@ -31,13 +31,13 @@ function CardDescription({
 }
 
 function CardContent({ className, ...props }: React.ComponentProps<"div">) {
-  return <div className={cn("px-6 pb-6", className)} {...props} />;
+  return <div className={cn("px-4 pb-4 md:px-5 md:pb-5", className)} {...props} />;
 }
 
 function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
-      className={cn("flex items-center gap-3 px-6 pb-6 pt-2", className)}
+      className={cn("flex items-center gap-3 border-t border-border px-4 pb-4 pt-4 md:px-5 md:pb-5", className)}
       {...props}
     />
   );

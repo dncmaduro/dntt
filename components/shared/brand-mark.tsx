@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 export function BrandMark({
   className,
@@ -11,12 +12,12 @@ export function BrandMark({
 }) {
   return (
     <div className={cn('flex items-center gap-3', className)}>
-      <img
+      <Image
         alt="DNTT nội bộ"
-        className="size-11 rounded-2xl shadow-lg shadow-primary/15"
-        height="44"
+        className="size-10 rounded-xl shadow-sm shadow-black/10"
+        height={40}
         src="/icon.svg"
-        width="44"
+        width={40}
       />
 
       {compact ? null : (

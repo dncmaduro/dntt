@@ -30,10 +30,10 @@ export function PaymentRequestItem({
 }) {
   return (
     <div
-      className={`rounded-2xl border p-2.5 transition-colors ${
+      className={`rounded-lg border p-2.5 transition-colors ${
         checked
           ? "border-primary/50 bg-primary/5"
-          : "border-border/70 bg-white hover:border-primary/30"
+          : "border-border bg-white hover:border-primary/30"
       } ${disabled ? "opacity-70" : ""}`}
     >
       <div className="flex items-start gap-2.5">
@@ -64,7 +64,7 @@ export function PaymentRequestItem({
             <Dialog>
               <DialogTrigger asChild>
                 <Button
-                  className="h-10 shrink-0 rounded-2xl px-4"
+                  className="h-10 shrink-0 rounded-lg px-4"
                   disabled={disabled}
                   onClick={(event) => event.stopPropagation()}
                   type="button"
@@ -93,7 +93,7 @@ export function PaymentRequestItem({
                     label="Minh chứng"
                     value={
                       request.attachment_preview_url ? (
-                        <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-border/70 bg-muted/20">
+                        <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-border bg-muted/20">
                           <Image
                             alt={`Minh chứng của ${request.title}`}
                             className="object-cover"
@@ -111,13 +111,13 @@ export function PaymentRequestItem({
                   />
                 </div>
 
-                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                <div className="rounded-lg border border-border bg-muted/20 p-4">
                   <p className="flex items-center gap-2 text-sm font-medium">
                     <StickyNote className="size-4 text-muted-foreground" />
                     Mô tả
                   </p>
                   <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                    {request.description?.trim() ? request.description : "Không có mô tả"}
+                    {request.description?.trim() ? request.description : "—"}
                   </p>
                 </div>
               </DialogContent>
@@ -137,7 +137,7 @@ function DetailTile({
   value: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-border/70 bg-white/80 p-3">
+    <div className="rounded-lg border border-border bg-card p-3">
       <p className="text-sm font-medium text-foreground/70">{label}</p>
       <div className="mt-2 text-sm font-medium text-foreground">{value}</div>
     </div>

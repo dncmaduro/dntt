@@ -34,6 +34,7 @@ import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 type NotificationsContextValue = {
   error: string | null;
   isMarkingAllRead: boolean;
+  isSyncing: boolean;
   markingNotificationId: string | null;
   notifications: Notification[];
   unreadCount: number;
@@ -172,6 +173,9 @@ export function NotificationsProvider({
   const [notifications, setNotifications] = useState(initialNotifications);
   const [unreadCount, setUnreadCount] = useState(initialUnreadCount);
   const [error, setError] = useState<string | null>(initialError);
+  const [isSyncing, setIsSyncing] = useState(
+    initialNotifications.length === 0 && !initialError,
+  );
   const [markingNotificationId, setMarkingNotificationId] = useState<string | null>(
     null,
   );
@@ -269,6 +273,7 @@ export function NotificationsProvider({
 
     const requestId = ++syncRequestIdRef.current;
     const activeUserId = userId;
+    setIsSyncing(true);
 
     try {
       const [latestNotifications, latestUnreadCount] = await Promise.all([
@@ -312,6 +317,10 @@ export function NotificationsProvider({
       }
 
       setError((currentError) => currentError ?? DEFAULT_ERROR_MESSAGE);
+    } finally {
+      if (syncRequestIdRef.current === requestId && activeUserId === userId) {
+        setIsSyncing(false);
+      }
     }
   });
 
@@ -411,6 +420,7 @@ export function NotificationsProvider({
     setNotifications(initialNotifications);
     setUnreadCount(initialUnreadCount);
     setError(initialError);
+    setIsSyncing(initialNotifications.length === 0 && !initialError);
     setMarkingNotificationId(null);
     setIsMarkingAllRead(false);
   }, [initialError, initialNotifications, initialUnreadCount, userId]);
@@ -586,6 +596,7 @@ export function NotificationsProvider({
       value={{
         error,
         isMarkingAllRead,
+        isSyncing,
         markingNotificationId,
         notifications,
         unreadCount,

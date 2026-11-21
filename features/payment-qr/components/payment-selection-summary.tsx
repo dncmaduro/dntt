@@ -19,7 +19,7 @@ export function PaymentSelectionSummary({
   selectedTotalAmount: number;
 }) {
   return (
-    <div className="mt-4 rounded-2xl border border-border/80 bg-background/95 p-3 shadow-lg backdrop-blur md:fixed md:right-6 md:bottom-6 md:z-50 md:mt-0 md:w-full md:max-w-md">
+    <div className="mt-4 rounded-lg border border-border bg-background p-3 shadow-lg md:fixed md:right-6 md:bottom-6 md:z-50 md:mt-0 md:w-full md:max-w-md">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="text-sm">
           <p className="font-semibold">Đã chọn {selectedCount} đề nghị</p>

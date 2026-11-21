@@ -24,6 +24,7 @@ import type {
   PaymentRequestLogWithActor,
   PaymentRequestDetail,
   PaymentRequestListItem,
+  PaginatedList,
   ProfileOption,
   RequestOwner,
   RequestFilters,
@@ -109,6 +110,9 @@ const EXPENSE_FILTER_DEFAULTS: ExpenseFilters = {
   payment_status: 'all',
   month: '',
 };
+
+const REQUEST_LIST_PAGE_SIZE = 20;
+const EXPENSE_LIST_PAGE_SIZE = 20;
 
 const normalizeRole = (value?: string | null): UserRole | null => {
   const normalizedValue =
@@ -295,6 +299,14 @@ export const parseExpenseFilters = async (
   };
 };
 
+export const parseListPage = (
+  value: string | string[] | undefined,
+): number => {
+  const page = Number(toPlainString(value));
+
+  return Number.isInteger(page) && page > 0 ? page : 1;
+};
+
 export const getCategories = async (): Promise<Category[]> => {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -333,18 +345,26 @@ export const getSubCategories = async ({
   return (data ?? []) as SubCategory[];
 };
 
-export const getRequestList = async ({
+const getRequestListData = async ({
   filters,
+  limit,
+  page,
+  pageSize,
   scope,
   userId,
 }: {
   filters: RequestFilters;
+  limit?: number;
+  page?: number;
+  pageSize?: number;
   scope: 'mine' | 'all';
   userId?: string;
-}): Promise<PaymentRequestListItem[]> => {
+}): Promise<{ items: PaymentRequestListItem[]; totalItems: number }> => {
   const supabase = await createClient();
 
-  let query = supabase.from('payment_requests').select(REQUEST_LIST_SELECT);
+  let query = supabase
+    .from('payment_requests')
+    .select(REQUEST_LIST_SELECT, { count: 'exact' });
 
   if (filters.category) {
     const categorySubCategoryIds = await getSubCategoryIdsByCategory({
@@ -353,7 +373,7 @@ export const getRequestList = async ({
     });
 
     if (!categorySubCategoryIds.length) {
-      return [];
+      return { items: [], totalItems: 0 };
     }
 
     query = query.in('sub_category_id', categorySubCategoryIds);
@@ -400,7 +420,16 @@ export const getRequestList = async ({
     ascending: filters.sort === 'oldest',
   });
 
-  const { data, error } = await query;
+  if (limit) {
+    query = query.limit(limit);
+  }
+
+  if (page && pageSize) {
+    const from = (page - 1) * pageSize;
+    query = query.range(from, from + pageSize - 1);
+  }
+
+  const { data, error, count } = await query;
 
   if (error) {
     throw new Error(error.message);
@@ -411,31 +440,95 @@ export const getRequestList = async ({
     supabase,
   });
 
-  return items.map((item) => ({
-    ...item,
-    owner: item.owner,
-    attachment_count: item.attachments?.length ?? 0,
-  })) as PaymentRequestListItem[];
+  return {
+    items: items.map((item) => ({
+      ...item,
+      owner: item.owner,
+      attachment_count: item.attachments?.length ?? 0,
+    })) as PaymentRequestListItem[],
+    totalItems: count ?? 0,
+  };
 };
 
-export const getExpenseRequestList = async ({
+export const getRequestList = async ({
   filters,
+  scope,
+  userId,
+  limit,
+}: {
+  filters: RequestFilters;
+  limit?: number;
+  scope: 'mine' | 'all';
+  userId?: string;
+}): Promise<PaymentRequestListItem[]> => {
+  const result = await getRequestListData({
+    filters,
+    limit,
+    scope,
+    userId,
+  });
+
+  return result.items;
+};
+
+export const getRequestListPage = async ({
+  filters,
+  page,
+  scope,
+  userId,
+}: {
+  filters: RequestFilters;
+  page: number;
+  scope: 'mine' | 'all';
+  userId?: string;
+}): Promise<PaginatedList<PaymentRequestListItem>> => {
+  const pageSize = REQUEST_LIST_PAGE_SIZE;
+  const result = await getRequestListData({
+    filters,
+    page,
+    pageSize,
+    scope,
+    userId,
+  });
+
+  return {
+    items: result.items,
+    page,
+    pageSize,
+    totalItems: result.totalItems,
+    totalPages: Math.max(1, Math.ceil(result.totalItems / pageSize)),
+  };
+};
+
+const getExpenseRequestListData = async ({
+  filters,
+  page,
+  pageSize,
 }: {
   filters: ExpenseFilters;
-}): Promise<ExpenseRequestListItem[]> => {
+  page?: number;
+  pageSize?: number;
+}): Promise<{
+  items: ExpenseRequestListItem[];
+  totalAmount: number;
+  totalItems: number;
+}> => {
   const supabase = await createClient();
-  let query = supabase.from('payment_requests').select(EXPENSE_LIST_SELECT);
+  let query = supabase
+    .from('payment_requests')
+    .select(EXPENSE_LIST_SELECT, { count: 'exact' });
+  let categorySubCategoryIds: string[] | null = null;
 
   query = query.eq('is_deleted', false);
 
   if (filters.category) {
-    const categorySubCategoryIds = await getSubCategoryIdsByCategory({
+    categorySubCategoryIds = await getSubCategoryIdsByCategory({
       categoryId: filters.category,
       supabase,
     });
 
     if (!categorySubCategoryIds.length) {
-      return [];
+      return { items: [], totalAmount: 0, totalItems: 0 };
     }
 
     query = query.in('sub_category_id', categorySubCategoryIds);
@@ -461,7 +554,60 @@ export const getExpenseRequestList = async ({
 
   query = query.order('paid_at', { ascending: false });
 
-  const { data, error } = await query;
+  if (page && pageSize) {
+    const from = (page - 1) * pageSize;
+    query = query.range(from, from + pageSize - 1);
+  }
+
+  const totalAmountPromise = page
+    ? (async () => {
+        let amountQuery = supabase
+          .from('payment_requests')
+          .select('amount')
+          .eq('is_deleted', false);
+
+        if (categorySubCategoryIds) {
+          amountQuery = amountQuery.in(
+            'sub_category_id',
+            categorySubCategoryIds,
+          );
+        }
+
+        if (filters.sub_category) {
+          amountQuery = amountQuery.eq('sub_category_id', filters.sub_category);
+        }
+
+        if (filters.payment_status === 'paid') {
+          amountQuery = amountQuery.eq('status', 'paid');
+        }
+
+        if (filters.month) {
+          const monthRange = getPaidAtMonthRange(filters.month);
+
+          if (monthRange) {
+            amountQuery = amountQuery
+              .gte('paid_at', monthRange.from)
+              .lt('paid_at', monthRange.toExclusive);
+          }
+        }
+
+        const { data: amounts, error: amountError } = await amountQuery;
+
+        if (amountError) {
+          throw new Error(amountError.message);
+        }
+
+        return ((amounts ?? []) as Array<{ amount: number | null }>).reduce(
+          (total, item) => total + (item.amount ?? 0),
+          0,
+        );
+      })()
+    : Promise.resolve(0);
+
+  const [{ data, error, count }, totalAmount] = await Promise.all([
+    query,
+    totalAmountPromise,
+  ]);
 
   if (error) {
     throw new Error(error.message);
@@ -472,35 +618,89 @@ export const getExpenseRequestList = async ({
     supabase,
   });
 
-  const itemsWithAttachmentUrls = await Promise.all(
-    items.map(async (item) => ({
-      ...item,
-      attachments: await Promise.all(
-        (item.attachments ?? []).map(async (attachment) => {
-          const { data: signedUrlData } = await supabase.storage
-            .from(STORAGE_BUCKET)
-            .createSignedUrl(attachment.file_path, 60 * 60);
-
-          return {
-            ...attachment,
-            signed_url: signedUrlData?.signedUrl ?? null,
-          };
-        }),
+  const attachmentPaths = Array.from(
+    new Set(
+      items.flatMap((item) =>
+        (item.attachments ?? []).map((attachment) => attachment.file_path),
       ),
-    })),
+    ),
   );
+  const signedUrlByPath = new Map<string, string>();
 
-  return itemsWithAttachmentUrls.map((item) => ({
+  if (attachmentPaths.length) {
+    const { data: signedUrls, error: signedUrlError } = await supabase.storage
+      .from(STORAGE_BUCKET)
+      .createSignedUrls(attachmentPaths, 60 * 60);
+
+    if (signedUrlError) {
+      throw new Error(signedUrlError.message);
+    }
+
+    signedUrls.forEach((signedUrl) => {
+      if (signedUrl.path && signedUrl.signedUrl) {
+        signedUrlByPath.set(signedUrl.path, signedUrl.signedUrl);
+      }
+    });
+  }
+
+  const itemsWithAttachmentUrls = items.map((item) => ({
     ...item,
-    attachment_count: item.attachments.length,
-  })) as ExpenseRequestListItem[];
+    attachments: (item.attachments ?? []).map((attachment) => ({
+      ...attachment,
+      signed_url: signedUrlByPath.get(attachment.file_path) ?? null,
+    })),
+  }));
+
+  return {
+    items: itemsWithAttachmentUrls.map((item) => ({
+      ...item,
+      attachment_count: item.attachments.length,
+    })) as ExpenseRequestListItem[],
+    totalAmount,
+    totalItems: count ?? 0,
+  };
+};
+
+export const getExpenseRequestList = async ({
+  filters,
+}: {
+  filters: ExpenseFilters;
+}): Promise<ExpenseRequestListItem[]> => {
+  const result = await getExpenseRequestListData({ filters });
+
+  return result.items;
+};
+
+export const getExpenseRequestListPage = async ({
+  filters,
+  page,
+}: {
+  filters: ExpenseFilters;
+  page: number;
+}): Promise<PaginatedList<ExpenseRequestListItem>> => {
+  const pageSize = EXPENSE_LIST_PAGE_SIZE;
+  const result = await getExpenseRequestListData({
+    filters,
+    page,
+    pageSize,
+  });
+
+  return {
+    items: result.items,
+    page,
+    pageSize,
+    totalAmount: result.totalAmount,
+    totalItems: result.totalItems,
+    totalPages: Math.max(1, Math.ceil(result.totalItems / pageSize)),
+  };
 };
 
 export const getEmployeesForFilter = async (): Promise<ProfileOption[]> => {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, full_name, role');
+    .select('id, full_name, role')
+    .eq('role', 'employee');
 
   if (error) {
     throw new Error(error.message);
@@ -737,7 +937,7 @@ export const getDashboardData = async ({
   role: UserRole;
   userId: string;
 }): Promise<DashboardData> => {
-  const metrics = await (async () => {
+  const metricsPromise = (async () => {
     if (role === 'employee') {
       const [total, unpaidCount, unpaidAmount, paidCount] = await Promise.all([
         countRequests({ role, userId }),
@@ -881,14 +1081,20 @@ export const getDashboardData = async ({
     ];
   })();
 
-  const recentRequests = await getRequestList({
+  const recentRequestsPromise = getRequestList({
     filters: REQUEST_FILTER_DEFAULTS,
+    limit: 5,
     scope: canViewGlobalRequests(role) ? 'all' : 'mine',
     userId,
   });
 
+  const [metrics, recentRequests] = await Promise.all([
+    metricsPromise,
+    recentRequestsPromise,
+  ]);
+
   return {
     metrics,
-    recentRequests: recentRequests.slice(0, 5),
+    recentRequests,
   };
 };

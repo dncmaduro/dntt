@@ -5,6 +5,7 @@ import { RotateCcw } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { useDataNavigation } from "@/components/shared/data-navigation";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -68,6 +69,8 @@ export function ExpenseFilterBar({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const { isPending: isDataPending, start: startDataNavigation } =
+    useDataNavigation();
   const [draft, setDraft] = useState(filters);
 
   useEffect(() => {
@@ -83,6 +86,7 @@ export function ExpenseFilterBar({
 
   const applyFilters = (nextFilters: ExpenseFilters) => {
     const params = new URLSearchParams(searchParams.toString());
+    params.delete("page");
 
     (Object.entries(nextFilters) as Array<[keyof ExpenseFilters, string]>).forEach(
       ([key, value]) => {
@@ -103,6 +107,7 @@ export function ExpenseFilterBar({
       return;
     }
 
+    startDataNavigation();
     startTransition(() => {
       router.push(nextUrl);
     });
@@ -130,11 +135,12 @@ export function ExpenseFilterBar({
   };
 
   return (
-    <div className="surface-panel space-y-4 rounded-[2rem] p-5">
+    <div className="surface-panel space-y-4 rounded-lg p-5">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div className="space-y-2">
           <Label>Danh mục</Label>
           <Select
+            disabled={isPending || isDataPending}
             onValueChange={(value) =>
               updateFilters((current) => ({
                 ...current,
@@ -161,7 +167,7 @@ export function ExpenseFilterBar({
         <div className="space-y-2">
           <Label>Danh mục con</Label>
           <Select
-            disabled={!draft.category}
+            disabled={!draft.category || isPending || isDataPending}
             onValueChange={(value) =>
               updateFilters((current) => ({
                 ...current,
@@ -187,6 +193,7 @@ export function ExpenseFilterBar({
         <div className="space-y-2">
           <Label>Trạng thái thanh toán</Label>
           <Select
+            disabled={isPending || isDataPending}
             onValueChange={(value) =>
               updateFilters((current) => ({
                 ...current,
@@ -209,6 +216,7 @@ export function ExpenseFilterBar({
         <div className="space-y-2">
           <Label>Tháng</Label>
           <Select
+            disabled={isPending || isDataPending}
             onValueChange={(value) =>
               updateFilters((current) => ({
                 ...current,
@@ -234,9 +242,16 @@ export function ExpenseFilterBar({
 
       <div className="flex items-center justify-between gap-3">
         <div className="text-sm text-muted-foreground">
-          {isPending ? "Đang cập nhật bộ lọc..." : "Bộ lọc cập nhật tự động"}
+          {isPending || isDataPending
+            ? "Đang cập nhật bộ lọc..."
+            : "Bộ lọc cập nhật tự động"}
         </div>
-        <Button onClick={resetFilters} type="button" variant="ghost">
+        <Button
+          disabled={isPending || isDataPending}
+          onClick={resetFilters}
+          type="button"
+          variant="ghost"
+        >
           <RotateCcw className="size-4" />
           Đặt lại
         </Button>

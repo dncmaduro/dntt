@@ -11,20 +11,20 @@ export function RequestListSkeleton() {
           <Skeleton className="h-8 w-64 max-w-full" />
           <Skeleton className="h-4 w-96 max-w-full" />
         </div>
-        <Skeleton className="h-11 w-36 rounded-2xl" />
+        <Skeleton className="h-11 w-36 rounded-lg" />
       </div>
 
-      <div className="grid gap-3 rounded-[2rem] border border-border/70 bg-white/70 p-5 md:grid-cols-4">
+      <div className="grid gap-3 rounded-lg border border-border bg-card p-5 md:grid-cols-4">
         {Array.from({ length: 4 }).map((_, index) => (
-          <Skeleton key={index} className="h-11 rounded-2xl" />
+          <Skeleton key={index} className="h-11 rounded-lg" />
         ))}
       </div>
 
-      <div className="overflow-hidden rounded-[2rem] border border-border/70 bg-white/70 p-5">
+      <div className="overflow-hidden rounded-lg border border-border bg-card p-5">
         <Skeleton className="h-10 w-full rounded-xl" />
         <div className="mt-4 space-y-3">
           {Array.from({ length: 6 }).map((_, index) => (
-            <Skeleton key={index} className="h-20 w-full rounded-2xl" />
+            <Skeleton key={index} className="h-20 w-full rounded-lg" />
           ))}
         </div>
       </div>

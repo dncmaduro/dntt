@@ -4,9 +4,9 @@ import { APP_ROUTES } from "@/lib/constants";
 
 export default function NotFound() {
   return (
-    <div className="flex min-h-screen items-center justify-center px-6">
-      <div className="surface-panel max-w-xl rounded-3xl p-8 text-center">
-        <p className="text-sm font-semibold uppercase tracking-[0.32em] text-primary">
+    <main className="flex min-h-screen items-center justify-center px-6">
+      <div className="surface-panel max-w-xl rounded-lg p-8 text-center">
+        <p className="text-sm font-semibold text-primary">
           404
         </p>
         <h1 className="mt-4 text-3xl font-semibold">Không tìm thấy nội dung</h1>
@@ -15,11 +15,11 @@ export default function NotFound() {
         </p>
         <Link
           href={APP_ROUTES.dashboard}
-          className="mt-6 inline-flex rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground"
+          className="mt-6 inline-flex rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground"
         >
           Quay về tổng quan
         </Link>
       </div>
-    </div>
+    </main>
   );
 }

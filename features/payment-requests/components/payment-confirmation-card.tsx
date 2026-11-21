@@ -116,7 +116,7 @@ export function PaymentConfirmationCard({
 
   if (isPaid && !canConfirmPayment) {
     return (
-      <Card className="rounded-[2rem]">
+      <Card className="rounded-lg">
         <CardHeader>
           <CardTitle className="text-xl">Thông tin thanh toán</CardTitle>
           <CardDescription>Danh sách bill thanh toán đã lưu cho đề nghị này.</CardDescription>
@@ -141,7 +141,7 @@ export function PaymentConfirmationCard({
   }
 
   return (
-    <Card className="rounded-[2rem]">
+    <Card className="rounded-lg">
       <CardHeader>
         <CardTitle className="text-xl">Xác nhận thanh toán</CardTitle>
         <CardDescription>Tải từ 1 đến tối đa 5 bill cho đề nghị này.</CardDescription>
@@ -198,7 +198,7 @@ function PaymentInfoItem({
   label: string;
 }) {
   return (
-    <div className="min-w-0 rounded-[1.5rem] border border-border/70 bg-white/70 p-4">
+    <div className="min-w-0 rounded-lg border border-border bg-card p-4">
       <p className="text-sm text-muted-foreground">{label}</p>
       <div className="mt-2 min-w-0 text-sm [overflow-wrap:anywhere]">{children}</div>
     </div>

@@ -297,7 +297,7 @@ export function RequestForm({
 
   return (
     <form className="space-y-6" onSubmit={onSubmit}>
-      <Card className="rounded-[2rem]">
+      <Card className="rounded-lg">
         <CardHeader>
           <CardTitle className="text-xl">Thông tin đề nghị</CardTitle>
         </CardHeader>
@@ -348,7 +348,7 @@ export function RequestForm({
             >
               Trạng thái thanh toán
             </FieldLabelWithTooltip>
-            <label className="flex items-start gap-3 rounded-[1.5rem] border border-border/70 bg-white/75 px-4 py-4">
+            <label className="flex items-start gap-3 rounded-lg border border-border bg-card px-4 py-4">
               <input
                 className="mt-1 size-4 accent-[var(--color-primary)]"
                 type="checkbox"
@@ -512,7 +512,7 @@ export function RequestForm({
         </CardContent>
       </Card>
 
-      <Card className="rounded-[2rem]">
+      <Card className="rounded-lg">
         <CardHeader>
           <CardTitle className="text-xl">
             Chứng từ đính kèm
@@ -520,8 +520,8 @@ export function RequestForm({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
-          <label className="flex cursor-pointer flex-col items-center justify-center rounded-[1.75rem] border border-dashed border-primary/30 bg-primary/5 px-5 py-8 text-center">
-            <div className="flex size-14 items-center justify-center rounded-3xl bg-primary/10 text-primary">
+          <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-primary/30 bg-primary/5 px-5 py-8 text-center">
+            <div className="flex size-14 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <UploadCloud className="size-6" />
             </div>
             <p className="mt-4 font-medium">
@@ -546,7 +546,7 @@ export function RequestForm({
               {attachmentPreviewItems.map((item) => (
                 <div
                   key={item.id}
-                  className="overflow-hidden rounded-[1.5rem] border border-border/70 bg-white/70"
+                  className="overflow-hidden rounded-lg border border-border bg-card"
                 >
                   <div className="relative aspect-[4/3] bg-muted/45">
                     {item.previewUrl && isImageMimeType(item.type) ? (
@@ -581,14 +581,14 @@ export function RequestForm({
               ))}
             </div>
           ) : (
-            <div className="rounded-[1.5rem] border border-border/70 bg-muted/25 px-5 py-6 text-sm text-muted-foreground">
+            <div className="rounded-lg border border-border bg-muted/25 px-5 py-6 text-sm text-muted-foreground">
               Chưa có tệp nào được chọn.
             </div>
           )}
         </CardContent>
       </Card>
 
-      <div className="mb-6 rounded-[1.75rem] border border-border/70 bg-background/92 p-4 shadow-lg backdrop-blur-xl md:mb-8 md:border-0 md:bg-transparent md:p-0 md:shadow-none">
+      <div className="mb-6 rounded-lg border border-border bg-background p-4 shadow-lg md:mb-8 md:border-0 md:bg-transparent md:p-0 md:shadow-none">
         <div className="flex flex-col-reverse gap-3 md:flex-row md:justify-end">
           <Button onClick={() => router.back()} type="button" variant="ghost">
             Hủy
@@ -606,7 +606,11 @@ export function RequestForm({
 }
 
 function FieldError({ error }: { error?: string }) {
-  return error ? <p className="text-sm text-destructive">{error}</p> : null;
+  return error ? (
+    <p role="alert" className="text-sm text-destructive">
+      {error}
+    </p>
+  ) : null;
 }
 
 function FieldLabel({
@@ -653,7 +657,7 @@ function InfoTooltip({ content }: { content: string }) {
       >
         <Info className="size-4" />
       </button>
-      <span className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-72 -translate-x-1/2 rounded-2xl border border-border/70 bg-background px-3 py-2 text-xs leading-5 text-muted-foreground opacity-0 shadow-xl transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+      <span className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-72 -translate-x-1/2 rounded-lg border border-border bg-background px-3 py-2 text-xs leading-5 text-muted-foreground opacity-0 shadow-xl transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
         {content}
       </span>
     </span>

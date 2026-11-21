@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { LoaderCircle, LogIn, Eye, EyeOff } from "lucide-react";
 
@@ -20,24 +20,29 @@ export function LoginForm({ redirectTo }: { redirectTo?: string }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  useEffect(() => {
-    if (state.error) {
-      setPassword("");
-    }
-  }, [state.error]);
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+
+    setPassword("");
+    formAction(formData);
+  };
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form action={formAction} className="space-y-5" onSubmit={handleSubmit}>
       <input name="redirectTo" type="hidden" value={redirectTo ?? ""} />
 
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input
           autoComplete="email"
+          className="h-12"
           id="email"
           name="email"
           placeholder="ban@example.com"
           type="email"
+          aria-invalid={Boolean(state.error)}
+          aria-describedby={state.error ? "login-form-error" : undefined}
           onChange={(event) => setEmail(event.target.value)}
           value={email}
         />
@@ -48,10 +53,13 @@ export function LoginForm({ redirectTo }: { redirectTo?: string }) {
         <div className="relative">
           <Input
             autoComplete="current-password"
+            className="h-12"
             id="password"
             name="password"
             placeholder="Nhập mật khẩu"
             type={showPassword ? "text" : "password"}
+            aria-invalid={Boolean(state.error)}
+            aria-describedby={state.error ? "login-form-error" : undefined}
             onChange={(event) => setPassword(event.target.value)}
             value={password}
           />
@@ -75,7 +83,7 @@ export function LoginForm({ redirectTo }: { redirectTo?: string }) {
       </div>
 
       {state.error ? (
-        <p className="rounded-2xl border border-destructive/15 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+        <p id="login-form-error" role="alert" className="rounded-lg border border-destructive/15 bg-destructive/5 px-4 py-3 text-sm text-destructive">
           {state.error}
         </p>
       ) : null}

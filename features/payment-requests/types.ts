@@ -64,6 +64,15 @@ export type DashboardData = {
   recentRequests: PaymentRequestListItem[];
 };
 
+export type PaginatedList<T> = {
+  items: T[];
+  page: number;
+  pageSize: number;
+  totalAmount?: number;
+  totalItems: number;
+  totalPages: number;
+};
+
 export type RequestFilters = {
   category: string;
   sub_category: string;

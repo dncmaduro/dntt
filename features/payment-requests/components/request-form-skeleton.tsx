@@ -11,21 +11,21 @@ export function RequestFormSkeleton() {
           <Skeleton className="h-8 w-72 max-w-full" />
           <Skeleton className="h-4 w-96 max-w-full" />
         </div>
-        <Skeleton className="h-11 w-40 rounded-2xl" />
+        <Skeleton className="h-11 w-40 rounded-lg" />
       </div>
 
-      <div className="rounded-[2rem] border border-border/70 bg-white/70 p-6">
+      <div className="rounded-lg border border-border bg-card p-6">
         <Skeleton className="h-7 w-44" />
         <div className="mt-6 grid gap-5 md:grid-cols-2">
           {Array.from({ length: 6 }).map((_, index) => (
             <div key={index} className={index === 4 ? "md:col-span-2" : ""}>
               <Skeleton className="mb-2 h-4 w-24" />
-              <Skeleton className="h-11 w-full rounded-2xl" />
+              <Skeleton className="h-11 w-full rounded-lg" />
             </div>
           ))}
         </div>
-        <Skeleton className="mt-6 h-32 w-full rounded-2xl" />
-        <Skeleton className="mt-6 h-11 w-40 rounded-2xl" />
+        <Skeleton className="mt-6 h-32 w-full rounded-lg" />
+        <Skeleton className="mt-6 h-11 w-40 rounded-lg" />
       </div>
     </div>
   );

@@ -69,7 +69,7 @@ export function PaymentRequestQrUploadField({
     <div className="space-y-3">
       <div
         className={cn(
-          "rounded-[1.5rem] border border-dashed transition-colors px-5 py-6",
+          "rounded-lg border border-dashed transition-colors px-5 py-6",
           isDragActive
             ? "border-primary/60 bg-primary/8"
             : "border-primary/25 bg-primary/5",
@@ -103,7 +103,7 @@ export function PaymentRequestQrUploadField({
         }}
       >
         <div className="flex items-center gap-4">
-          <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-3xl bg-primary/10 text-primary">
+          <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary/10 text-primary">
             {value ? (
               <Image
                 alt={value.file.name}

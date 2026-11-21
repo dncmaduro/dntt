@@ -94,7 +94,7 @@ export function ReviewPanel({
   }
 
   return (
-    <Card className="rounded-[2rem]">
+    <Card className="rounded-lg">
       <CardHeader>
         <CardTitle className="text-xl">Thao tác xử lý</CardTitle>
       </CardHeader>

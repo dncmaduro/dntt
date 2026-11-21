@@ -9,7 +9,7 @@ function Label({
 }: React.ComponentProps<typeof LabelPrimitive.Root>) {
   return (
     <LabelPrimitive.Root
-      className={cn("text-sm font-medium leading-none", className)}
+      className={cn("text-[15px] font-semibold leading-5 tracking-[-0.01em]", className)}
       {...props}
     />
   );

@@ -36,14 +36,14 @@ export function PaymentQrPanel({
     : employee.unpaid_requests.total_items;
 
   return (
-    <section className="rounded-[1.75rem] border border-border/70 bg-white/80 p-5 lg:p-6">
+    <section className="rounded-lg border border-border bg-card p-5 lg:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
           <p className="text-sm font-medium text-muted-foreground">
             QR thanh toán
           </p>
           <h2 className="text-2xl font-semibold leading-tight">
-            {employee.full_name ?? 'Chưa cập nhật họ tên'}
+            {employee.full_name ?? 'Chưa cập nhật'}
           </h2>
           <p className="text-sm text-muted-foreground">
             {ROLE_LABELS[employee.role]}
@@ -55,10 +55,10 @@ export function PaymentQrPanel({
         {hasQrPreview ? (
           <div className="space-y-3">
             <Dialog>
-              <div className="relative aspect-square w-full max-w-md overflow-hidden rounded-[1.5rem] border border-border/70 bg-white shadow-sm">
+              <div className="relative aspect-square w-full max-w-md overflow-hidden rounded-lg border border-border bg-white shadow-sm">
                 <DialogTrigger asChild>
                   <Button
-                    className="absolute right-3 top-3 z-10 bg-white/95 shadow-sm hover:bg-white"
+                    className="absolute right-3 top-3 z-10 bg-card shadow-sm hover:bg-white"
                     size="sm"
                     type="button"
                     variant="secondary"
@@ -85,8 +85,8 @@ export function PaymentQrPanel({
                     Mở lớn mã QR để thao tác chuyển khoản nhanh hơn.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="flex min-h-[65vh] items-center justify-center rounded-[1.75rem] border border-border/70 bg-muted/15 p-6">
-                  <div className="relative aspect-square w-full max-w-2xl overflow-hidden rounded-[1.5rem] border border-border/70 bg-white shadow-sm">
+                <div className="flex min-h-[65vh] items-center justify-center rounded-lg border border-border bg-muted/15 p-6">
+                  <div className="relative aspect-square w-full max-w-2xl overflow-hidden rounded-lg border border-border bg-white shadow-sm">
                     <Image
                       alt={`QR thanh toán của ${employee.full_name ?? 'nhân sự'}`}
                       className="object-contain p-6"
@@ -99,8 +99,8 @@ export function PaymentQrPanel({
               </DialogContent>
             </Dialog>
 
-            <div className="rounded-[1.25rem] border border-border/70 bg-white/85 px-4 py-3 text-center shadow-sm">
-              <p className="text-xs uppercase font-bold text-muted-foreground">
+            <div className="rounded-md border border-border bg-card px-4 py-3 text-center shadow-sm">
+              <p className="text-xs font-bold text-muted-foreground">
                 Số tiền cần chuyển
               </p>
               <p className="mt-1 text-lg font-semibold">
@@ -126,11 +126,11 @@ export function PaymentQrPanel({
             </p>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
               {hasSavedQr
-                ? 'Hồ sơ đã có mã QR nhưng hệ thống chưa tạo được liên kết xem trước. Hãy tải lại trang hoặc kiểm tra lại QR trong hồ sơ nhân sự.'
+                ? 'Không thể tạo bản xem trước QR. Kiểm tra lại ảnh QR trong hồ sơ.'
                 : 'Yêu cầu nhân sự cập nhật ảnh QR trong hồ sơ trước khi thực hiện chi trả.'}
             </p>
-            <div className="mt-5 rounded-[1.25rem] border border-border/70 bg-white/85 px-4 py-3 shadow-sm">
-              <p className="text-xs uppercase font-bold text-muted-foreground">
+            <div className="mt-5 rounded-md border border-border bg-card px-4 py-3 shadow-sm">
+              <p className="text-xs font-bold text-muted-foreground">
                 Số tiền cần chuyển
               </p>
               <p className="mt-1 text-lg font-semibold">

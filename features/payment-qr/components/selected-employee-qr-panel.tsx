@@ -41,9 +41,9 @@ export function SelectedEmployeeQrPanel({
           title="Chưa chọn nhân sự"
         />
         <EmptyState
-          description="Danh sách đề nghị chờ thanh toán sẽ xuất hiện ngay tại đây sau khi bạn chọn nhân sự."
+          description="Chọn nhân sự để xem các đề nghị chờ thanh toán."
           icon={FileClock}
-          title="Chưa có dữ liệu đề nghị"
+          title="Chưa chọn nhân sự"
         />
       </div>
     );

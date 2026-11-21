@@ -25,7 +25,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -162,7 +161,7 @@ export function ProfileForm({
   const qrFieldError = qrImageError || serverErrors.qr_image?.[0];
 
   return (
-    <Card className="rounded-[2rem]">
+    <Card className="rounded-lg">
       <CardHeader>
         <CardTitle className="text-xl">Thông tin cá nhân</CardTitle>
       </CardHeader>
@@ -184,7 +183,7 @@ export function ProfileForm({
           </div>
 
           <div className="grid gap-5 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
-            <div className="rounded-[1.75rem] border border-border/70 bg-white/75 p-4">
+            <div className="rounded-lg border border-border bg-card p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium">Ảnh QR thanh toán</p>
@@ -192,13 +191,13 @@ export function ProfileForm({
                     Tải 1 ảnh QR rõ nét. Hệ thống chỉ upload khi bạn bấm lưu.
                   </p>
                 </div>
-                <div className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
+                <div className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
                   Tối đa {formatFileSize(MAX_PROFILE_QR_SIZE_BYTES)}
                 </div>
               </div>
 
               <div
-                className={`mt-4 rounded-[1.5rem] border border-dashed px-5 py-8 text-center transition-colors ${
+                className={`mt-4 rounded-lg border border-dashed px-5 py-8 text-center transition-colors ${
                   isDragActive
                     ? "border-primary/60 bg-primary/8"
                     : "border-primary/25 bg-primary/5"
@@ -221,7 +220,7 @@ export function ProfileForm({
                   handleIncomingFile(event.dataTransfer.files?.[0]);
                 }}
               >
-                <div className="mx-auto flex size-14 items-center justify-center rounded-3xl bg-primary/10 text-primary">
+                <div className="mx-auto flex size-14 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <UploadCloud className="size-6" />
                 </div>
                 <p className="mt-4 font-medium">Kéo thả ảnh vào đây hoặc chọn từ thiết bị</p>
@@ -256,7 +255,7 @@ export function ProfileForm({
               <FieldError error={qrFieldError} />
 
               {draftQrImage ? (
-                <div className="mt-4 rounded-[1.25rem] border border-border/70 bg-background/80 p-4">
+                <div className="mt-4 rounded-md border border-border bg-background p-4">
                   <p className="text-sm font-medium">Sẵn sàng lưu ảnh mới</p>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {draftQrImage.file.name} • {formatFileSize(draftQrImage.file.size)}
@@ -273,7 +272,7 @@ export function ProfileForm({
               )}
             </div>
 
-            <div className="rounded-[1.75rem] border border-border/70 bg-white/75 p-4">
+            <div className="rounded-lg border border-border bg-card p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium">{previewLabel}</p>
@@ -287,9 +286,9 @@ export function ProfileForm({
                 </div>
               </div>
 
-              <div className="mt-4 flex min-h-80 items-center justify-center rounded-[1.5rem] border border-dashed border-border/80 bg-muted/20 p-6">
+              <div className="mt-4 flex min-h-80 items-center justify-center rounded-lg border border-dashed border-border bg-muted/20 p-6">
                 {previewImageUrl ? (
-                  <div className="relative aspect-square w-full max-w-72 overflow-hidden rounded-[1.25rem] border border-border/70 bg-white shadow-sm">
+                  <div className="relative aspect-square w-full max-w-72 overflow-hidden rounded-md border border-border bg-white shadow-sm">
                     <Image
                       alt="Ảnh QR thanh toán"
                       className="object-contain p-4"

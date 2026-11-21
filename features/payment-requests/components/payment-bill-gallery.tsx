@@ -15,7 +15,7 @@ export function PaymentBillGallery({
 }) {
   if (!paymentBills.length) {
     return (
-      <div className="rounded-[1.5rem] border border-dashed border-border/80 bg-muted/20 px-4 py-5 text-sm text-muted-foreground">
+      <div className="rounded-lg border border-dashed border-border bg-muted/20 px-4 py-5 text-sm text-muted-foreground">
         {emptyLabel}
       </div>
     );
@@ -24,10 +24,10 @@ export function PaymentBillGallery({
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {paymentBills.map((bill) => (
-        <Card key={bill.id} className="overflow-hidden rounded-[1.75rem]">
+        <Card key={bill.id} className="overflow-hidden rounded-lg">
           <CardContent className="space-y-4 p-4">
             {bill.signed_url && isImageMimeType(bill.file_type) ? (
-              <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-muted">
+              <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-muted">
                 <Image
                   alt={bill.file_name ?? "Bill thanh toán"}
                   className="object-cover"
@@ -37,7 +37,7 @@ export function PaymentBillGallery({
                 />
               </div>
             ) : (
-              <div className="flex aspect-[4/3] items-center justify-center rounded-3xl bg-muted/50 text-muted-foreground">
+              <div className="flex aspect-[4/3] items-center justify-center rounded-lg bg-muted/50 text-muted-foreground">
                 {isImageMimeType(bill.file_type) ? (
                   <FileImage className="size-10" />
                 ) : (
