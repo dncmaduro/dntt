@@ -99,6 +99,7 @@ export type ExpenseRequestListItem = PaymentRequestRow & {
   owner: RequestOwner | null;
   attachment_count: number;
   attachments: ExpenseAttachmentWithUrl[];
+  payment_bills: PaymentBillWithUrl[];
   category: Category | null;
   sub_category: SubCategoryWithCategory | null;
 };

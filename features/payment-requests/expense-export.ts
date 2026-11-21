@@ -7,6 +7,7 @@ import type {
   ExpenseAttachmentWithUrl,
   ExpenseFilters,
   ExpenseRequestListItem,
+  PaymentBillWithUrl,
 } from "@/features/payment-requests/types";
 import { isImageMimeType } from "@/lib/utils";
 
@@ -21,7 +22,10 @@ const DETAIL_SLOT_COUNT = DETAIL_END_ROW - DETAIL_START_ROW + 1;
 const TOTAL_ROW_TEMPLATE = 75;
 const EVIDENCE_SHEET_NAME = "Minh chứng";
 const REPORT_EVIDENCE_COLUMN = 7;
-const EVIDENCE_IMAGE_START_COLUMN = 3;
+const REPORT_REIMBURSEMENT_DATE_COLUMN = 8;
+const REPORT_REIMBURSEMENT_COLUMN = 9;
+const EVIDENCE_REIMBURSEMENT_COLUMN = 3;
+const EVIDENCE_IMAGE_START_COLUMN = 4;
 const EVIDENCE_IMAGE_SCALE = 1.8;
 const EVIDENCE_IMAGE_WIDTH = 480 * EVIDENCE_IMAGE_SCALE;
 const EVIDENCE_IMAGE_HEIGHT = 360 * EVIDENCE_IMAGE_SCALE;
@@ -57,8 +61,12 @@ type ExpenseSummaryRow = {
 
 type WorkbookImageExtension = "gif" | "jpeg" | "png";
 
-type ResolvedAttachmentImage = {
-  attachment: ExpenseAttachmentWithUrl;
+type WorkbookImageSource =
+  | ExpenseAttachmentWithUrl
+  | PaymentBillWithUrl;
+
+type ResolvedWorkbookImage = {
+  attachment: WorkbookImageSource;
   base64: string;
   dimensions: ImageDimensions;
   extension: WorkbookImageExtension;
@@ -192,6 +200,37 @@ const buildDateValue = (value?: string | null) => {
   return (utcDate - excelEpoch) / 86_400_000;
 };
 
+const buildDateTimeValue = (value?: string | null) => {
+  if (!value) {
+    return null;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return buildDateValue(value);
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  const vietnamDate = new Date(date.getTime() + 7 * 60 * 60 * 1_000);
+  const excelEpoch = Date.UTC(1899, 11, 30);
+  const datePart = Date.UTC(
+    vietnamDate.getUTCFullYear(),
+    vietnamDate.getUTCMonth(),
+    vietnamDate.getUTCDate(),
+  );
+  const timePart =
+    (vietnamDate.getUTCHours() * 60 * 60 +
+      vietnamDate.getUTCMinutes() * 60 +
+      vietnamDate.getUTCSeconds()) /
+    86_400;
+
+  return (datePart - excelEpoch) / 86_400_000 + timePart;
+};
+
 const withWrapText = <T extends Record<string, unknown>>(baseStyle: T) => ({
   ...cloneValue(baseStyle),
   alignment: {
@@ -275,7 +314,7 @@ const buildRequestEvidenceLabel = (item: ExpenseRequestListItem) => {
 };
 
 const normalizeWorkbookImageExtension = (
-  attachment: ExpenseAttachmentWithUrl,
+  attachment: WorkbookImageSource,
 ): WorkbookImageExtension | null => {
   const normalizedMimeType = attachment.file_type?.trim().toLowerCase();
 
@@ -291,7 +330,10 @@ const normalizeWorkbookImageExtension = (
     return "gif";
   }
 
-  const normalizedExtension = path.extname(attachment.file_name).trim().toLowerCase();
+  const normalizedExtension = path
+    .extname(attachment.file_name ?? "")
+    .trim()
+    .toLowerCase();
 
   if (normalizedExtension === ".jpg" || normalizedExtension === ".jpeg") {
     return "jpeg";
@@ -399,8 +441,8 @@ const getContainedImageSize = ({ height, width }: ImageDimensions) => {
 };
 
 const downloadAttachmentImage = async (
-  attachment: ExpenseAttachmentWithUrl,
-): Promise<ResolvedAttachmentImage | null> => {
+  attachment: WorkbookImageSource,
+): Promise<ResolvedWorkbookImage | null> => {
   if (!attachment.signed_url || !isImageMimeType(attachment.file_type)) {
     return null;
   }
@@ -458,7 +500,16 @@ const buildEvidenceSheet = async ({
   });
   const imageMatrix = await Promise.all(
     items.map((item) =>
-      Promise.all(item.attachments.map((attachment) => downloadAttachmentImage(attachment))),
+      Promise.all(
+        item.attachments.map((attachment) => downloadAttachmentImage(attachment)),
+      ),
+    ),
+  );
+  const paymentBillMatrix = await Promise.all(
+    items.map((item) =>
+      Promise.all(
+        item.payment_bills.map((bill) => downloadAttachmentImage(bill)),
+      ),
     ),
   );
   const maxImageCount = Math.max(
@@ -469,6 +520,11 @@ const buildEvidenceSheet = async ({
   evidenceSheet.columns = [
     { header: "STT", key: "index", width: 8 },
     { header: "Đề nghị", key: "request", width: 52 },
+    {
+      header: "Hoàn ứng",
+      key: "reimbursement",
+      width: EVIDENCE_IMAGE_COLUMN_WIDTH,
+    },
     ...Array.from({ length: maxImageCount }, (_, index) => ({
       header: `Ảnh ${index + 1}`,
       key: `image_${index + 1}`,
@@ -486,14 +542,18 @@ const buildEvidenceSheet = async ({
   headerRow.alignment = { horizontal: "center", vertical: "middle" };
   headerRow.height = 24;
 
-  const linkTargetByRequestId = new Map<string, string>();
+  const evidenceLinkTargetByRequestId = new Map<string, string>();
+  const reimbursementLinkTargetByRequestId = new Map<string, string>();
 
   imageMatrix.forEach((images, index) => {
     const item = items[index];
     const rowNumber = index + 2;
     const row = evidenceSheet.getRow(rowNumber);
     const resolvedImages = images.filter(
-      (image): image is ResolvedAttachmentImage => image !== null,
+      (image): image is ResolvedWorkbookImage => image !== null,
+    );
+    const resolvedPaymentBills = paymentBillMatrix[index].filter(
+      (image): image is ResolvedWorkbookImage => image !== null,
     );
 
     row.getCell(1).value = index + 1;
@@ -502,40 +562,66 @@ const buildEvidenceSheet = async ({
     row.getCell(2).font = { name: EVIDENCE_FONT_NAME, size: 12 };
     row.getCell(2).alignment = { vertical: "middle", wrapText: true };
 
-    if (!resolvedImages.length) {
+    if (resolvedPaymentBills.length) {
+      const image = resolvedPaymentBills[0];
+      const cellAddress = `${getExcelColumnName(EVIDENCE_REIMBURSEMENT_COLUMN)}${rowNumber}`;
+      const imageId = workbook.addImage({
+        base64: image.base64,
+        extension: image.extension,
+      });
+
+      evidenceSheet.addImage(imageId, {
+        tl: {
+          col: EVIDENCE_REIMBURSEMENT_COLUMN - 1 + 0.08,
+          row: rowNumber - 1 + 0.08,
+        },
+        ext: getContainedImageSize(image.dimensions),
+      });
+      reimbursementLinkTargetByRequestId.set(item.id, cellAddress);
+    } else {
+      row.getCell(EVIDENCE_REIMBURSEMENT_COLUMN).value = "Không có ảnh hoàn ứng";
+      row.getCell(EVIDENCE_REIMBURSEMENT_COLUMN).font = {
+        name: EVIDENCE_FONT_NAME,
+        size: 12,
+      };
+    }
+
+    if (resolvedImages.length) {
+      row.height = EVIDENCE_IMAGE_ROW_HEIGHT;
+
+      resolvedImages.forEach((image, imageIndex) => {
+        const columnNumber = EVIDENCE_IMAGE_START_COLUMN + imageIndex;
+        const cellAddress = `${getExcelColumnName(columnNumber)}${rowNumber}`;
+        const imageId = workbook.addImage({
+          base64: image.base64,
+          extension: image.extension,
+        });
+        const imageSize = getContainedImageSize(image.dimensions);
+
+        evidenceSheet.addImage(imageId, {
+          tl: { col: columnNumber - 1 + 0.08, row: rowNumber - 1 + 0.08 },
+          ext: imageSize,
+        });
+        evidenceSheet.getColumn(columnNumber).width = EVIDENCE_IMAGE_COLUMN_WIDTH;
+
+        if (imageIndex === 0) {
+          evidenceLinkTargetByRequestId.set(item.id, cellAddress);
+        }
+      });
+    } else {
       row.getCell(EVIDENCE_IMAGE_START_COLUMN).value = "Không có ảnh minh chứng";
       row.getCell(EVIDENCE_IMAGE_START_COLUMN).font = {
         name: EVIDENCE_FONT_NAME,
         size: 12,
       };
-      row.height = 24;
-      return;
+      row.height = resolvedPaymentBills.length ? EVIDENCE_IMAGE_ROW_HEIGHT : 24;
     }
-
-    row.height = EVIDENCE_IMAGE_ROW_HEIGHT;
-
-    resolvedImages.forEach((image, imageIndex) => {
-      const columnNumber = EVIDENCE_IMAGE_START_COLUMN + imageIndex;
-      const cellAddress = `${getExcelColumnName(columnNumber)}${rowNumber}`;
-      const imageId = workbook.addImage({
-        base64: image.base64,
-        extension: image.extension,
-      });
-      const imageSize = getContainedImageSize(image.dimensions);
-
-      evidenceSheet.addImage(imageId, {
-        tl: { col: columnNumber - 1 + 0.08, row: rowNumber - 1 + 0.08 },
-        ext: imageSize,
-      });
-      evidenceSheet.getColumn(columnNumber).width = EVIDENCE_IMAGE_COLUMN_WIDTH;
-
-      if (imageIndex === 0) {
-        linkTargetByRequestId.set(item.id, cellAddress);
-      }
-    });
   });
 
-  return linkTargetByRequestId;
+  return {
+    evidenceLinkTargetByRequestId,
+    reimbursementLinkTargetByRequestId,
+  };
 };
 
 export const buildExpenseExportWorkbook = async ({
@@ -559,7 +645,10 @@ export const buildExpenseExportWorkbook = async ({
     (left.paid_at ?? "").localeCompare(right.paid_at ?? "") ||
     left.created_at.localeCompare(right.created_at),
   );
-  const evidenceLinkTargetByRequestId = await buildEvidenceSheet({
+  const {
+    evidenceLinkTargetByRequestId,
+    reimbursementLinkTargetByRequestId,
+  } = await buildEvidenceSheet({
     items: exportItems,
     workbook,
   });
@@ -573,6 +662,10 @@ export const buildExpenseExportWorkbook = async ({
 
   worksheet.name = buildWorksheetName(filters.month);
   worksheet.getColumn(REPORT_EVIDENCE_COLUMN).width = 18;
+  worksheet.getColumn(REPORT_REIMBURSEMENT_DATE_COLUMN).width = 20;
+  worksheet.getColumn(REPORT_REIMBURSEMENT_COLUMN).width = 18;
+  worksheet.getColumn(11).width = 18;
+  worksheet.getColumn(12).width = 14;
 
   clearMergeIfExists(worksheet, "A75:E75");
   clearMergeIfExists(worksheet, "E77:F77");
@@ -580,6 +673,8 @@ export const buildExpenseExportWorkbook = async ({
   clearMergeIfExists(worksheet, "C83:E83");
   clearMergeIfExists(worksheet, "C84:F84");
   clearMergeIfExists(worksheet, "G7:G8");
+  clearMergeIfExists(worksheet, "H7:H8");
+  clearMergeIfExists(worksheet, "I7:I8");
 
   if (extraRows > 0) {
     worksheet.spliceRows(
@@ -603,9 +698,17 @@ export const buildExpenseExportWorkbook = async ({
   worksheet.mergeCells(`C${signatureTopRow}:E${signatureTopRow}`);
   worksheet.mergeCells(`C${signatureBottomRow}:F${signatureBottomRow}`);
   worksheet.mergeCells("G7:G8");
+  worksheet.mergeCells("H7:H8");
+  worksheet.mergeCells("I7:I8");
   worksheet.getCell("G7").value = "Minh chứng";
+  worksheet.getCell("H7").value = "Thời gian hoàn ứng";
+  worksheet.getCell("I7").value = "Hoàn ứng";
   worksheet.getCell("G7").style = cloneValue(worksheet.getCell("F7").style);
   worksheet.getCell("G8").style = cloneValue(worksheet.getCell("F8").style);
+  worksheet.getCell("H7").style = cloneValue(worksheet.getCell("F7").style);
+  worksheet.getCell("H8").style = cloneValue(worksheet.getCell("F8").style);
+  worksheet.getCell("I7").style = cloneValue(worksheet.getCell("F7").style);
+  worksheet.getCell("I8").style = cloneValue(worksheet.getCell("F8").style);
 
   const actualRowStyles = {
     A: cloneValue(worksheet.getCell("A9").style),
@@ -615,6 +718,8 @@ export const buildExpenseExportWorkbook = async ({
     E: cloneValue(worksheet.getCell("E9").style),
     F: cloneValue(worksheet.getCell("F9").style),
     G: cloneValue(worksheet.getCell("E9").style),
+    H: cloneValue(worksheet.getCell("C9").style),
+    I: cloneValue(worksheet.getCell("E9").style),
   };
   const blankRowStyles = {
     A: cloneValue(worksheet.getCell("A68").style),
@@ -624,6 +729,8 @@ export const buildExpenseExportWorkbook = async ({
     E: cloneValue(worksheet.getCell("E68").style),
     F: cloneValue(worksheet.getCell("F68").style),
     G: cloneValue(worksheet.getCell("E68").style),
+    H: cloneValue(worksheet.getCell("C68").style),
+    I: cloneValue(worksheet.getCell("E68").style),
   };
   const summaryStyles = {
     blankLabel: cloneValue(worksheet.getCell("I24").style),
@@ -639,6 +746,15 @@ export const buildExpenseExportWorkbook = async ({
       .filter((row) => row.label !== "Tổng")
       .map((row) => [row.label, row.color]),
   );
+  const summaryClearEndRow = Math.max(
+    detailEndRow,
+    DETAIL_START_ROW + summaryRows.length + 4,
+  );
+
+  for (let rowNumber = DETAIL_START_ROW; rowNumber <= summaryClearEndRow; rowNumber += 1) {
+    worksheet.getCell(`I${rowNumber}`).value = null;
+    worksheet.getCell(`J${rowNumber}`).value = null;
+  }
 
   for (let index = 0; index < detailEndRow - DETAIL_START_ROW + 1; index += 1) {
     const rowNumber = DETAIL_START_ROW + index;
@@ -651,13 +767,19 @@ export const buildExpenseExportWorkbook = async ({
     const cellE = row.getCell(5);
     const cellF = row.getCell(6);
     const cellG = row.getCell(7);
+    const cellH = row.getCell(8);
+    const cellI = row.getCell(9);
 
     if (item) {
       const label = formatCategoryLabel(item);
       const fillColor = categoryColorByLabel.get(label) ?? CATEGORY_COLOR_PALETTE[0];
       const evidenceLinkTarget = evidenceLinkTargetByRequestId.get(item.id);
+      const reimbursementLinkTarget = reimbursementLinkTargetByRequestId.get(item.id);
       const imageCount = item.attachments.filter((attachment) =>
         isImageMimeType(attachment.file_type),
+      ).length;
+      const reimbursementCount = item.payment_bills.filter((bill) =>
+        isImageMimeType(bill.file_type),
       ).length;
       row.height = resolveDetailRowHeight(label);
 
@@ -668,6 +790,8 @@ export const buildExpenseExportWorkbook = async ({
       cellE.style = cloneValue(actualRowStyles.E);
       cellF.style = cloneValue(actualRowStyles.F);
       cellG.style = cloneValue(actualRowStyles.G);
+      cellH.style = cloneValue(actualRowStyles.H);
+      cellI.style = cloneValue(actualRowStyles.I);
 
       cellA.value = index + 1;
       cellB.value = item.attachment_count > 0 ? "Có hoá đơn" : null;
@@ -675,10 +799,19 @@ export const buildExpenseExportWorkbook = async ({
       cellD.value = label;
       cellE.value = item.title;
       cellF.value = item.amount ?? 0;
+      cellH.value = buildDateTimeValue(item.paid_at);
+      cellH.numFmt = "dd/mm/yyyy hh:mm";
       cellG.value = evidenceLinkTarget
         ? {
             text: `Xem ảnh (${imageCount})`,
             hyperlink: `#'${EVIDENCE_SHEET_NAME}'!${evidenceLinkTarget}`,
+            tooltip: `Đi tới sheet ${EVIDENCE_SHEET_NAME}`,
+          }
+        : "Không có ảnh";
+      cellI.value = reimbursementLinkTarget
+        ? {
+            text: `Xem ảnh (${reimbursementCount})`,
+            hyperlink: `#'${EVIDENCE_SHEET_NAME}'!${reimbursementLinkTarget}`,
             tooltip: `Đi tới sheet ${EVIDENCE_SHEET_NAME}`,
           }
         : "Không có ảnh";
@@ -691,6 +824,15 @@ export const buildExpenseExportWorkbook = async ({
             underline: true,
           }
         : cloneValue(cellG.font);
+      cellI.font = reimbursementLinkTarget
+        ? {
+            ...(typeof actualRowStyles.I.font === "object" && actualRowStyles.I.font
+              ? actualRowStyles.I.font
+              : {}),
+            color: { argb: "FF0563C1" },
+            underline: true,
+          }
+        : cloneValue(cellI.font);
     } else {
       row.height = 30;
       cellA.style = cloneValue(blankRowStyles.A);
@@ -700,6 +842,8 @@ export const buildExpenseExportWorkbook = async ({
       cellE.style = cloneValue(blankRowStyles.E);
       cellF.style = cloneValue(blankRowStyles.F);
       cellG.style = cloneValue(blankRowStyles.G);
+      cellH.style = cloneValue(blankRowStyles.H);
+      cellI.style = cloneValue(blankRowStyles.I);
 
       cellA.value = null;
       cellB.value = null;
@@ -708,14 +852,14 @@ export const buildExpenseExportWorkbook = async ({
       cellE.value = null;
       cellF.value = null;
       cellG.value = null;
+      cellH.value = null;
+      cellI.value = null;
     }
   }
 
-  const summaryClearEndRow = Math.max(detailEndRow, DETAIL_START_ROW + summaryRows.length + 4);
-
   for (let rowNumber = DETAIL_START_ROW; rowNumber <= summaryClearEndRow; rowNumber += 1) {
-    const labelCell = worksheet.getCell(`I${rowNumber}`);
-    const valueCell = worksheet.getCell(`J${rowNumber}`);
+    const labelCell = worksheet.getCell(`K${rowNumber}`);
+    const valueCell = worksheet.getCell(`L${rowNumber}`);
 
     labelCell.style = cloneValue(summaryStyles.blankLabel);
     valueCell.style = cloneValue(summaryStyles.blankValue);
@@ -725,8 +869,8 @@ export const buildExpenseExportWorkbook = async ({
 
   summaryRows.forEach((summary, index) => {
     const rowNumber = DETAIL_START_ROW + index;
-    const labelCell = worksheet.getCell(`I${rowNumber}`);
-    const valueCell = worksheet.getCell(`J${rowNumber}`);
+    const labelCell = worksheet.getCell(`K${rowNumber}`);
+    const valueCell = worksheet.getCell(`L${rowNumber}`);
 
     labelCell.style =
       summary.label === "Tổng"

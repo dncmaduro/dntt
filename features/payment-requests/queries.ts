@@ -60,6 +60,15 @@ const EXPENSE_LIST_SELECT = `
     file_path,
     file_type,
     payment_request_id
+  ),
+  payment_bills:payment_request_payment_bills (
+    id,
+    created_at,
+    created_by,
+    file_name,
+    file_path,
+    file_type,
+    payment_request_id
   )
 `;
 
@@ -80,6 +89,7 @@ type ExpenseListRow = Omit<
   "attachment_count" | "category" | "sub_category"
 > & {
   attachments: AttachmentWithUrl[] | null;
+  payment_bills: PaymentBillWithUrl[] | null;
 };
 
 type EmployeeFilterRow = {
@@ -625,12 +635,20 @@ const getExpenseRequestListData = async ({
       ),
     ),
   );
+  const paymentBillPaths = Array.from(
+    new Set(
+      items.flatMap((item) =>
+        (item.payment_bills ?? []).map((bill) => bill.file_path),
+      ),
+    ),
+  );
+  const filePaths = Array.from(new Set([...attachmentPaths, ...paymentBillPaths]));
   const signedUrlByPath = new Map<string, string>();
 
-  if (attachmentPaths.length) {
+  if (filePaths.length) {
     const { data: signedUrls, error: signedUrlError } = await supabase.storage
       .from(STORAGE_BUCKET)
-      .createSignedUrls(attachmentPaths, 60 * 60);
+      .createSignedUrls(filePaths, 60 * 60);
 
     if (signedUrlError) {
       throw new Error(signedUrlError.message);
@@ -648,6 +666,10 @@ const getExpenseRequestListData = async ({
     attachments: (item.attachments ?? []).map((attachment) => ({
       ...attachment,
       signed_url: signedUrlByPath.get(attachment.file_path) ?? null,
+    })),
+    payment_bills: (item.payment_bills ?? []).map((bill) => ({
+      ...bill,
+      signed_url: signedUrlByPath.get(bill.file_path) ?? null,
     })),
   }));
 
