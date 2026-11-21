@@ -1,10 +1,8 @@
-import { Download } from "lucide-react";
-
 import { DataNavigationRegion } from "@/components/shared/data-loading-overlay";
 import { PageIntro } from "@/components/shared/page-intro";
 import { PaginationControls } from "@/components/shared/pagination-controls";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ExpenseExportButton } from "@/features/payment-requests/components/expense-export-button";
 import { ExpenseFilterBar } from "@/features/payment-requests/components/expense-filter-bar";
 import { ExpenseRequestList } from "@/features/payment-requests/components/expense-request-list";
 import {
@@ -50,14 +48,7 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
   return (
     <div className="space-y-6">
       <PageIntro
-        actions={
-          <Button asChild>
-            <a download href={exportHref}>
-              <Download className="size-4" />
-              Xuất DNTT
-            </a>
-          </Button>
-        }
+        actions={<ExpenseExportButton href={exportHref} />}
         title="Chi phí"
       />
 
