@@ -16,7 +16,6 @@ export default async function NewRequestPage() {
   return (
     <div className="space-y-6">
       <PageIntro
-        description="Điền thông tin và đính kèm chứng từ."
         title="Tạo đề nghị thanh toán"
       />
 

@@ -38,7 +38,6 @@ export default async function RequestsPage({ searchParams }: RequestsPageProps) 
   return (
     <div className="space-y-6">
       <PageIntro
-        description="Lọc theo người tạo, trạng thái và thời gian."
         title="Tất cả đề nghị thanh toán"
       />
 

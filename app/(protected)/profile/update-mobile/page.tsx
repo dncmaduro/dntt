@@ -23,7 +23,6 @@ export default async function MobileProfileUpdatePage() {
   return (
     <div className="space-y-6 md:hidden">
       <PageIntro
-        description="Cập nhật họ tên và ảnh QR."
         title="Cập nhật hồ sơ"
       />
 

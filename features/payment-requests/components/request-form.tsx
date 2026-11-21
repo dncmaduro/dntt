@@ -354,13 +354,9 @@ export function RequestForm({
                 type="checkbox"
                 {...form.register('creator_paid_before')}
               />
-              <span className="space-y-1">
+              <span>
                 <span className="block font-medium text-foreground">
                   Tôi đã thanh toán trước khoản này
-                </span>
-                <span className="block text-sm leading-6 text-muted-foreground">
-                  Bật nếu bạn cần hoàn ứng. Tắt nếu kế toán sẽ thanh toán bằng
-                  QR.
                 </span>
               </span>
             </label>

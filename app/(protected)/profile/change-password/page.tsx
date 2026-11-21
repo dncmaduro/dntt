@@ -9,7 +9,6 @@ export default async function ChangePasswordPage() {
   return (
     <div className="space-y-6">
       <PageIntro
-        description="Đổi mật khẩu tài khoản."
         title="Đổi mật khẩu"
       />
 

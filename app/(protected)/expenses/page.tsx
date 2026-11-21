@@ -58,7 +58,6 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
             </a>
           </Button>
         }
-        description="Lọc chi phí theo danh mục, tháng và trạng thái."
         title="Chi phí"
       />
 

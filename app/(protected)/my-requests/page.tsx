@@ -46,7 +46,6 @@ export default async function MyRequestsPage({
             <Link href={APP_ROUTES.newRequest}>Tạo đề nghị</Link>
           </Button>
         }
-        description="Theo dõi trạng thái các đề nghị do bạn tạo."
         title="DNTT của tôi"
       />
 

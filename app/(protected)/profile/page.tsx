@@ -17,7 +17,6 @@ export default async function ProfilePage() {
   return (
     <div className="space-y-6">
       <PageIntro
-        description="Cập nhật thông tin và QR thanh toán của bạn."
         title="Hồ sơ cá nhân"
       />
 

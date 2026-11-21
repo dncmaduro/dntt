@@ -32,7 +32,6 @@ export default async function PaymentQrPage({
   return (
     <div className="space-y-6">
       <PageIntro
-        description="Chọn nhân sự để xem QR và xử lý thanh toán."
         title="QR thanh toán"
       />
 

@@ -19,7 +19,6 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <PageIntro
-        description="Theo dõi tiến độ xử lý và mở các hồ sơ gần đây."
         title="Tổng quan xử lý"
       />
 
