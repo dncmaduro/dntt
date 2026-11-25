@@ -343,11 +343,6 @@ export const DIRECTOR_NAVIGATION: NavigationItem[] = [
 
 export const PRIVATE_ACCOUNTANT_NAVIGATION: NavigationItem[] = [
   {
-    href: APP_ROUTES.privateDashboard,
-    label: "Tổng quan",
-    icon: LayoutDashboard,
-  },
-  {
     href: APP_ROUTES.privateRequests,
     label: "Tất cả DNTT riêng",
     icon: Files,
@@ -357,24 +352,9 @@ export const PRIVATE_ACCOUNTANT_NAVIGATION: NavigationItem[] = [
     label: "Chi phí DNTT riêng",
     icon: WalletCards,
   },
-  {
-    href: APP_ROUTES.notifications,
-    label: "Thông báo",
-    icon: BellRing,
-  },
-  {
-    href: APP_ROUTES.profile,
-    label: "Cá nhân",
-    icon: CircleUserRound,
-  },
 ];
 
 export const PRIVATE_DIRECTOR_NAVIGATION: NavigationItem[] = [
-  {
-    href: APP_ROUTES.privateDashboard,
-    label: "Tổng quan",
-    icon: LayoutDashboard,
-  },
   {
     href: APP_ROUTES.privateRequests,
     label: "Tất cả DNTT riêng",
@@ -389,16 +369,6 @@ export const PRIVATE_DIRECTOR_NAVIGATION: NavigationItem[] = [
     href: APP_ROUTES.privateExpenses,
     label: "Chi phí DNTT riêng",
     icon: WalletCards,
-  },
-  {
-    href: APP_ROUTES.notifications,
-    label: "Thông báo",
-    icon: BellRing,
-  },
-  {
-    href: APP_ROUTES.profile,
-    label: "Cá nhân",
-    icon: CircleUserRound,
   },
 ];
 

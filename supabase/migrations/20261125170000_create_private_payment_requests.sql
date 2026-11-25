@@ -150,7 +150,7 @@ create policy "private dntt directors can upload files"
   with check (
     bucket_id = 'private-payment-request-files'
     and public.is_private_dntt_director()
-    and owner_id = auth.uid()
+    and owner_id = auth.uid()::text
   );
 
 drop policy if exists "private dntt reviewers can view files"
@@ -170,5 +170,5 @@ create policy "private dntt directors can delete own files"
   for delete to authenticated
   using (
     bucket_id = 'private-payment-request-files'
-    and owner_id = auth.uid()
+    and owner_id = auth.uid()::text
   );
