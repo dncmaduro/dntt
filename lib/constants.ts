@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  ArrowLeftRight,
   BellRing,
   CircleUserRound,
   FilePlus2,
@@ -200,6 +201,10 @@ export const PAGE_TITLES: Record<string, string> = {
   "/profile": "Cá nhân",
   "/profile/update-mobile": "Cập nhật hồ sơ",
   "/profile/change-password": "Đổi mật khẩu",
+  "/private-requests": "DNTT riêng",
+  "/private-requests/requests": "Tất cả DNTT riêng",
+  "/private-requests/new": "Tạo DNTT riêng",
+  "/private-requests/expenses": "Chi phí DNTT riêng",
 };
 
 export const APP_ROUTES = {
@@ -217,7 +222,14 @@ export const APP_ROUTES = {
   profile: "/profile",
   profileMobileUpdate: "/profile/update-mobile",
   changePassword: "/profile/change-password",
+  privateDashboard: "/private-requests",
+  privateRequests: "/private-requests/requests",
+  privateNewRequest: "/private-requests/new",
+  privateExpenses: "/private-requests/expenses",
+  privateExpenseExport: "/private-requests/expenses/export",
 } as const;
+
+export const PRIVATE_FLOW_PREFIX = APP_ROUTES.privateDashboard;
 
 export type NavigationItem = {
   href: string;
@@ -328,3 +340,66 @@ export const DIRECTOR_NAVIGATION: NavigationItem[] = [
     icon: CircleUserRound,
   },
 ];
+
+export const PRIVATE_ACCOUNTANT_NAVIGATION: NavigationItem[] = [
+  {
+    href: APP_ROUTES.privateDashboard,
+    label: "Tổng quan",
+    icon: LayoutDashboard,
+  },
+  {
+    href: APP_ROUTES.privateRequests,
+    label: "Tất cả DNTT riêng",
+    icon: Files,
+  },
+  {
+    href: APP_ROUTES.privateExpenses,
+    label: "Chi phí DNTT riêng",
+    icon: WalletCards,
+  },
+  {
+    href: APP_ROUTES.notifications,
+    label: "Thông báo",
+    icon: BellRing,
+  },
+  {
+    href: APP_ROUTES.profile,
+    label: "Cá nhân",
+    icon: CircleUserRound,
+  },
+];
+
+export const PRIVATE_DIRECTOR_NAVIGATION: NavigationItem[] = [
+  {
+    href: APP_ROUTES.privateDashboard,
+    label: "Tổng quan",
+    icon: LayoutDashboard,
+  },
+  {
+    href: APP_ROUTES.privateRequests,
+    label: "Tất cả DNTT riêng",
+    icon: Files,
+  },
+  {
+    href: APP_ROUTES.privateNewRequest,
+    label: "Tạo DNTT riêng",
+    icon: FilePlus2,
+  },
+  {
+    href: APP_ROUTES.privateExpenses,
+    label: "Chi phí DNTT riêng",
+    icon: WalletCards,
+  },
+  {
+    href: APP_ROUTES.notifications,
+    label: "Thông báo",
+    icon: BellRing,
+  },
+  {
+    href: APP_ROUTES.profile,
+    label: "Cá nhân",
+    icon: CircleUserRound,
+  },
+];
+
+export const PRIVATE_FLOW_SWITCH_ICON = ArrowLeftRight;

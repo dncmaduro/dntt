@@ -362,6 +362,150 @@ export type Database = {
           },
         ];
       };
+      private_payment_request_attachments: {
+        Row: {
+          created_at: string;
+          created_by: string;
+          file_name: string;
+          file_path: string;
+          file_type: string | null;
+          id: string;
+          private_payment_request_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by: string;
+          file_name: string;
+          file_path: string;
+          file_type?: string | null;
+          id?: string;
+          private_payment_request_id: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string;
+          file_name?: string;
+          file_path?: string;
+          file_type?: string | null;
+          id?: string;
+          private_payment_request_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "private_payment_request_attachments_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "private_payment_request_attachments_request_id_fkey";
+            columns: ["private_payment_request_id"];
+            isOneToOne: false;
+            referencedRelation: "private_payment_requests";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      private_payment_request_logs: {
+        Row: {
+          action: string;
+          actor_id: string;
+          created_at: string;
+          id: string;
+          meta: Json | null;
+          private_payment_request_id: string;
+        };
+        Insert: {
+          action: string;
+          actor_id: string;
+          created_at?: string;
+          id?: string;
+          meta?: Json | null;
+          private_payment_request_id: string;
+        };
+        Update: {
+          action?: string;
+          actor_id?: string;
+          created_at?: string;
+          id?: string;
+          meta?: Json | null;
+          private_payment_request_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "private_payment_request_logs_actor_id_fkey";
+            columns: ["actor_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "private_payment_request_logs_request_id_fkey";
+            columns: ["private_payment_request_id"];
+            isOneToOne: false;
+            referencedRelation: "private_payment_requests";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      private_payment_requests: {
+        Row: {
+          amount: number | null;
+          created_at: string;
+          deleted_at: string | null;
+          description: string | null;
+          id: string;
+          is_deleted: boolean;
+          payment_date: string | null;
+          sub_category_id: string | null;
+          title: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          amount?: number | null;
+          created_at?: string;
+          deleted_at?: string | null;
+          description?: string | null;
+          id?: string;
+          is_deleted?: boolean;
+          payment_date?: string | null;
+          sub_category_id?: string | null;
+          title: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          amount?: number | null;
+          created_at?: string;
+          deleted_at?: string | null;
+          description?: string | null;
+          id?: string;
+          is_deleted?: boolean;
+          payment_date?: string | null;
+          sub_category_id?: string | null;
+          title?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "private_payment_requests_sub_category_id_fkey";
+            columns: ["sub_category_id"];
+            isOneToOne: false;
+            referencedRelation: "sub_categories";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "private_payment_requests_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -402,3 +546,9 @@ export type PaymentRequestLogRow =
 export type NotificationRow = Database["public"]["Tables"]["notifications"]["Row"];
 export type SubCategoryRow =
   Database["public"]["Tables"]["sub_categories"]["Row"];
+export type PrivatePaymentRequestRow =
+  Database["public"]["Tables"]["private_payment_requests"]["Row"];
+export type PrivatePaymentRequestAttachmentRow =
+  Database["public"]["Tables"]["private_payment_request_attachments"]["Row"];
+export type PrivatePaymentRequestLogRow =
+  Database["public"]["Tables"]["private_payment_request_logs"]["Row"];

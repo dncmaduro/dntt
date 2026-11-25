@@ -92,6 +92,19 @@ export const buildPaymentRequestQrStoragePath = ({
   fileName: string;
 }) => `payment-request-qrs/${requestId}/${timestamp}-${sanitizeFileName(fileName)}`;
 
+export const buildPrivatePaymentRequestStoragePath = ({
+  userId,
+  requestId,
+  timestamp,
+  fileName,
+}: {
+  userId: string;
+  requestId: string;
+  timestamp: number;
+  fileName: string;
+}) =>
+  `private-payment-requests/${userId}/${requestId}/${timestamp}-${sanitizeFileName(fileName)}`;
+
 const resolveFileExtension = ({
   fileName,
   fileType,

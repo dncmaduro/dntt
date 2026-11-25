@@ -33,6 +33,10 @@ import {
   DIRECTOR_NAVIGATION,
   EMPLOYEE_NAVIGATION,
   PAGE_TITLES,
+  PRIVATE_ACCOUNTANT_NAVIGATION,
+  PRIVATE_DIRECTOR_NAVIGATION,
+  PRIVATE_FLOW_PREFIX,
+  PRIVATE_FLOW_SWITCH_ICON,
   ROLE_LABELS,
   type UserRole,
 } from '@/lib/constants';
@@ -81,6 +85,22 @@ const resolveTitle = (pathname: string) => {
     return 'Chi tiết duyệt đề nghị';
   }
 
+  if (pathname.startsWith(`${PRIVATE_FLOW_PREFIX}/`)) {
+    if (pathname.endsWith('/new')) {
+      return 'Tạo DNTT riêng';
+    }
+
+    if (pathname.endsWith('/expenses')) {
+      return 'Chi phí DNTT riêng';
+    }
+
+    if (pathname.endsWith('/requests')) {
+      return 'Tất cả DNTT riêng';
+    }
+
+    return 'Chi tiết DNTT riêng';
+  }
+
   return 'Tổng quan';
 };
 
@@ -101,14 +121,29 @@ export function AppShell({
 }) {
   const pathname = usePathname();
   const logoutFormRef = useRef<HTMLFormElement>(null);
+  const isPrivateFlow =
+    pathname === PRIVATE_FLOW_PREFIX ||
+    pathname.startsWith(`${PRIVATE_FLOW_PREFIX}/`);
   const navigation =
     profile.role === 'employee'
       ? EMPLOYEE_NAVIGATION
-      : profile.role === 'director'
-        ? DIRECTOR_NAVIGATION
-        : ACCOUNTANT_NAVIGATION;
+      : isPrivateFlow
+        ? profile.role === 'director'
+          ? PRIVATE_DIRECTOR_NAVIGATION
+          : PRIVATE_ACCOUNTANT_NAVIGATION
+        : profile.role === 'director'
+          ? DIRECTOR_NAVIGATION
+          : ACCOUNTANT_NAVIGATION;
   const pageTitle = resolveTitle(pathname);
   const activeNavigationHref = getActiveNavigationHref(pathname, navigation);
+  const showFlowSwitcher = profile.role === 'accountant' || profile.role === 'director';
+  const FlowSwitchIcon = PRIVATE_FLOW_SWITCH_ICON;
+  const flowSwitchHref = isPrivateFlow
+    ? APP_ROUTES.dashboard
+    : APP_ROUTES.privateDashboard;
+  const flowSwitchLabel = isPrivateFlow
+    ? 'Chuyển qua DNTT chung'
+    : 'Chuyển qua DNTT riêng';
 
   return (
     <NotificationsProvider
@@ -149,6 +184,18 @@ export function AppShell({
               );
             })}
           </nav>
+
+          {showFlowSwitcher ? (
+            <div className="px-4 pb-4">
+              <Link
+                className="flex items-center gap-3 rounded-md border border-white/10 bg-sidebar-accent px-3 py-2.5 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent/80 hover:text-white"
+                href={flowSwitchHref}
+              >
+                <FlowSwitchIcon className="size-4" />
+                <span>{flowSwitchLabel}</span>
+              </Link>
+            </div>
+          ) : null}
 
           <div className="border-t border-sidebar-border px-6 py-5">
             <div className="rounded-lg border border-white/10 bg-sidebar-accent p-4">
@@ -212,6 +259,19 @@ export function AppShell({
                           );
                         })}
                       </nav>
+                      {showFlowSwitcher ? (
+                        <div className="px-4 pb-4">
+                          <SheetClose asChild>
+                            <Link
+                              className="flex items-center gap-3 rounded-md border border-white/10 bg-sidebar-accent px-3 py-2.5 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent/80 hover:text-white"
+                              href={flowSwitchHref}
+                            >
+                              <FlowSwitchIcon className="size-4" />
+                              <span>{flowSwitchLabel}</span>
+                            </Link>
+                          </SheetClose>
+                        </div>
+                      ) : null}
                       <div className="border-t border-sidebar-border px-6 py-5">
                         <div className="rounded-lg border border-white/10 bg-sidebar-accent p-4">
                           <p className="text-xs font-bold text-white/50">
