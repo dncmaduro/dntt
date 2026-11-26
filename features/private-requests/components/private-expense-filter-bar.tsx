@@ -7,6 +7,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useDataNavigation } from "@/components/shared/data-navigation";
 import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
 import type {
   Category,
   PrivateExpenseFilters,
@@ -106,8 +107,7 @@ export function PrivateExpenseFilterBar({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="space-y-2">
           <Label>Danh mục</Label>
-          <select
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          <NativeSelect
             disabled={disabled}
             onChange={(event) =>
               updateFilters((current) => ({
@@ -124,13 +124,12 @@ export function PrivateExpenseFilterBar({
                 {category.name}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
 
         <div className="space-y-2">
           <Label>Danh mục con</Label>
-          <select
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+          <NativeSelect
             disabled={!draft.category || disabled}
             onChange={(event) =>
               updateFilters((current) => ({
@@ -146,13 +145,12 @@ export function PrivateExpenseFilterBar({
                 {subCategory.name}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
 
         <div className="space-y-2">
           <Label>Tháng phát sinh</Label>
-          <select
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          <NativeSelect
             disabled={disabled}
             onChange={(event) =>
               updateFilters((current) => ({
@@ -168,7 +166,7 @@ export function PrivateExpenseFilterBar({
                 {option.label}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
       </div>
 

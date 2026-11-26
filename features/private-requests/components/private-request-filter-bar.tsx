@@ -7,6 +7,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
 import { useDataNavigation } from "@/components/shared/data-navigation";
 import type {
   Category,
@@ -252,8 +253,8 @@ function FilterSelect({
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
-      <select
-        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+      <NativeSelect
+        className="disabled:cursor-not-allowed disabled:opacity-50"
         disabled={disabled}
         onChange={(event) => onChange(event.target.value)}
         value={value || ALL_VALUE}
@@ -266,7 +267,7 @@ function FilterSelect({
             {option.label}
           </option>
         ))}
-      </select>
+      </NativeSelect>
     </div>
   );
 }

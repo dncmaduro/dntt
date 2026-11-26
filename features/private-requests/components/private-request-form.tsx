@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { createPrivatePaymentRequestAction } from "@/features/private-requests/actions";
 import {
@@ -184,9 +185,8 @@ export function PrivateRequestForm({
 
           <div className="space-y-2">
             <FieldLabel required>Danh mục</FieldLabel>
-            <select
+            <NativeSelect
               aria-label="Danh mục"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               onChange={(event) => {
                 setSelectedCategoryId(event.target.value);
                 form.setValue("sub_category_id", "", {
@@ -202,7 +202,7 @@ export function PrivateRequestForm({
                   {category.name}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
 
           <div className="space-y-2">
@@ -211,9 +211,8 @@ export function PrivateRequestForm({
               control={form.control}
               name="sub_category_id"
               render={({ field }) => (
-                <select
+                <NativeSelect
                   aria-label="Danh mục con"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
                   disabled={!selectedCategoryId}
                   onChange={field.onChange}
                   value={field.value || ""}
@@ -224,7 +223,7 @@ export function PrivateRequestForm({
                       {subCategory.name}
                     </option>
                   ))}
-                </select>
+                </NativeSelect>
               )}
             />
             <FieldError
