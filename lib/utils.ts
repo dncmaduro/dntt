@@ -5,12 +5,15 @@ import { twMerge } from "tailwind-merge";
 
 export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
 
+export const DATE_DISPLAY_FORMAT = "dd/MM/yyyy";
+export const DATE_TIME_DISPLAY_FORMAT = "dd/MM/yyyy HH:mm";
+
 export const formatDate = (value?: string | null) => {
   if (!value) {
     return "--";
   }
 
-  return format(new Date(value), "dd/MM/yyyy", { locale: vi });
+  return format(new Date(value), DATE_DISPLAY_FORMAT, { locale: vi });
 };
 
 export const formatDateTime = (value?: string | null) => {
@@ -18,7 +21,7 @@ export const formatDateTime = (value?: string | null) => {
     return "--";
   }
 
-  return format(new Date(value), "dd/MM/yyyy HH:mm", { locale: vi });
+  return format(new Date(value), DATE_TIME_DISPLAY_FORMAT, { locale: vi });
 };
 
 export const formatCurrency = (value?: number | null) => {

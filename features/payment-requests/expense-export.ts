@@ -796,6 +796,7 @@ export const buildExpenseExportWorkbook = async ({
       cellA.value = index + 1;
       cellB.value = item.attachment_count > 0 ? "Có hoá đơn" : null;
       cellC.value = buildDateValue(item.paid_at);
+      cellC.numFmt = "dd/mm/yyyy";
       cellD.value = label;
       cellE.value = item.title;
       cellF.value = item.amount ?? 0;

@@ -1,6 +1,7 @@
 import ExcelJS from "exceljs";
 
 import type { PrivateExpenseRequestListItem } from "@/features/private-requests/types";
+import { formatDate } from "@/lib/utils";
 
 type PrivateExportResult = {
   buffer: ArrayBuffer;
@@ -69,13 +70,14 @@ export const buildPrivateExpenseExportWorkbook = async ({
   items.forEach((item, index) => {
     const row = worksheet.addRow([
       index + 1,
-      item.payment_date ?? "—",
+      item.payment_date ? formatDate(item.payment_date) : "—",
       item.sub_category?.name ?? item.category?.name ?? "Chưa phân loại",
       item.title,
       item.description ?? "",
       item.owner?.full_name ?? item.user_id,
       item.amount ?? 0,
     ]);
+    row.getCell(2).numFmt = "dd/mm/yyyy";
     row.getCell(7).numFmt = '#,##0" ₫"';
     row.alignment = { vertical: "top", wrapText: true };
   });

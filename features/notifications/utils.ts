@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 
 import { APP_ROUTES, type UserRole } from "@/lib/constants";
+import { DATE_TIME_DISPLAY_FORMAT } from "@/lib/utils";
 
 import {
   DEPRECATED_NOTIFICATION_TYPE_LABELS,
@@ -26,7 +27,7 @@ export const formatNotificationTime = (value: string) => {
     return `${Math.max(1, Math.floor(diffInMs / 3_600_000))} giờ trước`;
   }
 
-  return format(targetDate, "dd/MM/yyyy HH:mm", { locale: vi });
+  return format(targetDate, DATE_TIME_DISPLAY_FORMAT, { locale: vi });
 };
 
 export const getNotificationTypeLabel = (type: string) =>
