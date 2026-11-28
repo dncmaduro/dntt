@@ -30,9 +30,6 @@ export default async function DashboardPage() {
                 <p className="text-sm text-muted-foreground">{metric.label}</p>
                 <p className="mt-2 text-4xl font-semibold">{metric.value}</p>
               </div>
-              <p className="text-sm leading-6 text-muted-foreground">
-                {metric.description}
-              </p>
             </CardContent>
           </Card>
         ))}
@@ -44,7 +41,7 @@ export default async function DashboardPage() {
             <h2 className="text-xl font-semibold">Đề nghị gần đây</h2>
           </div>
           <Link className="text-sm font-medium text-primary" href={detailBase}>
-            Xem tất cả
+            Xem tất cả DNTT
           </Link>
         </div>
 

@@ -33,9 +33,6 @@ export default async function PrivateRequestsDashboardPage() {
                 <p className="text-sm text-muted-foreground">{metric.label}</p>
                 <p className="mt-2 text-3xl font-semibold">{metric.value}</p>
               </div>
-              <p className="text-sm leading-6 text-muted-foreground">
-                {metric.description}
-              </p>
             </CardContent>
           </Card>
         ))}
@@ -45,7 +42,7 @@ export default async function PrivateRequestsDashboardPage() {
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-xl font-semibold">DNTT riêng gần đây</h2>
           <Link className="text-sm font-medium text-primary" href={APP_ROUTES.privateRequests}>
-            Xem tất cả
+            Xem tất cả DNTT riêng
           </Link>
         </div>
         <PrivateRequestList

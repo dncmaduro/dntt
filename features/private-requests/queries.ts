@@ -598,17 +598,14 @@ export const getPrivateDashboardData = async (): Promise<PrivateDashboardData> =
       {
         label: "Tổng DNTT riêng",
         value: recent.totalItems,
-        description: "Tổng số DNTT riêng đã tạo",
       },
       {
         label: "Tổng chi phí",
         value: formatCurrency(totalAmount),
-        description: "Tổng giá trị các DNTT riêng",
       },
       {
         label: "Chi phí tháng này",
         value: formatCurrency(currentMonthAmount),
-        description: "Tổng chi phí theo ngày DNTT",
       },
     ],
     recentRequests: recent.items,

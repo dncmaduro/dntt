@@ -458,7 +458,7 @@ export function RequestForm({
             </FieldLabel>
             <Textarea
               id="description"
-              placeholder="Trình bày ngắn gọn nội dung thanh toán, bối cảnh phát sinh, hoặc đầu mục chi phí."
+              placeholder="Mô tả khoản chi hoặc lý do thanh toán."
               {...form.register('description')}
             />
             <FieldError

@@ -170,10 +170,12 @@ export function PrivateExpenseFilterBar({
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-3">
-        <div className="text-sm text-muted-foreground">
-          {disabled ? "Đang cập nhật bộ lọc..." : "Bộ lọc cập nhật tự động"}
-        </div>
+      <div className="flex items-center gap-3">
+        {disabled ? (
+          <div className="mr-auto text-sm text-muted-foreground">
+            Đang cập nhật bộ lọc...
+          </div>
+        ) : null}
         <Button
           disabled={disabled}
           onClick={() => {

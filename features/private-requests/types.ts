@@ -60,7 +60,6 @@ export type PrivateExpenseRequestListItem = PrivateRequestListItem;
 export type PrivateDashboardMetric = {
   label: string;
   value: number | string;
-  description: string;
 };
 
 export type PrivateDashboardData = {

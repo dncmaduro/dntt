@@ -177,7 +177,7 @@ export function NotificationBell() {
         <div className="p-2">
           <Button asChild className="w-full" variant="ghost">
             <Link href={APP_ROUTES.notifications} onClick={() => setOpen(false)}>
-              Xem tất cả
+              Mở thông báo
             </Link>
           </Button>
         </div>

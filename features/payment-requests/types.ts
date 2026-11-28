@@ -56,7 +56,6 @@ export type PaymentRequestDetail = PaymentRequestRow & {
 export type DashboardMetric = {
   label: string;
   value: number | string;
-  description: string;
 };
 
 export type DashboardData = {

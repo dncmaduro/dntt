@@ -206,10 +206,12 @@ export function PrivateRequestFilterBar({
         />
       </div>
 
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-sm text-muted-foreground">
-          {disabled ? "Đang cập nhật bộ lọc..." : "Bộ lọc cập nhật tự động"}
-        </span>
+      <div className="flex items-center gap-3">
+        {disabled ? (
+          <span className="mr-auto text-sm text-muted-foreground">
+            Đang cập nhật bộ lọc...
+          </span>
+        ) : null}
         <Button
           disabled={disabled}
           onClick={() => {

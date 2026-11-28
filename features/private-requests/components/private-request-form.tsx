@@ -240,7 +240,7 @@ export function PrivateRequestForm({
             </FieldLabel>
             <Textarea
               id="private-description"
-              placeholder="Trình bày nội dung và bối cảnh phát sinh chi phí."
+              placeholder="Mô tả nội dung khoản chi."
               {...form.register("description")}
             />
             <FieldError

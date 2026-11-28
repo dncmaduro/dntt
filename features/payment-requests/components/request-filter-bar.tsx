@@ -18,7 +18,6 @@ import {
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetFooter,
   SheetHeader,
   SheetTitle,
@@ -393,12 +392,12 @@ export function RequestFilterBar({
             subCategories={subCategories}
           />
         </div>
-        <div className="col-span-full flex items-center justify-between gap-3">
-          <div className="text-sm text-muted-foreground">
-            {isPending || isDataPending
-              ? "Đang cập nhật bộ lọc..."
-              : "Bộ lọc cập nhật tự động"}
-          </div>
+        <div className="col-span-full flex items-center gap-3">
+          {isPending || isDataPending ? (
+            <div className="mr-auto text-sm text-muted-foreground">
+              Đang cập nhật bộ lọc...
+            </div>
+          ) : null}
           <Button
             disabled={isPending || isDataPending}
             onClick={resetFilters}
@@ -422,7 +421,6 @@ export function RequestFilterBar({
           <SheetContent side="bottom">
             <SheetHeader>
               <SheetTitle>Lọc đề nghị</SheetTitle>
-              <SheetDescription>Lọc theo thông tin đề nghị.</SheetDescription>
             </SheetHeader>
             <div className="grid gap-4">
               <FilterFields

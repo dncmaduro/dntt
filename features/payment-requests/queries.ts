@@ -996,22 +996,18 @@ export const getDashboardData = async ({
         {
           label: 'Tổng đề nghị',
           value: total,
-          description: 'Toàn bộ DNTT bạn đã tạo',
         },
         {
           label: 'Chưa được thanh toán',
           value: unpaidCount,
-          description: 'Đang chờ hoặc chưa hoàn tất chi trả',
         },
         {
           label: 'Chưa thanh toán',
           value: formatCurrency(unpaidAmount),
-          description: 'Tổng số tiền chưa được thanh toán',
         },
         {
           label: 'Đã được thanh toán',
           value: paidCount,
-          description: 'Đã hoàn tất chi trả',
         },
       ];
     }
@@ -1040,22 +1036,18 @@ export const getDashboardData = async ({
         {
           label: 'Chờ kế toán',
           value: pendingAccounting,
-          description: 'Cần xác nhận hồ sơ ngay',
         },
         {
           label: 'Kế toán đã duyệt',
           value: approved,
-          description: 'Đã sẵn sàng để thanh toán',
         },
         {
           label: 'Đã thanh toán',
           value: paid,
-          description: 'Đã hoàn tất chi trả',
         },
         {
           label: 'Toàn hệ thống',
           value: total,
-          description: 'Tổng số DNTT đang quản lý',
         },
       ];
     }
@@ -1083,22 +1075,18 @@ export const getDashboardData = async ({
       {
         label: 'Chờ giám đốc xử lý',
         value: readyToPay,
-        description: 'Các hồ sơ đã được kế toán duyệt',
       },
       {
         label: 'Đã thanh toán',
         value: paid,
-        description: 'Các khoản đã hoàn tất chi trả',
       },
       {
         label: 'Đã từ chối',
         value: rejected,
-        description: 'Hồ sơ bị trả về để bổ sung',
       },
       {
         label: 'Toàn hệ thống',
         value: total,
-        description: 'Tổng số DNTT đã phát sinh',
       },
     ];
   })();
